@@ -20,7 +20,17 @@ import adminStoreSettingRoutes from "../routes/adminStoreSetting.routes.js";
 //Customer routes
 import customerRoutes from "../routes/customer.routes.js";
 
+// Middleware
+import applySecurityMiddleware from "../middleware/securityMiddleware.js";
+import {
+  adminRateLimiter,
+  apiRateLimiter,
+  authRateLimiter,
+  checkoutRateLimiter,
+} from "../middleware/rateLimitMiddleware.js";
+
 const app = express();
+applySecurityMiddleware(app);
 
 const rawPort = process.env.PORT ?? "5000";
 const port = Number(rawPort);
@@ -80,6 +90,14 @@ app.get("/api/health", async (request, response) => {
   });
 });
 
+// Rate limiting middleware
+app.use("/api", apiRateLimiter);
+
+app.use("/api/auth", authRateLimiter);
+
+app.use("/api/checkout", checkoutRateLimiter);
+
+app.use("/api/admin", adminRateLimiter);
 // API routes
 // Authentication and user management routes
 app.use("/api/auth", authRoutes);
