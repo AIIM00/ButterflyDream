@@ -77,8 +77,6 @@ model User {
   passwordHash      String     @db.VarChar(255)
   role              Role       @default(CUSTOMER)
   status            UserStatus @default(ACTIVE)
-
-  authVersion Int @default(0)
   
   emailVerifiedAt   DateTime?
   passwordChangedAt DateTime?

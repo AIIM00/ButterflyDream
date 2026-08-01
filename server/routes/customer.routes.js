@@ -26,10 +26,23 @@ import {
   removeNotification,
   removeReadNotifications,
 } from "../controllers/customerNotification.controller.js";
+import {
+  changePassword,
+  getProfile,
+  updateProfile,
+} from "../controllers/customerProfile.controller.js";
 
 const router = Router();
 
 router.use(requireAuthentication, requireRole("CUSTOMER"));
+
+// Customer profile
+
+router.get("/profile", getProfile);
+
+router.patch("/profile", updateProfile);
+
+router.patch("/password", changePassword);
 
 // Customer addresses
 

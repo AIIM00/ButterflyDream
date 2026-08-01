@@ -1,14 +1,26 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
+// React Toastify
+import { toast } from "react-toastify";
+
+// MUI Icons
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
-import { toast } from "react-toastify";
+
+// Components
 import AddressEditorDialog from "../../components/account/AddressEditorDialog.jsx";
 import CustomerAddressCard from "../../components/account/CustomerAddressCard.jsx";
+import CustomerPasswordForm from "../../components/account/CustomerPasswordForm.jsx";
+import CustomerProfileEditor from "../../components/account/CustomerProfileEditor.jsx";
+
+// Context
 import useAppContext from "../../context/app/useAppContext.js";
+
+// Services
 import {
   createCustomerAddress,
   deleteCustomerAddress,
@@ -16,6 +28,9 @@ import {
   setDefaultCustomerAddress,
   updateCustomerAddress,
 } from "../../services/customerApi.js";
+import { fetchCustomerProfile } from "../../services/customerProfileApi.js";
+
+// Utilities
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
 
 function isCancelledRequest(error, signal) {
@@ -32,8 +47,9 @@ function Account() {
 
   const { user } = useAppContext();
 
-  const [addressState, setAddressState] = useState({
+  const [accountState, setAccountState] = useState({
     status: "loading",
+    profile: null,
     addresses: [],
     error: null,
   });
@@ -49,19 +65,26 @@ function Account() {
   useEffect(() => {
     const controller = new AbortController();
 
-    async function loadAddresses() {
+    async function loadAccount() {
       try {
-        const response = await fetchCustomerAddresses({
-          signal: controller.signal,
-        });
+        const [profileResponse, addressResponse] = await Promise.all([
+          fetchCustomerProfile({
+            signal: controller.signal,
+          }),
+
+          fetchCustomerAddresses({
+            signal: controller.signal,
+          }),
+        ]);
 
         if (controller.signal.aborted) {
           return;
         }
 
-        setAddressState({
+        setAccountState({
           status: "ready",
-          addresses: response.addresses ?? [],
+          profile: profileResponse.profile ?? null,
+          addresses: addressResponse.addresses ?? [],
           error: null,
         });
       } catch (error) {
@@ -80,15 +103,16 @@ function Account() {
           return;
         }
 
-        setAddressState({
+        setAccountState({
           status: "error",
+          profile: null,
           addresses: [],
           error,
         });
       }
     }
 
-    void loadAddresses();
+    void loadAccount();
 
     return () => {
       controller.abort();
@@ -123,6 +147,13 @@ function Account() {
     }));
   }
 
+  function handleProfileUpdated(updatedProfile) {
+    setAccountState((currentState) => ({
+      ...currentState,
+      profile: updatedProfile,
+    }));
+  }
+
   async function handleDialogSubmit(payload) {
     const isEditing = Boolean(dialog.address);
 
@@ -133,11 +164,12 @@ function Account() {
         ? await updateCustomerAddress(dialog.address.id, payload)
         : await createCustomerAddress(payload);
 
-      setAddressState({
+      setAccountState((currentState) => ({
+        ...currentState,
         status: "ready",
         addresses: response.addresses ?? [],
         error: null,
-      });
+      }));
 
       setDialog((currentDialog) => ({
         ...currentDialog,
@@ -162,11 +194,12 @@ function Account() {
     try {
       const response = await setDefaultCustomerAddress(address.id);
 
-      setAddressState({
+      setAccountState((currentState) => ({
+        ...currentState,
         status: "ready",
         addresses: response.addresses ?? [],
         error: null,
-      });
+      }));
 
       toast.success(response.message ?? "Default address updated.");
     } catch (error) {
@@ -190,11 +223,12 @@ function Account() {
     try {
       const response = await deleteCustomerAddress(address.id);
 
-      setAddressState({
+      setAccountState((currentState) => ({
+        ...currentState,
         status: "ready",
         addresses: response.addresses ?? [],
         error: null,
-      });
+      }));
 
       toast.success(response.message ?? "Address deleted.");
     } catch (error) {
@@ -205,28 +239,45 @@ function Account() {
   }
 
   async function handleRetry() {
-    setAddressState({
+    setAccountState((currentState) => ({
+      ...currentState,
       status: "loading",
-      addresses: [],
       error: null,
-    });
+    }));
 
     try {
-      const response = await fetchCustomerAddresses();
+      const [profileResponse, addressResponse] = await Promise.all([
+        fetchCustomerProfile(),
+        fetchCustomerAddresses(),
+      ]);
 
-      setAddressState({
+      setAccountState({
         status: "ready",
-        addresses: response.addresses ?? [],
+        profile: profileResponse.profile ?? null,
+        addresses: addressResponse.addresses ?? [],
         error: null,
       });
     } catch (error) {
-      setAddressState({
+      if (isAuthenticationError(error)) {
+        navigate("/login", {
+          replace: true,
+          state: {
+            from: `${location.pathname}${location.search}`,
+          },
+        });
+
+        return;
+      }
+
+      setAccountState((currentState) => ({
+        ...currentState,
         status: "error",
-        addresses: [],
         error,
-      });
+      }));
     }
   }
+
+  const displayedProfile = accountState.profile ?? user;
 
   return (
     <section className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -248,139 +299,151 @@ function Account() {
 
           <div>
             <h2 className="text-xl font-bold text-gray-950">
-              {user?.fullName ?? "Customer"}
+              {displayedProfile?.fullName ?? "Customer"}
             </h2>
 
-            <p className="mt-1 text-gray-600">{user?.email}</p>
+            <p className="mt-1 text-gray-600">{displayedProfile?.email}</p>
 
-            {user?.phone && (
-              <p className="mt-1 text-sm text-gray-500">{user.phone}</p>
+            {displayedProfile?.phone && (
+              <p className="mt-1 text-sm text-gray-500">
+                {displayedProfile.phone}
+              </p>
             )}
           </div>
         </div>
       </div>
 
-      <section className="mt-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <LocationOnOutlinedIcon className="text-gray-600" />
+      {accountState.status === "loading" && (
+        <div className="mt-8 space-y-6">
+          <div className="h-72 animate-pulse rounded-2xl bg-gray-100" />
 
-              <h2 className="text-2xl font-bold text-gray-950">
-                Delivery addresses
-              </h2>
-            </div>
+          <div className="h-96 animate-pulse rounded-2xl bg-gray-100" />
+        </div>
+      )}
 
-            <p className="mt-2 text-gray-600">
-              Save up to 10 delivery addresses.
-            </p>
-          </div>
+      {accountState.status === "error" && (
+        <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+          <ErrorOutlineRoundedIcon
+            className="text-red-500"
+            sx={{
+              fontSize: 48,
+            }}
+          />
+
+          <h2 className="mt-3 text-xl font-bold text-red-900">
+            Your account could not be loaded
+          </h2>
+
+          <p className="mt-2 text-red-700">
+            {getApiErrorMessage(
+              accountState.error,
+              "Unable to load your account information.",
+            )}
+          </p>
 
           <button
             type="button"
-            onClick={openCreateDialog}
-            disabled={
-              Boolean(mutationKey) || addressState.addresses.length >= 10
-            }
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-300"
+            onClick={() => void handleRetry()}
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-700 px-5 py-2.5 font-semibold text-white"
           >
-            <AddRoundedIcon />
-            Add address
+            <RefreshRoundedIcon />
+            Try again
           </button>
         </div>
+      )}
 
-        {addressState.status === "loading" && (
-          <div className="mt-6 grid gap-5 md:grid-cols-2">
-            {Array.from({
-              length: 2,
-            }).map((_, index) => (
-              <div
-                key={index}
-                className="h-64 animate-pulse rounded-2xl bg-gray-100"
-              />
-            ))}
-          </div>
-        )}
-
-        {addressState.status === "error" && (
-          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-            <ErrorOutlineRoundedIcon
-              className="text-red-500"
-              sx={{
-                fontSize: 48,
-              }}
-            />
-
-            <h3 className="mt-3 text-xl font-bold text-red-900">
-              Addresses could not be loaded
-            </h3>
-
-            <p className="mt-2 text-red-700">
-              {getApiErrorMessage(
-                addressState.error,
-                "Unable to load addresses.",
-              )}
-            </p>
-
-            <button
-              type="button"
-              onClick={() => void handleRetry()}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-700 px-5 py-2.5 font-semibold text-white"
-            >
-              <RefreshRoundedIcon />
-              Try again
-            </button>
-          </div>
-        )}
-
-        {addressState.status === "ready" &&
-          addressState.addresses.length === 0 && (
-            <div className="mt-6 rounded-2xl border border-dashed border-gray-300 p-10 text-center">
-              <LocationOnOutlinedIcon
-                className="text-gray-400"
-                sx={{
-                  fontSize: 48,
-                }}
+      {accountState.status === "ready" && (
+        <>
+          {accountState.profile && (
+            <div className="mt-8 space-y-8">
+              <CustomerProfileEditor
+                key={accountState.profile.updatedAt}
+                profile={accountState.profile}
+                onUpdated={handleProfileUpdated}
               />
 
-              <h3 className="mt-4 text-xl font-bold text-gray-950">
-                No saved addresses
-              </h3>
+              <CustomerPasswordForm />
+            </div>
+          )}
 
-              <p className="mt-2 text-gray-600">
-                Add an address to use during checkout.
-              </p>
+          <section className="mt-10">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="flex items-center gap-3">
+                  <LocationOnOutlinedIcon className="text-gray-600" />
+
+                  <h2 className="text-2xl font-bold text-gray-950">
+                    Delivery addresses
+                  </h2>
+                </div>
+
+                <p className="mt-2 text-gray-600">
+                  Save up to 10 delivery addresses.
+                </p>
+              </div>
 
               <button
                 type="button"
                 onClick={openCreateDialog}
-                className="mt-6 rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white"
+                disabled={
+                  Boolean(mutationKey) || accountState.addresses.length >= 10
+                }
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-300"
               >
-                Add your first address
+                <AddRoundedIcon />
+                Add address
               </button>
             </div>
-          )}
 
-        {addressState.status === "ready" &&
-          addressState.addresses.length > 0 && (
-            <div className="mt-6 grid gap-5 md:grid-cols-2">
-              {addressState.addresses.map((address) => (
-                <CustomerAddressCard
-                  key={address.id}
-                  address={address}
-                  mutationKey={mutationKey}
-                  onEdit={openEditDialog}
-                  onSetDefault={(selectedAddress) =>
-                    void handleSetDefault(selectedAddress)
-                  }
-                  onDelete={(selectedAddress) =>
-                    void handleDelete(selectedAddress)
-                  }
+            {accountState.addresses.length === 0 && (
+              <div className="mt-6 rounded-2xl border border-dashed border-gray-300 p-10 text-center">
+                <LocationOnOutlinedIcon
+                  className="text-gray-400"
+                  sx={{
+                    fontSize: 48,
+                  }}
                 />
-              ))}
-            </div>
-          )}
-      </section>
+
+                <h3 className="mt-4 text-xl font-bold text-gray-950">
+                  No saved addresses
+                </h3>
+
+                <p className="mt-2 text-gray-600">
+                  Add an address to use during checkout.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={openCreateDialog}
+                  disabled={Boolean(mutationKey)}
+                  className="mt-6 rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-300"
+                >
+                  Add your first address
+                </button>
+              </div>
+            )}
+
+            {accountState.addresses.length > 0 && (
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
+                {accountState.addresses.map((address) => (
+                  <CustomerAddressCard
+                    key={address.id}
+                    address={address}
+                    mutationKey={mutationKey}
+                    onEdit={openEditDialog}
+                    onSetDefault={(selectedAddress) =>
+                      void handleSetDefault(selectedAddress)
+                    }
+                    onDelete={(selectedAddress) =>
+                      void handleDelete(selectedAddress)
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
       {dialog.open && (
         <AddressEditorDialog
