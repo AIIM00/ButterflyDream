@@ -1,0 +1,26 @@
+import { Router } from "express";
+import {
+  createCategory,
+  getAdminCategories,
+  reorderCategories,
+  updateCategory,
+  updateCategoryStatus,
+} from "../controllers/adminCategory.controller.js";
+import requireAuthentication from "../middleware/authMiddleware.js";
+import requireRole from "../middleware/roleMiddleware.js";
+
+const router = Router();
+
+router.use(requireAuthentication, requireRole("ADMIN"));
+
+router.get("/", getAdminCategories);
+
+router.post("/", createCategory);
+
+router.patch("/reorder", reorderCategories);
+
+router.patch("/:categoryId/status", updateCategoryStatus);
+
+router.patch("/:categoryId", updateCategory);
+
+export default router;

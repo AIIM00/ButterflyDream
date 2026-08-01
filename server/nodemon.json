@@ -1,0 +1,16 @@
+{
+  "watch": [
+    "src",
+    "config",
+    "controllers",
+    "middleware",
+    "routes",
+    "services",
+    "utils",
+    "prisma"
+  ],
+  "ext": "js,json,prisma",
+  "ignore": ["node_modules", "prisma/migrations"],
+  "exec": "node src/index.js",
+  "delay": 250
+}
