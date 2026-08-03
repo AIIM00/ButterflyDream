@@ -1,6 +1,6 @@
 import request from "supertest";
 import { describe, expect, test } from "vitest";
-import { app } from "../src/index.js";
+import app from "../src/app.js";
 
 describe("API security", () => {
   test("does not expose the Express X-Powered-By header", async () => {

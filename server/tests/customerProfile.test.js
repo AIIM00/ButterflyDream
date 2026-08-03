@@ -1,6 +1,6 @@
 import request from "supertest";
 import { describe, expect, test } from "vitest";
-import { app } from "../src/index.js";
+import app from "../src/app.js";
 import prisma from "../src/prisma.js";
 import { comparePassword } from "../services/passwordService.js";
 import createAuthCookie from "./helpers/createAuthCookie.js";

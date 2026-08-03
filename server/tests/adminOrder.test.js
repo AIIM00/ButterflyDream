@@ -19,7 +19,7 @@ vi.mock("../services/orderEmailService.js", () => ({
   }),
 }));
 
-import { app } from "../src/index.js";
+import app from "../src/app.js";
 import prisma from "../src/prisma.js";
 import createAuthCookie from "./helpers/createAuthCookie.js";
 import {
