@@ -1,0 +1,160 @@
+name: Butterfly Dream CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  client:
+    name: Client lint and build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install client dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Run client lint
+        working-directory: client
+        run: npm run lint
+
+      - name: Build client
+        working-directory: client
+        env:
+          VITE_API_URL: http://localhost:5000/api
+        run: npm run build
+
+  server:
+    name: Server validation and tests
+
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: accessories_platform_test
+
+        ports:
+          - 5432:5432
+
+        options: >-
+          --health-cmd "pg_isready -U postgres -d accessories_platform_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Create test environment
+        working-directory: server
+        run: |
+          cat > .env.test <<'EOF'
+          PORT=5001
+          NODE_ENV=test
+
+          FRONTEND_URL=http://localhost:5173
+          CLIENT_URL=http://localhost:5173
+          ALLOWED_FRONTEND_ORIGINS=http://localhost:5173
+
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/accessories_platform_test?schema=public
+
+          JWT_SECRET=github_actions_test_jwt_secret_with_more_than_sixty_four_characters_1234567890
+          AUTH_SESSION_DAYS=7
+          AUTH_COOKIE_NAME=accessories_auth
+          AUTH_COOKIE_SAME_SITE=lax
+
+          ADMIN_NAME=Test Administrator
+          ADMIN_EMAIL=admin.test@example.com
+          ADMIN_PASSWORD=TestAdminPassword123!
+
+          STORE_NAME=Butterfly Dream Test Store
+          DEFAULT_DELIVERY_FEE=0.00
+
+          OTP_HASH_SECRET=github_actions_test_otp_hash_secret_with_more_than_sixty_four_characters_123456
+
+          ADMIN_LOGIN_OTP_MINUTES=3
+          ADMIN_LOGIN_OTP_MAX_ATTEMPTS=5
+
+          EMAIL_VERIFICATION_OTP_MINUTES=3
+          EMAIL_VERIFICATION_OTP_MAX_ATTEMPTS=5
+
+          PASSWORD_RESET_OTP_MINUTES=5
+          PASSWORD_RESET_OTP_MAX_ATTEMPTS=5
+
+          SMTP_HOST=localhost
+          SMTP_PORT=2525
+          SMTP_SECURE=false
+          SMTP_USER=test@example.com
+          SENDER_EMAIL=test@example.com
+          EMAIL_PASSWORD=test-email-password
+
+          TRUST_PROXY=false
+          REQUEST_BODY_LIMIT=250kb
+
+          API_RATE_LIMIT_WINDOW_MINUTES=15
+          API_RATE_LIMIT_MAX_REQUESTS=1000
+
+          AUTH_RATE_LIMIT_WINDOW_MINUTES=15
+          AUTH_RATE_LIMIT_MAX_REQUESTS=100
+
+          CHECKOUT_RATE_LIMIT_WINDOW_MINUTES=10
+          CHECKOUT_RATE_LIMIT_MAX_REQUESTS=100
+
+          ADMIN_RATE_LIMIT_WINDOW_MINUTES=15
+          ADMIN_RATE_LIMIT_MAX_REQUESTS=1000
+          EOF
+
+      - name: Validate Prisma schema
+        working-directory: server
+        run: npm run db-validate
+
+      - name: Generate Prisma Client
+        working-directory: server
+        run: npx prisma generate
+
+      - name: Apply test database migrations
+        working-directory: server
+        run: npm run test:db:migrate
+
+      - name: Run server tests
+        working-directory: server
+        run: npm test
