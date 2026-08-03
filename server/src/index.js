@@ -20,7 +20,7 @@ async function startServer() {
 
     console.log("PostgreSQL database connected successfully.");
 
-    server = app.listen(port, () => {
+    server = app.listen(port, "0.0.0.0", () => {
       console.log(`Accessories platform API is running on port ${port}.`);
 
       console.log(`Environment: ${process.env.NODE_ENV ?? "development"}`);

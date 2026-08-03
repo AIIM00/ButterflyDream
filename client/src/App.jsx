@@ -1,4 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+
+// Protected routes
 import ProtectedRoute from "./components/protected/ProtectedRoute.jsx";
 
 // Layouts
@@ -6,22 +8,23 @@ import AdminLayout from "./layouts/AdminLayout.jsx";
 import AuthLayout from "./layouts/AuthLayout.jsx";
 import CustomerLayout from "./layouts/CustomerLayout.jsx";
 
-// Pages
+// General pages
 import NotFound from "./pages/NotFound.jsx";
 
 // Admin pages
-import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
-import AdminPlaceholder from "./pages/admin/AdminPlaceholder.jsx";
-import AdminLogin from "./pages/auth/AdminLogin.jsx";
-import AdminOtpVerification from "./pages/auth/AdminOtpVerification.jsx";
 import AdminCategories from "./pages/admin/AdminCategories.jsx";
+import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import AdminOrderManage from "./pages/admin/AdminOrderManage.jsx";
+import AdminOrders from "./pages/admin/AdminOrders.jsx";
+import AdminPlaceholder from "./pages/admin/AdminPlaceholder.jsx";
 import AdminProductCreate from "./pages/admin/AdminProductCreate.jsx";
 import AdminProductManage from "./pages/admin/AdminProductManage.jsx";
 import AdminProducts from "./pages/admin/AdminProducts.jsx";
-import AdminOrders from "./pages/admin/AdminOrders.jsx";
-import AdminOrderManage from "./pages/admin/AdminOrderManage.jsx";
 import AdminSettings from "./pages/admin/AdminSettings.jsx";
-// Auth pages
+
+// Authentication pages
+import AdminLogin from "./pages/auth/AdminLogin.jsx";
+import AdminOtpVerification from "./pages/auth/AdminOtpVerification.jsx";
 import EmailVerification from "./pages/auth/EmailVerification.jsx";
 import ForgotPassword from "./pages/auth/ForgotPassword.jsx";
 import Login from "./pages/auth/Login.jsx";
@@ -29,38 +32,31 @@ import Register from "./pages/auth/Register.jsx";
 import ResetPassword from "./pages/auth/ResetPassword.jsx";
 
 // Customer pages
-import CustomerPlaceholder from "./pages/customer/CustomerPlaceholder.jsx";
-import Home from "./pages/customer/Home.jsx";
-import ProductDetails from "./pages/customer/ProductDetails.jsx";
-import Products from "./pages/customer/Products.jsx";
+import Account from "./pages/customer/Account.jsx";
 import Cart from "./pages/customer/Cart.jsx";
 import Checkout from "./pages/customer/Checkout.jsx";
-import OrderSuccess from "./pages/customer/OrderSuccess.jsx";
-import Account from "./pages/customer/Account.jsx";
-import Orders from "./pages/customer/Orders.jsx";
-import OrderDetails from "./pages/customer/OrderDetails.jsx";
-import Wishlist from "./pages/customer/Wishlist.jsx";
+import CustomerPlaceholder from "./pages/customer/CustomerPlaceholder.jsx";
+import Home from "./pages/customer/Home.jsx";
 import Notifications from "./pages/customer/Notifications.jsx";
+import OrderDetails from "./pages/customer/OrderDetails.jsx";
+import OrderSuccess from "./pages/customer/OrderSuccess.jsx";
+import Orders from "./pages/customer/Orders.jsx";
+import ProductDetails from "./pages/customer/ProductDetails.jsx";
+import Products from "./pages/customer/Products.jsx";
+import Wishlist from "./pages/customer/Wishlist.jsx";
 
 function App() {
   return (
     <Routes>
+      {/* Customer storefront */}
       <Route element={<CustomerLayout />}>
+        {/* Public storefront routes */}
         <Route index element={<Home />} />
 
         <Route path="products" element={<Products />} />
 
         <Route path="products/:slug" element={<ProductDetails />} />
-        <Route path="cart" element={<Cart />} />
-        <Route path="wishlist" element={<Wishlist />} />
-        <Route path="notifications" element={<Notifications />} />
 
-        <Route path="checkout" element={<Checkout />} />
-        <Route path="checkout/success/:orderId" element={<OrderSuccess />} />
-        <Route path="account" element={<Account />} />
-
-        <Route path="orders" element={<Orders />} />
-        <Route path="orders/:orderId" element={<OrderDetails />} />
         <Route
           path="privacy"
           element={
@@ -83,53 +79,27 @@ function App() {
           }
         />
 
+        {/* Customer-only storefront routes */}
         <Route element={<ProtectedRoute allowedRoles={["CUSTOMER"]} />}>
-          <Route
-            path="wishlist"
-            element={
-              <CustomerPlaceholder
-                eyebrow="Your account"
-                title="Wishlist"
-                description="Your saved products will appear here after the wishlist interface is connected."
-              />
-            }
-          />
+          <Route path="cart" element={<Cart />} />
 
-          <Route
-            path="cart"
-            element={
-              <CustomerPlaceholder
-                eyebrow="Shopping"
-                title="Your cart"
-                description="Selected products and variants will appear here after the cart feature is implemented."
-              />
-            }
-          />
+          <Route path="wishlist" element={<Wishlist />} />
 
-          <Route
-            path="orders"
-            element={
-              <CustomerPlaceholder
-                eyebrow="Your account"
-                title="Your orders"
-                description="Your order history and delivery status will appear here."
-              />
-            }
-          />
+          <Route path="notifications" element={<Notifications />} />
 
-          <Route
-            path="account"
-            element={
-              <CustomerPlaceholder
-                eyebrow="Your account"
-                title="Account settings"
-                description="Your profile, phone number, addresses, and security settings will appear here."
-              />
-            }
-          />
+          <Route path="checkout" element={<Checkout />} />
+
+          <Route path="checkout/success/:orderId" element={<OrderSuccess />} />
+
+          <Route path="account" element={<Account />} />
+
+          <Route path="orders" element={<Orders />} />
+
+          <Route path="orders/:orderId" element={<OrderDetails />} />
         </Route>
       </Route>
 
+      {/* Public authentication pages */}
       <Route element={<AuthLayout />}>
         <Route path="login" element={<Login />} />
 
@@ -144,12 +114,14 @@ function App() {
         <Route path="admin/verify-otp" element={<AdminOtpVerification />} />
       </Route>
 
+      {/* Logged-in customer email verification */}
       <Route element={<ProtectedRoute allowedRoles={["CUSTOMER"]} />}>
         <Route element={<AuthLayout />}>
           <Route path="verify-email" element={<EmailVerification />} />
         </Route>
       </Route>
 
+      {/* Admin-only routes */}
       <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
         <Route path="admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
@@ -169,6 +141,7 @@ function App() {
           <Route path="orders/:orderId" element={<AdminOrderManage />} />
 
           <Route path="settings" element={<AdminSettings />} />
+
           <Route
             path="inventory"
             element={
@@ -195,16 +168,6 @@ function App() {
               <AdminPlaceholder
                 title="Notifications"
                 description="Review store activity, order updates, and inventory alerts."
-              />
-            }
-          />
-
-          <Route
-            path="settings"
-            element={
-              <AdminPlaceholder
-                title="Store settings"
-                description="Manage store information, contact details, currency settings, and operational preferences."
               />
             }
           />
