@@ -38,7 +38,7 @@ services:
 
       # Render generates this securely.
       - key: JWT_SECRET
-        generateValue: true
+        generateValue: false
 
       - key: AUTH_SESSION_DAYS
         value: "7"
@@ -69,7 +69,7 @@ services:
 
       # Still required for customer verification/password reset OTP hashing.
       - key: OTP_HASH_SECRET
-        generateValue: true
+        generateValue: false
 
       - key: EMAIL_VERIFICATION_OTP_MINUTES
         value: "3"
