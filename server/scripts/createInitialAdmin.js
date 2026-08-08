@@ -141,8 +141,8 @@ async function createAdminRecord({ adminName, adminEmail, passwordHash }) {
      * this transaction ends.
      */
     await transaction.$queryRaw`
-      SELECT pg_advisory_xact_lock(${INITIAL_ADMIN_LOCK_KEY})
-    `;
+  SELECT pg_advisory_xact_lock(${INITIAL_ADMIN_LOCK_KEY})::text AS "lockResult"
+`;
 
     const existingAdmin = await transaction.user.findFirst({
       where: {
