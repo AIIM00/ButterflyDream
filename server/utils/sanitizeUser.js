@@ -11,6 +11,7 @@ function sanitizeUser(user) {
     role: user.role,
     status: user.status,
     emailVerifiedAt: user.emailVerifiedAt,
+    mustChangePassword: Boolean(user.mustChangePassword),
     lastLoginAt: user.lastLoginAt,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,

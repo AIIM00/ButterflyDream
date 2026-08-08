@@ -65,25 +65,48 @@ enum NotificationType {
   SYSTEM
 }
 
+enum InStoreSaleStatus {
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum InStorePaymentMethod {
+  CASH
+  CARD
+  OTHER
+}
+
+enum InventoryMovementType {
+  IN_STORE_SALE
+  IN_STORE_SALE_CANCELLED
+  IN_STORE_REFUND
+  RESTOCK
+  MANUAL_ADJUSTMENT
+  DAMAGED
+  RETURN
+}
+
 // ======================================================
 // Users and Authentication
 // ======================================================
 
 model User {
-  id                String     @id @default(uuid()) @db.Uuid
-  fullName          String     @db.VarChar(120)
-  email             String     @unique @db.VarChar(255)
-  phone             String?    @db.VarChar(30)
-  passwordHash      String     @db.VarChar(255)
-  role              Role       @default(CUSTOMER)
-  status            UserStatus @default(ACTIVE)
-  
+  id           String     @id @default(uuid()) @db.Uuid
+  fullName     String     @db.VarChar(120)
+  email        String     @unique @db.VarChar(255)
+  phone        String?    @db.VarChar(30)
+  passwordHash String     @db.VarChar(255)
+  role         Role       @default(CUSTOMER)
+  status       UserStatus @default(ACTIVE)
+
   emailVerifiedAt   DateTime?
   passwordChangedAt DateTime?
+  mustChangePassword Boolean @default(false)
   lastLoginAt       DateTime?
   deletedAt         DateTime?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   addresses          Address[]
   otpCodes           OtpCode[]
@@ -92,6 +115,8 @@ model User {
   orders             Order[]
   notifications      Notification[]
   orderStatusChanges OrderStatusHistory[] @relation("OrderStatusChangedBy")
+  inStoreSales       InStoreSale[]        @relation("InStoreSaleRecordedBy")
+  inventoryMovements InventoryMovement[]  @relation("InventoryMovementCreatedBy")
 
   @@index([role, status])
   @@index([status, createdAt])
@@ -172,11 +197,12 @@ model Product {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  category      Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  images        ProductImage[]
-  variants      ProductVariant[]
-  wishlistItems WishlistItem[]
-  orderItems    OrderItem[]
+  category         Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images           ProductImage[]
+  variants         ProductVariant[]
+  wishlistItems    WishlistItem[]
+  orderItems       OrderItem[]
+  inStoreSaleItems InStoreSaleItem[]
 
   @@index([categoryId, status])
   @@index([status, isFeatured])
@@ -188,10 +214,13 @@ model ProductImage {
   productId String  @db.Uuid
   variantId String? @db.Uuid
 
-  imageUrl  String  @db.Text
-  altText   String? @db.Text
-  position  Int     @default(0)
-  isPrimary Boolean @default(false)
+  imageUrl    String  @db.Text
+  storageKey  String? @unique
+  contentType String?
+  fileSize    Int?
+  altText     String? @db.Text
+  position    Int     @default(0)
+  isPrimary   Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -218,11 +247,12 @@ model ProductVariant {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  product    Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  inventory  Inventory?
-  images     ProductImage[]
-  cartItems  CartItem[]
-  orderItems OrderItem[]
+  product          Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  inventory        Inventory?
+  images           ProductImage[]
+  cartItems        CartItem[]
+  orderItems       OrderItem[]
+  inStoreSaleItems InStoreSaleItem[]
 
   @@index([productId, isActive])
   @@index([productId, isDefault])
@@ -241,9 +271,108 @@ model Inventory {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  variant   ProductVariant      @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  movements InventoryMovement[]
 
   @@index([stockQuantity])
+}
+
+// ======================================================
+// In-Store Sales
+// ======================================================
+
+model InStoreSale {
+  id               String  @id @default(uuid()) @db.Uuid
+  saleNumber       String  @unique @db.VarChar(30)
+  recordedByUserId String? @db.Uuid
+
+  status        InStoreSaleStatus    @default(COMPLETED)
+  paymentMethod InStorePaymentMethod
+  currency      String               @default("USD") @db.Char(3)
+
+  subtotal       Decimal @db.Decimal(10, 2)
+  discountAmount Decimal @default(0) @db.Decimal(10, 2)
+  totalAmount    Decimal @db.Decimal(10, 2)
+
+  customerName  String? @db.VarChar(120)
+  customerPhone String? @db.VarChar(30)
+  note          String? @db.Text
+
+  soldAt      DateTime  @default(now())
+  cancelledAt DateTime?
+  refundedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  recordedBy User? @relation("InStoreSaleRecordedBy", fields: [recordedByUserId], references: [id], onDelete: SetNull)
+
+  items              InStoreSaleItem[]
+  inventoryMovements InventoryMovement[]
+
+  @@index([status, soldAt])
+  @@index([paymentMethod, soldAt])
+  @@index([recordedByUserId])
+  @@index([soldAt])
+}
+
+model InStoreSaleItem {
+  id     String @id @default(uuid()) @db.Uuid
+  saleId String @db.Uuid
+
+  productId String? @db.Uuid
+  variantId String? @db.Uuid
+
+  productName String @db.VarChar(180)
+  variantName String @db.VarChar(180)
+  sku         String @db.VarChar(100)
+  options     Json
+
+  unitPrice Decimal @db.Decimal(10, 2)
+  quantity  Int
+  lineTotal Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+
+  sale InStoreSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([saleId])
+  @@index([productId])
+  @@index([variantId])
+}
+
+// ======================================================
+// Inventory Movement History
+// ======================================================
+
+model InventoryMovement {
+  id              String  @id @default(uuid()) @db.Uuid
+  inventoryId     String  @db.Uuid
+  inStoreSaleId   String? @db.Uuid
+  createdByUserId String? @db.Uuid
+
+  type InventoryMovementType
+
+  quantityChange Int
+  stockBefore    Int
+  stockAfter     Int
+
+  note      String?  @db.Text
+  createdAt DateTime @default(now())
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Restrict)
+
+  inStoreSale InStoreSale? @relation(fields: [inStoreSaleId], references: [id], onDelete: SetNull)
+
+  createdBy User? @relation("InventoryMovementCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([inventoryId, createdAt])
+  @@index([inStoreSaleId])
+  @@index([createdByUserId])
+  @@index([type, createdAt])
 }
 
 // ======================================================

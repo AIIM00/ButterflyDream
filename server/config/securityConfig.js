@@ -47,27 +47,75 @@ function parseTrustProxy(value) {
   return parsedValue;
 }
 
-function getAllowedOrigins() {
-  const configuredOrigins = (
-    process.env.ALLOWED_FRONTEND_ORIGINS ??
-    process.env.FRONTEND_ORIGIN ??
-    process.env.CLIENT_ORIGIN ??
-    process.env.FRONTEND_URL ??
-    "http://localhost:5173"
-  )
+function validateOrigin(origin, isProduction) {
+  if (origin === "*") {
+    throw new Error(
+      "ALLOWED_FRONTEND_ORIGINS must not contain * when cookie authentication is enabled.",
+    );
+  }
+
+  let parsedOrigin;
+
+  try {
+    parsedOrigin = new URL(origin);
+  } catch {
+    throw new Error(
+      `ALLOWED_FRONTEND_ORIGINS contains an invalid origin: ${origin}`,
+    );
+  }
+
+  if (!["http:", "https:"].includes(parsedOrigin.protocol)) {
+    throw new Error(
+      `ALLOWED_FRONTEND_ORIGINS contains an unsupported protocol: ${origin}`,
+    );
+  }
+
+  if (parsedOrigin.origin !== origin) {
+    throw new Error(
+      `ALLOWED_FRONTEND_ORIGINS must contain origins only, without paths, query strings, or fragments: ${origin}`,
+    );
+  }
+
+  if (isProduction && parsedOrigin.protocol !== "https:") {
+    throw new Error(`Production frontend origins must use HTTPS: ${origin}`);
+  }
+
+  return parsedOrigin.origin;
+}
+
+function getAllowedOrigins(isProduction) {
+  const rawOrigins = process.env.ALLOWED_FRONTEND_ORIGINS?.trim();
+
+  if (!rawOrigins) {
+    if (isProduction) {
+      throw new Error("ALLOWED_FRONTEND_ORIGINS is required in production.");
+    }
+
+    return ["http://localhost:5173"];
+  }
+
+  const configuredOrigins = rawOrigins
     .split(",")
     .map((origin) => origin.trim().replace(/\/+$/, ""))
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((origin) => validateOrigin(origin, isProduction));
+
+  if (configuredOrigins.length === 0) {
+    throw new Error(
+      "ALLOWED_FRONTEND_ORIGINS must contain at least one valid origin.",
+    );
+  }
 
   return [...new Set(configuredOrigins)];
 }
+const isProduction = process.env.NODE_ENV?.trim() === "production";
 
 const securityConfig = Object.freeze({
-  isProduction: process.env.NODE_ENV === "production",
+  isProduction,
 
   trustProxy: parseTrustProxy(process.env.TRUST_PROXY?.trim()),
 
-  allowedOrigins: getAllowedOrigins(),
+  allowedOrigins: getAllowedOrigins(isProduction),
 
   requestBodyLimit: process.env.REQUEST_BODY_LIMIT?.trim() || "250kb",
 

@@ -11,6 +11,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon",
+    "admin:create-initial": "node scripts/createInitialAdmin.js",
+    "r2:test": "node scripts/testR2.js",
     "build": "prisma generate",
     "test": "cross-env NODE_ENV=test DOTENV_CONFIG_PATH=.env.test vitest run --maxWorkers=1",
     "test:watch": "cross-env NODE_ENV=test DOTENV_CONFIG_PATH=.env.test vitest --maxWorkers=1",
@@ -29,6 +31,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1104.0",
+    "@aws-sdk/s3-request-presigner": "^3.1104.0",
     "@prisma/adapter-pg": "^6.19.0",
     "@prisma/client": "^6.19.0",
     "bcryptjs": "^3.0.3",

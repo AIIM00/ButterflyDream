@@ -1,9 +1,6 @@
 import "dotenv/config";
-import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import prisma from "../src/prisma.js";
-
-const PASSWORD_SALT_ROUNDS = 12;
 
 const categorySeeds = [
   {
@@ -68,58 +65,6 @@ function getRequiredEnvironmentVariable(variableName) {
   return value;
 }
 
-function validateAdminName(adminName) {
-  if (adminName.length < 2 || adminName.length > 120) {
-    throw new Error("ADMIN_NAME must contain between 2 and 120 characters.");
-  }
-}
-
-function validateAdminEmail(adminEmail) {
-  const basicEmailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (adminEmail.length > 255 || !basicEmailPattern.test(adminEmail)) {
-    throw new Error("ADMIN_EMAIL must contain a valid email address.");
-  }
-}
-
-function validateAdminPassword(adminPassword) {
-  const passwordByteLength = Buffer.byteLength(adminPassword, "utf8");
-
-  if (adminPassword.length < 12) {
-    throw new Error("ADMIN_PASSWORD must contain at least 12 characters.");
-  }
-
-  if (passwordByteLength > 72) {
-    throw new Error("ADMIN_PASSWORD must not exceed 72 UTF-8 bytes.");
-  }
-
-  if (!/[a-z]/.test(adminPassword)) {
-    throw new Error("ADMIN_PASSWORD must contain a lowercase letter.");
-  }
-
-  if (!/[A-Z]/.test(adminPassword)) {
-    throw new Error("ADMIN_PASSWORD must contain an uppercase letter.");
-  }
-
-  if (!/[0-9]/.test(adminPassword)) {
-    throw new Error("ADMIN_PASSWORD must contain a number.");
-  }
-
-  if (!/[^A-Za-z0-9]/.test(adminPassword)) {
-    throw new Error("ADMIN_PASSWORD must contain a special character.");
-  }
-
-  const obviousPlaceholderValues = [
-    "REPLACE_WITH_A_STRONG_PASSWORD",
-    "CHANGE_ME",
-    "YOUR_PASSWORD",
-  ];
-
-  if (obviousPlaceholderValues.includes(adminPassword)) {
-    throw new Error("ADMIN_PASSWORD still contains an example placeholder.");
-  }
-}
-
 function validateStoreName(storeName) {
   if (storeName.length < 2 || storeName.length > 160) {
     throw new Error("STORE_NAME must contain between 2 and 160 characters.");
@@ -140,26 +85,13 @@ function parseDeliveryFee(rawDeliveryFee) {
 }
 
 function getSeedConfiguration() {
-  const adminName = getRequiredEnvironmentVariable("ADMIN_NAME");
-
-  const adminEmail =
-    getRequiredEnvironmentVariable("ADMIN_EMAIL").toLowerCase();
-
-  const adminPassword = getRequiredEnvironmentVariable("ADMIN_PASSWORD");
-
   const storeName = getRequiredEnvironmentVariable("STORE_NAME");
 
   const rawDeliveryFee = getRequiredEnvironmentVariable("DEFAULT_DELIVERY_FEE");
 
-  validateAdminName(adminName);
-  validateAdminEmail(adminEmail);
-  validateAdminPassword(adminPassword);
   validateStoreName(storeName);
 
   return {
-    adminName,
-    adminEmail,
-    adminPassword,
     storeName,
     defaultDeliveryFee: parseDeliveryFee(rawDeliveryFee),
   };
@@ -226,74 +158,8 @@ async function seedCategories(transaction) {
   return seededCategories;
 }
 
-async function seedAdmin(transaction, configuration, adminPasswordHash) {
-  const existingUser = await transaction.user.findUnique({
-    where: {
-      email: configuration.adminEmail,
-    },
-    select: {
-      id: true,
-      fullName: true,
-      email: true,
-      role: true,
-      status: true,
-      deletedAt: true,
-    },
-  });
-
-  if (existingUser) {
-    if (existingUser.role !== "ADMIN") {
-      throw new Error(
-        `The email ${configuration.adminEmail} already belongs to a CUSTOMER account. ` +
-          "The seed will not automatically promote a customer to ADMIN.",
-      );
-    }
-
-    if (existingUser.status !== "ACTIVE" || existingUser.deletedAt !== null) {
-      throw new Error(
-        `The admin account ${configuration.adminEmail} exists but is not active. ` +
-          "Resolve the account status manually before continuing.",
-      );
-    }
-
-    return {
-      record: existingUser,
-      created: false,
-    };
-  }
-
-  const admin = await transaction.user.create({
-    data: {
-      fullName: configuration.adminName,
-      email: configuration.adminEmail,
-      passwordHash: adminPasswordHash,
-      role: "ADMIN",
-      status: "ACTIVE",
-      emailVerifiedAt: new Date(),
-    },
-    select: {
-      id: true,
-      fullName: true,
-      email: true,
-      role: true,
-      status: true,
-      createdAt: true,
-    },
-  });
-
-  return {
-    record: admin,
-    created: true,
-  };
-}
-
 async function main() {
   const configuration = getSeedConfiguration();
-
-  const adminPasswordHash = await bcrypt.hash(
-    configuration.adminPassword,
-    PASSWORD_SALT_ROUNDS,
-  );
 
   const seedResult = await prisma.$transaction(async (transaction) => {
     const storeSettingsResult = await seedStoreSettings(
@@ -303,16 +169,9 @@ async function main() {
 
     const categories = await seedCategories(transaction);
 
-    const adminResult = await seedAdmin(
-      transaction,
-      configuration,
-      adminPasswordHash,
-    );
-
     return {
       storeSettingsResult,
       categories,
-      adminResult,
     };
   });
 
@@ -325,12 +184,6 @@ async function main() {
   );
 
   console.log(`Accessory categories ready: ${seedResult.categories.length}`);
-
-  console.log(
-    seedResult.adminResult.created
-      ? `Admin account created: ${seedResult.adminResult.record.email}`
-      : `Admin account already exists: ${seedResult.adminResult.record.email}`,
-  );
 }
 
 main()

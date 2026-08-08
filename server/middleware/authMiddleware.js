@@ -7,10 +7,7 @@ import sanitizeUser from "../utils/sanitizeUser.js";
 
 const allowedRoles = new Set(["CUSTOMER", "ADMIN"]);
 
-const allowedAuthenticationMethods = new Set([
-  "PASSWORD",
-  "PASSWORD_EMAIL_OTP",
-]);
+const allowedAuthenticationMethods = new Set(["PASSWORD"]);
 
 function rejectSession(response, statusCode, message) {
   clearAuthCookie(response);
@@ -108,6 +105,7 @@ async function requireAuthentication(request, response, next) {
         email: true,
         phone: true,
         passwordChangedAt: true,
+        mustChangePassword: true,
         role: true,
         status: true,
         emailVerifiedAt: true,
@@ -142,21 +140,7 @@ async function requireAuthentication(request, response, next) {
       );
     }
 
-    if (
-      user.role === "ADMIN" &&
-      payload.authenticationMethod !== "PASSWORD_EMAIL_OTP"
-    ) {
-      return rejectSession(
-        response,
-        401,
-        "Admin authentication requires email OTP verification.",
-      );
-    }
-
-    if (
-      user.role === "CUSTOMER" &&
-      payload.authenticationMethod !== "PASSWORD"
-    ) {
+    if (payload.authenticationMethod !== "PASSWORD") {
       return rejectSession(
         response,
         401,

@@ -17,6 +17,7 @@ export async function createTestUser({
   status = "ACTIVE",
 
   emailVerified = true,
+  mustChangePassword = false,
 } = {}) {
   const passwordHash = await hashPassword(password);
 
@@ -33,6 +34,7 @@ export async function createTestUser({
         status,
 
         emailVerifiedAt: emailVerified ? new Date() : null,
+        mustChangePassword,
       },
     });
 

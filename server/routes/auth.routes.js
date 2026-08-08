@@ -1,13 +1,12 @@
 import { Router } from "express";
 import {
+  changeAdminInitialPassword,
   getCurrentUser,
   register,
   loginAdmin,
   loginCustomer,
   logout,
-  resendAdminLoginOtp,
   resendCustomerEmailVerification,
-  verifyAdminLoginOtp,
   verifyCustomerEmail,
   requestPasswordReset,
   confirmPasswordReset,
@@ -27,16 +26,7 @@ router.post("/register", register);
 router.post("/login", loginRateLimiter, loginCustomer);
 
 router.post("/admin", loginRateLimiter, loginAdmin);
-router.post(
-  "/admin/verify-login-otp",
-  otpVerificationRateLimiter,
-  verifyAdminLoginOtp,
-);
-router.post(
-  "/admin/resend-login-otp",
-  otpRequestRateLimiter,
-  resendAdminLoginOtp,
-);
+
 router.post(
   "/email-verification/verify",
   otpVerificationRateLimiter,
@@ -52,6 +42,7 @@ router.post(
   requireRole("CUSTOMER"),
   resendCustomerEmailVerification,
 );
+
 router.post(
   "/password-reset/request",
   otpRequestRateLimiter,
@@ -63,10 +54,16 @@ router.post(
   otpVerificationRateLimiter,
   confirmPasswordReset,
 );
-
+router.post(
+  "/admin/change-initial-password",
+  requireAuthentication,
+  requireRole("ADMIN"),
+  changeAdminInitialPassword,
+);
 router.post("/logout", logout);
 
 router.get("/me", requireAuthentication, getCurrentUser);
+
 router.get(
   "/admin/check",
   requireAuthentication,

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import app from "./app.js";
 import prisma from "./prisma.js";
+import securityConfig from "../config/securityConfig.js";
 
 const rawPort = process.env.PORT ?? "5000";
 const port = Number(rawPort);
@@ -26,9 +27,7 @@ async function startServer() {
       console.log(`Environment: ${process.env.NODE_ENV ?? "development"}`);
 
       console.log(
-        `Allowed frontend origin: ${
-          process.env.FRONTEND_URL ?? process.env.CLIENT_URL ?? "not configured"
-        }`,
+        `Allowed frontend origins: ${securityConfig.allowedOrigins.join(", ")}`,
       );
     });
   } catch (error) {

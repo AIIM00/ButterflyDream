@@ -25,7 +25,7 @@ import adminDashboardRoutes from "../routes/adminDashboard.routes.js";
 import adminOrderRoutes from "../routes/adminOrder.routes.js";
 import adminProductRoutes from "../routes/adminProduct.routes.js";
 import adminStoreSettingRoutes from "../routes/adminStoreSetting.routes.js";
-
+import adminInStoreSaleRouter from "../routes/adminInStoreSale.routes.js";
 const app = express();
 
 applySecurityMiddleware(app);
@@ -69,7 +69,7 @@ app.use("/api/admin/settings", adminStoreSettingRoutes);
 app.use("/api/admin/categories", adminCategoryRoutes);
 app.use("/api/admin/products", adminProductRoutes);
 app.use("/api/admin/orders", adminOrderRoutes);
-
+app.use("/api/admin/in-store-sales", adminInStoreSaleRouter);
 // 404 handler
 app.use((request, response) => {
   return response.status(404).json({

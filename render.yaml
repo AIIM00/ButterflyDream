@@ -8,8 +8,9 @@ services:
 
     buildCommand: npm ci --include=dev && npm run build
 
-    preDeployCommand: npm run db-deploy
-    initialDeployHook: npm run db-seed
+    # Run Prisma migrations before every production deployment.
+    preDeployCommand: npm run db:deploy
+
     startCommand: npm start
 
     healthCheckPath: /api/health
@@ -27,15 +28,15 @@ services:
           name: butterfly-dream-postgres
           property: connectionString
 
-      - key: FRONTEND_URL
-        sync: false
-
+      # Customer-facing website used for customer email links.
       - key: CLIENT_URL
-        sync: false
+        value: https://butterflydream.cc
 
+      # Exact browser origins permitted to call the API with cookies.
       - key: ALLOWED_FRONTEND_ORIGINS
-        sync: false
+        value: https://butterflydream.cc,https://www.butterflydream.cc,https://admin.butterflydream.cc
 
+      # Render generates this securely.
       - key: JWT_SECRET
         generateValue: true
 
@@ -45,33 +46,30 @@ services:
       - key: AUTH_COOKIE_NAME
         value: accessories_auth
 
-      # Vercel and Render use different parent domains initially.
+      # All production sites are subdomains of butterflydream.cc.
       - key: AUTH_COOKIE_SAME_SITE
-        value: none
+        value: lax
 
+      # One-time initial administrator bootstrap.
       - key: ADMIN_NAME
         value: Store Administrator
 
       - key: ADMIN_EMAIL
         sync: false
 
-      - key: ADMIN_PASSWORD
-        sync: false
+      - key: ADMIN_PORTAL_URL
+        value: https://admin.butterflydream.cc
 
+      # Store configuration.
       - key: STORE_NAME
         value: Butterfly Dream Accessories Store
 
       - key: DEFAULT_DELIVERY_FEE
         value: "0.00"
 
+      # Still required for customer verification/password reset OTP hashing.
       - key: OTP_HASH_SECRET
         generateValue: true
-
-      - key: ADMIN_LOGIN_OTP_MINUTES
-        value: "3"
-
-      - key: ADMIN_LOGIN_OTP_MAX_ATTEMPTS
-        value: "5"
 
       - key: EMAIL_VERIFICATION_OTP_MINUTES
         value: "3"
@@ -85,8 +83,9 @@ services:
       - key: PASSWORD_RESET_OTP_MAX_ATTEMPTS
         value: "5"
 
+      # Existing Brevo SMTP configuration.
       - key: SMTP_HOST
-        value: smtp.gmail.com
+        value: smtp-relay.brevo.com
 
       - key: SMTP_PORT
         value: "587"
@@ -97,12 +96,32 @@ services:
       - key: SMTP_USER
         sync: false
 
-      - key: SENDER_EMAIL
-        sync: false
-
       - key: EMAIL_PASSWORD
         sync: false
 
+      - key: SENDER_EMAIL
+        value: support@butterflydream.cc
+
+      # Cloudflare R2.
+      - key: R2_ACCOUNT_ID
+        sync: false
+
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+
+      - key: R2_BUCKET_NAME
+        sync: false
+
+      - key: R2_PUBLIC_BASE_URL
+        sync: false
+
+      - key: R2_PRODUCT_PREFIX
+        value: products
+
+      # Render sits behind a reverse proxy.
       - key: TRUST_PROXY
         value: "1"
 
@@ -145,6 +164,5 @@ databases:
 
     connectionPool: none
 
-    # Block public database connections.
-    # The Render API uses the private connection string.
+    # No direct public database connections.
     ipAllowList: []

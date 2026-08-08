@@ -8,21 +8,6 @@ import generateAuthToken from "../utils/generateAuthToken.js";
 import sanitizeUser from "../utils/sanitizeUser.js";
 import setAuthCookie from "../utils/setAuthCookie.js";
 
-// Import the admin login service functions
-import {
-  getEligibleAdminById,
-  issueAdminLoginOtp,
-  verifyAdminLoginOtp as verifyAdminOtpService,
-} from "../services/adminLoginService.js";
-// Import the admin login challenge utility functions
-import {
-  clearAdminLoginChallengeCookie,
-  generateAdminLoginChallengeToken,
-  getAdminLoginChallengeToken,
-  setAdminLoginChallengeCookie,
-  verifyAdminLoginChallengeToken,
-} from "../utils/adminLoginChallenge.js";
-
 // Import the customer email verification service functions
 import {
   issueCustomerEmailVerificationOtp,
@@ -42,6 +27,12 @@ import {
   setPasswordResetChallengeCookie,
   verifyPasswordResetChallengeToken,
 } from "../utils/passwordResetChallenge.js";
+
+import { changeInitialAdminPassword } from "../services/adminPasswordService.js";
+import {
+  AdminPasswordValidationError,
+  parseInitialAdminPasswordInput,
+} from "../utils/adminPasswordValidation.js";
 
 // Utility function to normalize email addresses
 function normalizeEmail(email) {
@@ -137,61 +128,6 @@ function resolvePasswordResetChallenge(request, response) {
         response,
         401,
         "The password-reset request is invalid. Request a new code.",
-      );
-
-      return null;
-    }
-
-    throw error;
-  }
-}
-
-// Function to validate new password input
-function maskEmail(email) {
-  const [localPart, domain] = email.split("@");
-
-  if (!localPart || !domain) {
-    return "your admin email";
-  }
-
-  const visibleCharacters = localPart.slice(0, 2);
-
-  return `${visibleCharacters}***@${domain}`;
-}
-// Function to validate new password input
-function resolveAdminLoginChallenge(request, response) {
-  const challengeToken = getAdminLoginChallengeToken(request);
-
-  if (!challengeToken) {
-    errorResponse(
-      response,
-      401,
-      "Admin login verification has not been started.",
-    );
-
-    return null;
-  }
-
-  try {
-    return verifyAdminLoginChallengeToken(challengeToken);
-  } catch (error) {
-    clearAdminLoginChallengeCookie(response);
-
-    if (error?.name === "TokenExpiredError") {
-      errorResponse(
-        response,
-        401,
-        "The admin login verification has expired. Please enter your password again.",
-      );
-
-      return null;
-    }
-
-    if (error?.name === "JsonWebTokenError") {
-      errorResponse(
-        response,
-        401,
-        "The admin login verification is invalid. Please enter your password again.",
       );
 
       return null;
@@ -423,8 +359,6 @@ export async function loginAdmin(request, response) {
     if (admin.deletedAt !== null || admin.status !== "ACTIVE") {
       clearAuthCookie(response);
 
-      clearAdminLoginChallengeCookie(response);
-
       return errorResponse(
         response,
         403,
@@ -435,8 +369,6 @@ export async function loginAdmin(request, response) {
     if (!admin.emailVerifiedAt) {
       clearAuthCookie(response);
 
-      clearAdminLoginChallengeCookie(response);
-
       return errorResponse(
         response,
         403,
@@ -444,50 +376,34 @@ export async function loginAdmin(request, response) {
       );
     }
 
-    clearAuthCookie(response);
+    const loggedInAdmin = await prisma.user.update({
+      where: {
+        id: admin.id,
+      },
 
-    clearAdminLoginChallengeCookie(response);
-
-    const { otpId, expiresAt } = await issueAdminLoginOtp(admin);
-
-    const challengeToken = generateAdminLoginChallengeToken({
-      userId: admin.id,
-      otpId,
+      data: {
+        lastLoginAt: new Date(),
+      },
     });
 
-    setAdminLoginChallengeCookie(response, challengeToken);
+    const authenticationToken = generateAuthToken(loggedInAdmin, {
+      authenticationMethod: "PASSWORD",
+    });
 
-    return successResponse(
-      response,
-      200,
-      "A verification code was sent to the admin email.",
-      {
-        requiresOtp: true,
-        email: maskEmail(admin.email),
-        expiresAt,
-      },
-    );
+    setAuthCookie(response, authenticationToken);
+
+    return successResponse(response, 200, "Admin logged in successfully.", {
+      user: sanitizeUser(loggedInAdmin),
+    });
   } catch (error) {
-    if (error?.code === "ADMIN_LOGIN_EMAIL_FAILED") {
-      clearAdminLoginChallengeCookie(response);
-
-      return errorResponse(
-        response,
-        503,
-        "The verification email could not be sent. Please try again.",
-      );
-    }
-
     console.error("Admin login error:", error);
 
-    return errorResponse(response, 500, "Unable to begin admin login.");
+    return errorResponse(response, 500, "Unable to log in.");
   }
 }
 
 export function logout(_request, response) {
   clearAuthCookie(response);
-
-  clearAdminLoginChallengeCookie(response);
 
   clearPasswordResetChallengeCookie(response);
 
@@ -506,124 +422,17 @@ export function getCurrentUser(request, response) {
   );
 }
 
-export async function verifyAdminLoginOtp(request, response) {
+export async function changeAdminInitialPassword(request, response, next) {
   try {
-    const challenge = resolveAdminLoginChallenge(request, response);
+    const input = parseInitialAdminPasswordInput(request.body);
 
-    if (!challenge) {
-      return;
-    }
-
-    const { otp } = request.body;
-
-    const verificationResult = await verifyAdminOtpService({
-      userId: challenge.userId,
-
-      otpId: challenge.otpId,
-
-      code: typeof otp === "string" ? otp.trim() : otp,
-    });
-
-    switch (verificationResult.status) {
-      case "INVALID_FORMAT":
-        return errorResponse(
-          response,
-          400,
-          "The verification code must contain six digits.",
-        );
-
-      case "INVALID":
-        return errorResponse(
-          response,
-          401,
-          "The verification code is incorrect.",
-        );
-
-      case "EXPIRED":
-        clearAdminLoginChallengeCookie(response);
-
-        return errorResponse(
-          response,
-          401,
-          "The verification code has expired. Please log in again.",
-        );
-
-      case "USED":
-        clearAdminLoginChallengeCookie(response);
-
-        return errorResponse(
-          response,
-          401,
-          "This verification code is no longer valid.",
-        );
-
-      case "TOO_MANY_ATTEMPTS":
-        clearAdminLoginChallengeCookie(response);
-
-        return errorResponse(
-          response,
-          429,
-          "Too many incorrect verification attempts. Please log in again.",
-        );
-
-      case "ACCOUNT_UNAVAILABLE":
-        clearAuthCookie(response);
-
-        clearAdminLoginChallengeCookie(response);
-
-        return errorResponse(
-          response,
-          403,
-          "This admin account is currently unavailable.",
-        );
-
-      case "VERIFIED":
-        break;
-
-      default:
-        throw new Error("Unknown admin OTP verification result.");
-    }
-
-    const admin = verificationResult.user;
-
-    const authenticationToken = generateAuthToken(admin, {
-      authenticationMethod: "PASSWORD_EMAIL_OTP",
-    });
-
-    setAuthCookie(response, authenticationToken);
-
-    clearAdminLoginChallengeCookie(response);
-
-    return successResponse(
-      response,
-      200,
-      "Admin login verified successfully.",
-      {
-        requiresOtp: false,
-        user: sanitizeUser(admin),
-      },
+    const result = await changeInitialAdminPassword(
+      request.user.id,
+      input.newPassword,
     );
-  } catch (error) {
-    console.error("Admin OTP verification error:", error);
 
-    clearAuthCookie(response);
-
-    return errorResponse(response, 500, "Unable to verify the admin login.");
-  }
-}
-
-export async function resendAdminLoginOtp(request, response) {
-  try {
-    const challenge = resolveAdminLoginChallenge(request, response);
-
-    if (!challenge) {
-      return;
-    }
-
-    const admin = await getEligibleAdminById(challenge.userId);
-
-    if (!admin) {
-      clearAdminLoginChallengeCookie(response);
+    if (result.status === "ACCOUNT_UNAVAILABLE") {
+      clearAuthCookie(response);
 
       return errorResponse(
         response,
@@ -632,43 +441,38 @@ export async function resendAdminLoginOtp(request, response) {
       );
     }
 
-    const { otpId, expiresAt } = await issueAdminLoginOtp(admin);
+    if (result.status === "PASSWORD_CHANGE_NOT_REQUIRED") {
+      return errorResponse(
+        response,
+        409,
+        "The initial password has already been changed.",
+      );
+    }
 
-    const newChallengeToken = generateAdminLoginChallengeToken({
-      userId: admin.id,
-      otpId,
-    });
+    if (result.status === "PASSWORD_REUSED") {
+      return errorResponse(
+        response,
+        409,
+        "The new password must be different from the temporary password.",
+      );
+    }
 
-    setAdminLoginChallengeCookie(response, newChallengeToken);
+    clearAuthCookie(response);
 
     return successResponse(
       response,
       200,
-      "A new verification code was sent to the admin email.",
+      "Password changed successfully. Please sign in again.",
       {
-        requiresOtp: true,
-        email: maskEmail(admin.email),
-        expiresAt,
+        requiresReauthentication: true,
       },
     );
   } catch (error) {
-    if (error?.code === "ADMIN_LOGIN_EMAIL_FAILED") {
-      clearAdminLoginChallengeCookie(response);
-
-      return errorResponse(
-        response,
-        503,
-        "The verification email could not be sent. Please try again.",
-      );
+    if (error instanceof AdminPasswordValidationError) {
+      return errorResponse(response, error.statusCode, error.message);
     }
 
-    console.error("Admin OTP resend error:", error);
-
-    return errorResponse(
-      response,
-      500,
-      "Unable to resend the verification code.",
-    );
+    return next(error);
   }
 }
 

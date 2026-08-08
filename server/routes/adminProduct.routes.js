@@ -17,11 +17,19 @@ import {
 } from "../controllers/adminProduct.controller.js";
 import requireAuthentication from "../middleware/authMiddleware.js";
 import requireRole from "../middleware/roleMiddleware.js";
+import {
+  createProductImageUploadUrl,
+  finalizeProductImageUpload,
+} from "../controllers/adminProductImageUpload.controller.js";
+import requireCompletedAdminPasswordChange from "../middleware/adminPasswordChangeMiddleware.js";
 
 const router = Router();
 
-router.use(requireAuthentication, requireRole("ADMIN"));
-
+router.use(
+  requireAuthentication,
+  requireRole("ADMIN"),
+  requireCompletedAdminPasswordChange,
+);
 router.get("/", getAdminProducts);
 
 router.post("/", createProduct);
@@ -43,6 +51,9 @@ router.patch("/:productId/variants/:variantId/status", changeVariantStatus);
 router.patch("/:productId/variants/:variantId/inventory", updateInventory);
 
 router.patch("/:productId/variants/:variantId/archive", archiveVariant);
+
+router.post("/:productId/images/upload-url", createProductImageUploadUrl);
+router.post("/:productId/images/finalize", finalizeProductImageUpload);
 
 router.post("/:productId/images", createProductImage);
 

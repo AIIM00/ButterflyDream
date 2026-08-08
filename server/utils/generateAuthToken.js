@@ -3,10 +3,7 @@ import authConfig from "../config/authConfig.js";
 
 const allowedRoles = new Set(["CUSTOMER", "ADMIN"]);
 
-const allowedAuthenticationMethods = new Set([
-  "PASSWORD",
-  "PASSWORD_EMAIL_OTP",
-]);
+const allowedAuthenticationMethods = new Set(["PASSWORD"]);
 
 function generateAuthToken(user, { authenticationMethod = "PASSWORD" } = {}) {
   if (!user || typeof user !== "object" || Array.isArray(user)) {
@@ -23,16 +20,6 @@ function generateAuthToken(user, { authenticationMethod = "PASSWORD" } = {}) {
 
   if (!allowedAuthenticationMethods.has(authenticationMethod)) {
     throw new TypeError("The authentication method is invalid.");
-  }
-
-  if (user.role === "CUSTOMER" && authenticationMethod !== "PASSWORD") {
-    throw new Error("Customer sessions must use password authentication.");
-  }
-
-  if (user.role === "ADMIN" && authenticationMethod !== "PASSWORD_EMAIL_OTP") {
-    throw new Error(
-      "Admin sessions require password and email OTP authentication.",
-    );
   }
 
   return jwt.sign(
