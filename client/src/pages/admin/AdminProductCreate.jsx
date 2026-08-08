@@ -1,22 +1,119 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
+
+// MUI Icons
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+
+// Toast
 import { toast } from "react-toastify";
-import ImageEditorDialog from "../../components/admin/products/ImageEditorDialog.jsx";
+
+// Components
 import VariantEditorDialog from "../../components/admin/products/VariantEditorDialog.jsx";
+
+// Services
 import { fetchAdminCategories } from "../../services/adminCategoryApi.js";
 import { createAdminProduct } from "../../services/adminProductApi.js";
+
+// Utils
 import {
   buildProductCreatePayload,
   createAdminProductSlug,
   createLocalId,
   PRODUCT_STATUS_OPTIONS,
 } from "../../utils/adminProductForm.js";
+
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
+
+function VariantColorSwatch({ label, color }) {
+  if (!label) {
+    return null;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="
+          h-5 w-5
+          shrink-0
+          rounded-full
+          border border-black/10
+        "
+        style={{
+          backgroundColor: color || "#E6DFDA",
+        }}
+        aria-hidden="true"
+      />
+
+      <span
+        className="
+          text-sm font-semibold
+          text-[var(--color-deep-espresso)]
+        "
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function VariantOptionBadge({ label, value }) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  return (
+    <div
+      className="
+        rounded-full
+        border
+        border-[var(--color-warm-light-gray)]
+        bg-[var(--color-soft-ivory)]
+        px-3 py-1.5
+      "
+    >
+      <span
+        className="
+          text-[0.65rem]
+          font-semibold
+          uppercase
+          tracking-[0.12em]
+          text-[var(--color-warm-gray)]
+        "
+      >
+        {label}
+      </span>
+
+      <span
+        className="
+          ml-2
+          text-sm
+          font-bold
+          text-[var(--color-deep-espresso)]
+        "
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function formatVariantSize(options) {
+  const size = options?.size;
+
+  if (size === undefined || size === null || size === "") {
+    return null;
+  }
+
+  if (options?.sizeType === "RING") {
+    return `Ring ${size}`;
+  }
+
+  return String(size);
+}
 
 function AdminProductCreate() {
   const navigate = useNavigate();
@@ -34,8 +131,8 @@ function AdminProductCreate() {
   });
 
   const [slugEdited, setSlugEdited] = useState(false);
+
   const [variants, setVariants] = useState([]);
-  const [images, setImages] = useState([]);
 
   const [variantDialog, setVariantDialog] = useState({
     open: false,
@@ -43,13 +140,8 @@ function AdminProductCreate() {
     key: 0,
   });
 
-  const [imageDialog, setImageDialog] = useState({
-    open: false,
-    item: null,
-    key: 0,
-  });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [validationError, setValidationError] = useState("");
 
   useEffect(() => {
@@ -89,7 +181,9 @@ function AdminProductCreate() {
 
     setFormData((currentData) => ({
       ...currentData,
+
       name,
+
       slug: slugEdited ? currentData.slug : createAdminProductSlug(name),
     }));
   }
@@ -109,6 +203,7 @@ function AdminProductCreate() {
           )
         : [
             ...currentVariants,
+
             {
               ...payload,
               localId,
@@ -118,6 +213,7 @@ function AdminProductCreate() {
       if (payload.isDefault) {
         nextVariants = nextVariants.map((variant) => ({
           ...variant,
+
           isDefault: variant.localId === localId,
         }));
       }
@@ -159,62 +255,22 @@ function AdminProductCreate() {
     });
   }
 
-  function saveLocalImage(payload) {
-    setImages((currentImages) => {
-      const localId = imageDialog.item?.localId ?? createLocalId();
-
-      let nextImages = imageDialog.item
-        ? currentImages.map((image) =>
-            image.localId === localId
-              ? {
-                  ...payload,
-                  localId,
-                }
-              : image,
-          )
-        : [
-            ...currentImages,
-            {
-              ...payload,
-              localId,
-            },
-          ];
-
-      if (payload.isPrimary) {
-        nextImages = nextImages.map((image) => ({
-          ...image,
-          isPrimary: image.localId === localId,
-        }));
-      }
-
-      if (
-        nextImages.length > 0 &&
-        !nextImages.some((image) => image.isPrimary)
-      ) {
-        nextImages[0] = {
-          ...nextImages[0],
-          isPrimary: true,
-        };
-      }
-
-      return nextImages;
-    });
-
-    setImageDialog((currentState) => ({
-      ...currentState,
-      open: false,
-      item: null,
-    }));
-  }
-
   async function handleSubmit(event) {
     event.preventDefault();
 
     try {
+      /*
+       * Images are intentionally empty here.
+       *
+       * The product must exist first so that
+       * R2 can store its images under:
+       *
+       * products/{productId}/{imageId}.jpg
+       */
       const payload = buildProductCreatePayload({
         formData,
         variants,
-        images,
+        images: [],
       });
 
       setValidationError("");
@@ -224,6 +280,11 @@ function AdminProductCreate() {
 
       toast.success(response.message);
 
+      /*
+       * After creation, immediately move
+       * the administrator to the manage
+       * page where R2 uploads are available.
+       */
       navigate(`/admin/products/${response.product.id}`, {
         replace: true,
       });
@@ -242,37 +303,94 @@ function AdminProductCreate() {
     <section className="space-y-7">
       <Link
         to="/admin/products"
-        className="inline-flex items-center gap-2 font-semibold text-gray-700"
+        className="
+          inline-flex items-center
+          gap-2 font-semibold
+          text-gray-700
+        "
       >
         <ArrowBackRoundedIcon fontSize="small" />
         Products
       </Link>
 
       <header>
-        <p className="text-sm font-semibold uppercase tracking-widest text-gray-500">
+        <p
+          className="
+            text-sm font-semibold
+            uppercase tracking-widest
+            text-gray-500
+          "
+        >
           Product management
         </p>
 
-        <h2 className="mt-2 text-3xl font-bold">Create product</h2>
+        <h2
+          className="
+            mt-2 text-3xl
+            font-bold
+          "
+        >
+          Create product
+        </h2>
+
+        <p
+          className="
+            mt-3 max-w-2xl
+            text-sm leading-6
+            text-gray-500
+          "
+        >
+          Create the product and its variants first. After creation, you&apos;ll
+          be taken to the product manager where you can upload its photos.
+        </p>
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-7">
         {validationError && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+          <div
+            className="
+              rounded-xl border
+              border-red-200
+              bg-red-50
+              px-4 py-3
+              text-red-700
+            "
+          >
             {validationError}
           </div>
         )}
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        {/* PRODUCT INFORMATION */}
+
+        <section
+          className="
+            rounded-2xl
+            border border-gray-200
+            bg-white p-6
+            shadow-sm
+          "
+        >
           <h3 className="text-xl font-bold">Product information</h3>
 
-          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <div
+            className="
+              mt-6 grid gap-5
+              sm:grid-cols-2
+            "
+          >
             <label className="font-semibold">
               Product name
               <input
                 value={formData.name}
                 onChange={handleNameChange}
-                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal"
+                className="
+                  mt-2 w-full
+                  rounded-xl
+                  border
+                  border-gray-300
+                  px-4 py-3
+                  font-normal
+                "
               />
             </label>
 
@@ -285,10 +403,18 @@ function AdminProductCreate() {
 
                   setFormData((currentData) => ({
                     ...currentData,
+
                     slug: createAdminProductSlug(event.target.value),
                   }));
                 }}
-                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal"
+                className="
+                  mt-2 w-full
+                  rounded-xl
+                  border
+                  border-gray-300
+                  px-4 py-3
+                  font-normal
+                "
               />
             </label>
 
@@ -299,11 +425,20 @@ function AdminProductCreate() {
                 onChange={(event) =>
                   setFormData((currentData) => ({
                     ...currentData,
+
                     categoryId: event.target.value,
                   }))
                 }
                 disabled={isLoadingCategories}
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 font-normal"
+                className="
+                  mt-2 w-full
+                  rounded-xl
+                  border
+                  border-gray-300
+                  bg-white
+                  px-4 py-3
+                  font-normal
+                "
               >
                 <option value="">Select category</option>
 
@@ -322,10 +457,19 @@ function AdminProductCreate() {
                 onChange={(event) =>
                   setFormData((currentData) => ({
                     ...currentData,
+
                     status: event.target.value,
                   }))
                 }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 font-normal"
+                className="
+                  mt-2 w-full
+                  rounded-xl
+                  border
+                  border-gray-300
+                  bg-white
+                  px-4 py-3
+                  font-normal
+                "
               >
                 {PRODUCT_STATUS_OPTIONS.map((status) => (
                   <option key={status} value={status}>
@@ -336,28 +480,48 @@ function AdminProductCreate() {
             </label>
           </div>
 
-          <label className="mt-5 block font-semibold">
+          <label
+            className="
+              mt-5 block
+              font-semibold
+            "
+          >
             Description
             <textarea
               value={formData.description}
               onChange={(event) =>
                 setFormData((currentData) => ({
                   ...currentData,
+
                   description: event.target.value,
                 }))
               }
               rows={5}
-              className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal"
+              className="
+                mt-2 w-full
+                rounded-xl
+                border
+                border-gray-300
+                px-4 py-3
+                font-normal
+              "
             />
           </label>
 
-          <label className="mt-5 flex items-center gap-3 font-semibold">
+          <label
+            className="
+              mt-5 flex
+              items-center gap-3
+              font-semibold
+            "
+          >
             <input
               type="checkbox"
               checked={formData.isFeatured}
               onChange={(event) =>
                 setFormData((currentData) => ({
                   ...currentData,
+
                   isFeatured: event.target.checked,
                 }))
               }
@@ -366,12 +530,64 @@ function AdminProductCreate() {
           </label>
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
+        {/* VARIANTS */}
+
+        <section
+          className="
+    overflow-hidden
+    border
+    border-[var(--color-warm-light-gray)]
+    bg-white
+    shadow-sm
+  "
+        >
+          {/* HEADER */}
+
+          <div
+            className="
+      flex flex-col gap-4
+      border-b
+      border-[var(--color-warm-light-gray)]
+      px-5 py-5
+      sm:flex-row
+      sm:items-center
+      sm:justify-between
+      sm:px-6
+    "
+          >
             <div>
-              <h3 className="text-xl font-bold">Variants</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Add prices, options, and stock.
+              <p
+                className="
+          text-[0.6875rem]
+          font-semibold
+          uppercase
+          tracking-[0.16em]
+          text-[var(--color-deep-bronze)]
+        "
+              >
+                Product options
+              </p>
+
+              <h3
+                className="
+          mt-1
+          font-display
+          text-2xl
+          font-medium
+          text-[var(--color-deep-espresso)]
+        "
+              >
+                Variants
+              </h3>
+
+              <p
+                className="
+          mt-2
+          text-sm
+          text-[var(--color-warm-gray)]
+        "
+              >
+                Create each available combination of metal, stone and size.
               </p>
             </div>
 
@@ -384,150 +600,450 @@ function AdminProductCreate() {
                   key: currentState.key + 1,
                 }))
               }
-              className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 font-semibold text-white"
+              className="
+        inline-flex
+        min-h-11
+        items-center
+        justify-center
+        gap-2
+        rounded-full
+        bg-[var(--color-deep-espresso)]
+        px-5
+        text-sm
+        font-semibold
+        text-white
+        transition-colors
+        hover:bg-[var(--color-deep-bronze)]
+      "
             >
               <AddRoundedIcon />
               Add variant
             </button>
           </div>
 
-          <div className="mt-6 space-y-3">
-            {variants.map((variant) => (
-              <article
-                key={variant.localId}
-                className="flex flex-col gap-4 rounded-xl border border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between"
+          <div className="p-5 sm:p-6">
+            {variants.length === 0 ? (
+              <div
+                className="
+          border
+          border-dashed
+          border-[var(--color-warm-light-gray)]
+          bg-[var(--color-soft-ivory)]
+          px-6 py-12
+          text-center
+        "
               >
-                <div>
-                  <p className="font-bold">
-                    {variant.displayName}
-                    {variant.isDefault && (
-                      <span className="ml-2 text-xs text-emerald-700">
-                        Default
-                      </span>
-                    )}
-                  </p>
+                <p
+                  className="
+            font-semibold
+            text-[var(--color-deep-espresso)]
+          "
+                >
+                  No variants yet
+                </p>
 
-                  <p className="mt-1 text-sm text-gray-500">
-                    {variant.sku} · ${variant.price} · Stock{" "}
-                    {variant.stockQuantity}
-                  </p>
-                </div>
+                <p
+                  className="
+            mx-auto mt-2
+            max-w-md
+            text-sm leading-6
+            text-[var(--color-warm-gray)]
+          "
+                >
+                  Add at least one option with its color, size, price and stock.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {variants.map((variant) => {
+                  const options =
+                    variant.options && typeof variant.options === "object"
+                      ? variant.options
+                      : {};
 
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setVariantDialog((currentState) => ({
-                        open: true,
-                        item: variant,
-                        key: currentState.key + 1,
-                      }))
-                    }
-                    className="rounded-lg border border-gray-300 p-2"
-                  >
-                    <EditRoundedIcon />
-                  </button>
+                  const metalColor =
+                    options.metalColor ?? options.color ?? null;
 
-                  <button
-                    type="button"
-                    onClick={() => removeVariant(variant.localId)}
-                    className="rounded-lg border border-red-200 p-2 text-red-700"
-                  >
-                    <DeleteOutlineRoundedIcon />
-                  </button>
-                </div>
-              </article>
-            ))}
+                  const metalColorHex =
+                    options.metalColorHex ?? options.colorHex ?? null;
 
-            {variants.length === 0 && (
-              <p className="rounded-xl bg-gray-50 px-4 py-8 text-center text-gray-500">
-                Add at least one variant.
-              </p>
+                  const stoneColor = options.stoneColor ?? null;
+
+                  const stoneColorHex = options.stoneColorHex ?? null;
+
+                  const size = formatVariantSize(options);
+
+                  const stock = Number(variant.stockQuantity ?? 0);
+
+                  const lowStockThreshold = Number(
+                    variant.lowStockThreshold ?? 0,
+                  );
+
+                  const isOutOfStock = stock <= 0;
+
+                  const isLowStock = stock > 0 && stock <= lowStockThreshold;
+
+                  return (
+                    <article
+                      key={variant.localId}
+                      className="
+                  overflow-hidden
+                  border
+                  border-[var(--color-warm-light-gray)]
+                  bg-white
+                "
+                    >
+                      {/* MAIN INFO */}
+
+                      <div
+                        className="
+                    flex flex-col
+                    gap-5
+                    p-5
+                    lg:flex-row
+                    lg:items-start
+                    lg:justify-between
+                  "
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div
+                            className="
+                        flex flex-wrap
+                        items-center
+                        gap-2
+                      "
+                          >
+                            <h4
+                              className="
+                          text-lg
+                          font-bold
+                          text-[var(--color-deep-espresso)]
+                        "
+                            >
+                              {variant.displayName || "Product variant"}
+                            </h4>
+
+                            {variant.isDefault && (
+                              <span
+                                className="
+                            rounded-full
+                            bg-[var(--color-deep-espresso)]
+                            px-3 py-1
+                            text-[0.65rem]
+                            font-semibold
+                            uppercase
+                            tracking-[0.1em]
+                            text-white
+                          "
+                              >
+                                Default
+                              </span>
+                            )}
+
+                            {variant.isActive === false && (
+                              <span
+                                className="
+                            rounded-full
+                            bg-[var(--color-muted-red)]/10
+                            px-3 py-1
+                            text-[0.65rem]
+                            font-semibold
+                            uppercase
+                            tracking-[0.1em]
+                            text-[var(--color-muted-red)]
+                          "
+                              >
+                                Inactive
+                              </span>
+                            )}
+                          </div>
+
+                          <p
+                            className="
+                        mt-1
+                        text-xs
+                        font-medium
+                        uppercase
+                        tracking-[0.08em]
+                        text-[var(--color-warm-gray)]
+                      "
+                          >
+                            SKU: {variant.sku}
+                          </p>
+
+                          {/* OPTIONS */}
+
+                          <div
+                            className="
+                        mt-5
+                        flex flex-wrap
+                        items-center
+                        gap-x-6 gap-y-3
+                      "
+                          >
+                            <VariantColorSwatch
+                              label={metalColor}
+                              color={metalColorHex}
+                            />
+
+                            <VariantColorSwatch
+                              label={stoneColor ? `${stoneColor} stone` : null}
+                              color={stoneColorHex}
+                            />
+
+                            <VariantOptionBadge label="Size" value={size} />
+
+                            {!metalColor && !stoneColor && !size && (
+                              <span
+                                className="
+                              text-sm
+                              text-[var(--color-warm-gray)]
+                            "
+                              >
+                                Standard product option
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* PRICE */}
+
+                        <div
+                          className="
+                      shrink-0
+                      lg:text-right
+                    "
+                        >
+                          <p
+                            className="
+                        text-xs
+                        font-semibold
+                        uppercase
+                        tracking-[0.12em]
+                        text-[var(--color-warm-gray)]
+                      "
+                          >
+                            Price
+                          </p>
+
+                          <p
+                            className="
+                        mt-1
+                        text-2xl
+                        font-bold
+                        text-[var(--color-deep-espresso)]
+                      "
+                          >
+                            ${variant.price}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* INVENTORY + ACTIONS */}
+
+                      <div
+                        className="
+                    flex flex-col
+                    gap-4
+                    border-t
+                    border-[var(--color-warm-light-gray)]
+                    bg-[var(--color-warm-cream)]
+                    px-5 py-4
+                    sm:flex-row
+                    sm:items-center
+                    sm:justify-between
+                  "
+                      >
+                        <div
+                          className="
+                      flex flex-wrap
+                      items-center
+                      gap-3
+                    "
+                        >
+                          <VariantOptionBadge label="Stock" value={stock} />
+
+                          <VariantOptionBadge
+                            label="Low stock"
+                            value={lowStockThreshold}
+                          />
+
+                          {isOutOfStock ? (
+                            <span
+                              className="
+                          rounded-full
+                          bg-[var(--color-muted-red)]/10
+                          px-3 py-1.5
+                          text-xs
+                          font-bold
+                          text-[var(--color-muted-red)]
+                        "
+                            >
+                              Out of stock
+                            </span>
+                          ) : isLowStock ? (
+                            <span
+                              className="
+                          rounded-full
+                          bg-[var(--color-pale-champagne)]
+                          px-3 py-1.5
+                          text-xs
+                          font-bold
+                          text-[var(--color-deep-bronze)]
+                        "
+                            >
+                              Low stock
+                            </span>
+                          ) : (
+                            <span
+                              className="
+                          rounded-full
+                          bg-[var(--color-deep-sage)]/10
+                          px-3 py-1.5
+                          text-xs
+                          font-bold
+                          text-[var(--color-deep-sage)]
+                        "
+                            >
+                              In stock
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2">
+                          {/* EDIT */}
+
+                          <button
+                            type="button"
+                            aria-label={`Edit ${variant.displayName}`}
+                            onClick={() =>
+                              setVariantDialog((currentState) => ({
+                                open: true,
+                                item: variant,
+
+                                key: currentState.key + 1,
+                              }))
+                            }
+                            className="
+                        flex h-10 w-10
+                        items-center
+                        justify-center
+                        rounded-full
+                        border
+                        border-[var(--color-warm-light-gray)]
+                        bg-white
+                        text-[var(--color-deep-espresso)]
+                        transition-colors
+                        hover:border-[var(--color-warm-champagne)]
+                      "
+                          >
+                            <EditRoundedIcon fontSize="small" />
+                          </button>
+
+                          {/* DELETE */}
+
+                          <button
+                            type="button"
+                            aria-label={`Remove ${variant.displayName}`}
+                            onClick={() => removeVariant(variant.localId)}
+                            className="
+                        flex h-10 w-10
+                        items-center
+                        justify-center
+                        rounded-full
+                        border
+                        border-[var(--color-muted-red)]/25
+                        bg-white
+                        text-[var(--color-muted-red)]
+                        transition-colors
+                        hover:bg-[var(--color-muted-red)]/5
+                      "
+                          >
+                            <DeleteOutlineRoundedIcon fontSize="small" />
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             )}
           </div>
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-bold">Images</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Add public product image URLs.
-              </p>
+        {/* PRODUCT PHOTOS INFORMATION */}
+
+        <section
+          className="
+            border
+            border-gray-200
+            bg-white
+            p-6
+            shadow-sm
+          "
+        >
+          <div
+            className="
+              flex flex-col gap-4
+              sm:flex-row
+              sm:items-center
+            "
+          >
+            <div
+              className="
+                flex h-12 w-12
+                shrink-0
+                items-center
+                justify-center
+                rounded-full
+                bg-[var(--color-pale-champagne)]
+                text-[var(--color-deep-bronze)]
+              "
+            >
+              <ImageOutlinedIcon />
             </div>
 
-            <button
-              type="button"
-              onClick={() =>
-                setImageDialog((currentState) => ({
-                  open: true,
-                  item: null,
-                  key: currentState.key + 1,
-                }))
-              }
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold"
-            >
-              <AddPhotoAlternateRoundedIcon />
-              Add image
-            </button>
-          </div>
+            <div>
+              <h3 className="text-lg font-bold">Product photos</h3>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {images.map((image) => (
-              <article
-                key={image.localId}
-                className="overflow-hidden rounded-xl border border-gray-200"
+              <p
+                className="
+                  mt-1
+                  text-sm leading-6
+                  text-gray-500
+                "
               >
-                <img
-                  src={image.imageUrl}
-                  alt={image.altText || formData.name}
-                  className="aspect-square w-full object-cover"
-                />
-
-                <div className="flex items-center justify-between p-3">
-                  <span className="text-xs font-bold">
-                    {image.isPrimary ? "Primary" : `Position ${image.position}`}
-                  </span>
-
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setImageDialog((currentState) => ({
-                          open: true,
-                          item: image,
-                          key: currentState.key + 1,
-                        }))
-                      }
-                    >
-                      <EditRoundedIcon fontSize="small" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setImages((currentImages) =>
-                          currentImages.filter(
-                            (currentImage) =>
-                              currentImage.localId !== image.localId,
-                          ),
-                        )
-                      }
-                      className="text-red-700"
-                    >
-                      <DeleteOutlineRoundedIcon fontSize="small" />
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
+                Photos are uploaded after the product is created. You&apos;ll be
+                redirected to the product manager where you can upload up to 8
+                images directly to secure cloud storage.
+              </p>
+            </div>
           </div>
         </section>
 
-        <div className="flex justify-end gap-3">
+        {/* ACTIONS */}
+
+        <div
+          className="
+            flex flex-col-reverse
+            gap-3
+            sm:flex-row
+            sm:justify-end
+          "
+        >
           <Link
             to="/admin/products"
-            className="rounded-xl border border-gray-300 px-6 py-3 font-semibold"
+            className="
+              inline-flex
+              min-h-12
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-gray-300
+              px-6
+              font-semibold
+            "
           >
             Cancel
           </Link>
@@ -535,7 +1051,19 @@ function AdminProductCreate() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-xl bg-gray-950 px-6 py-3 font-semibold text-white disabled:opacity-50"
+            className="
+              inline-flex
+              min-h-12
+              items-center
+              justify-center
+              rounded-full
+              bg-gray-950
+              px-6
+              font-semibold
+              text-white
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
           >
             {isSubmitting ? "Creating..." : "Create product"}
           </button>
@@ -556,25 +1084,6 @@ function AdminProductCreate() {
             }))
           }
           onSubmit={saveLocalVariant}
-        />
-      )}
-
-      {imageDialog.open && (
-        <ImageEditorDialog
-          key={imageDialog.key}
-          open
-          image={imageDialog.item}
-          variants={[]}
-          allowVariantAssociation={false}
-          isSubmitting={false}
-          onClose={() =>
-            setImageDialog((currentState) => ({
-              ...currentState,
-              open: false,
-              item: null,
-            }))
-          }
-          onSubmit={saveLocalImage}
         />
       )}
     </section>

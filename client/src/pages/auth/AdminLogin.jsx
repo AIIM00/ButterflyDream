@@ -9,7 +9,7 @@ import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
 function AdminLogin() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { user, isAuthenticated, authLoading, clearAuthenticatedUser } =
+  const { user, isAuthenticated, authLoading, setAuthenticatedUser } =
     useAppContext();
 
   const navigate = useNavigate();
@@ -26,38 +26,43 @@ function AdminLogin() {
   }
 
   if (isAuthenticated && user.role === "ADMIN") {
-    return <Navigate to="/admin/dashboard" replace />;
+    return (
+      <Navigate
+        to={
+          user.mustChangePassword
+            ? "/admin/change-password"
+            : "/admin/dashboard"
+        }
+        replace
+      />
+    );
   }
-
   async function handleAdminLogin(credentials) {
     setIsSubmitting(true);
 
     try {
       const response = await loginAdmin(credentials);
 
-      if (response.requiresOtp !== true) {
-        throw new Error("The server did not begin admin verification.");
+      if (response.user?.role !== "ADMIN") {
+        throw new Error(
+          "The server did not return a valid administrator session.",
+        );
       }
 
-      /*
-       * The backend clears any existing
-       * customer authentication cookie when
-       * valid admin credentials are accepted.
-       */
-      clearAuthenticatedUser();
+      setAuthenticatedUser(response.user);
 
-      toast.success("A verification code was sent to the admin email.");
+      toast.success("Admin signed in successfully.");
 
-      navigate("/admin/verify-otp", {
-        replace: true,
-
-        state: {
-          email: response.email,
-          expiresAt: response.expiresAt,
+      navigate(
+        response.user.mustChangePassword
+          ? "/admin/change-password"
+          : "/admin/dashboard",
+        {
+          replace: true,
         },
-      });
+      );
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Unable to begin admin login."));
+      toast.error(getApiErrorMessage(error, "Unable to sign in."));
     } finally {
       setIsSubmitting(false);
     }
@@ -74,18 +79,13 @@ function AdminLogin() {
       </h1>
 
       <p className="mt-3 leading-7 text-gray-600">
-        Enter the administrator credentials. A verification code will then be
-        sent to the admin email.
+        Enter the administrator email and password to continue.
       </p>
-
-      <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-        Admin access requires the correct password and a one-time email code.
-      </div>
 
       <LoginForm
         onSubmit={handleAdminLogin}
         isSubmitting={isSubmitting}
-        submitLabel="Continue securely"
+        submitLabel="Sign in"
         emailAutoFocus
       />
     </section>

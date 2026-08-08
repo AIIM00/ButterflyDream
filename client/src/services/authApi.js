@@ -17,6 +17,17 @@ export async function loginAdmin(credentials) {
 
   return response.data;
 }
+export async function changeAdminInitialPassword({
+  newPassword,
+  confirmPassword,
+}) {
+  const response = await apiClient.post("/auth/admin/change-initial-password", {
+    newPassword,
+    confirmPassword,
+  });
+
+  return response.data;
+}
 
 export async function verifyCustomerEmail(otp) {
   const response = await apiClient.post("/auth/email-verification/verify", {
@@ -28,20 +39,6 @@ export async function verifyCustomerEmail(otp) {
 
 export async function resendCustomerEmailVerification() {
   const response = await apiClient.post("/auth/email-verification/resend");
-
-  return response.data;
-}
-
-export async function verifyAdminLoginOtp(otp) {
-  const response = await apiClient.post("/auth/admin/verify-login-otp", {
-    otp,
-  });
-
-  return response.data;
-}
-
-export async function resendAdminLoginOtp() {
-  const response = await apiClient.post("/auth/admin/resend-login-otp");
 
   return response.data;
 }

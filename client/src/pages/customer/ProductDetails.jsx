@@ -61,13 +61,31 @@ function ProductDetailsContent({ product }) {
   function handleVariantSelect(variantId) {
     setSelectedVariantId(variantId);
 
-    const variantImage = product.images.find(
-      (image) => image.variantId === variantId,
-    );
+    const variantImages = product.images
+      .filter((image) => image.variantId === variantId)
+      .sort(
+        (first, second) =>
+          Number(first.position ?? 0) - Number(second.position ?? 0),
+      );
 
-    if (variantImage) {
-      setSelectedImageId(variantImage.id);
+    if (variantImages.length > 0) {
+      setSelectedImageId(variantImages[0].id);
+
+      return;
     }
+
+    /*
+     * If the selected variant has no
+     * dedicated image, fall back to the
+     * primary/general product image.
+     */
+    const fallbackImage =
+      product.images.find((image) => image.isPrimary && !image.variantId) ??
+      product.images.find((image) => !image.variantId) ??
+      product.images.find((image) => image.isPrimary) ??
+      product.images[0];
+
+    setSelectedImageId(fallbackImage?.id ?? "");
   }
 
   return (
@@ -96,6 +114,7 @@ function ProductDetailsContent({ product }) {
           productName={product.name}
           images={product.images}
           selectedImageId={selectedImageId}
+          selectedVariantId={selectedVariantId}
           onImageSelect={setSelectedImageId}
         />
 

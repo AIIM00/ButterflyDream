@@ -12,7 +12,7 @@ import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import ShoppingBagRoundedIcon from "@mui/icons-material/ShoppingBagRounded";
 import WarehouseRoundedIcon from "@mui/icons-material/WarehouseRounded";
-
+import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
 const adminNavigation = [
   {
     label: "Dashboard",
@@ -33,6 +33,11 @@ const adminNavigation = [
     label: "Orders",
     path: "/admin/orders",
     icon: ReceiptLongRoundedIcon,
+  },
+  {
+    label: "In-Store Sales",
+    path: "/admin/in-store-sales",
+    icon: StorefrontRoundedIcon,
   },
   {
     label: "Inventory",

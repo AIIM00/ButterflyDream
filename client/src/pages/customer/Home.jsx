@@ -1,157 +1,262 @@
+import { useRef } from "react";
 import { Link } from "react-router-dom";
-import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
-import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
-import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 
-import useAppContext from "../../context/app/useAppContext";
-const benefits = [
-  {
-    title: "Delivery across Lebanon",
-    description:
-      "Orders are prepared for delivery through our courier partner.",
-    icon: LocalShippingOutlinedIcon,
-  },
-  {
-    title: "Cash on delivery",
-    description: "Pay in USD when your order reaches you.",
-    icon: PaymentsOutlinedIcon,
-  },
-  {
-    title: "Carefully selected",
-    description: "Accessories selected with attention to style and quality.",
-    icon: VerifiedOutlinedIcon,
-  },
-];
+import HomeCategories from "../../components/customer/home/HomeCategories.jsx";
+import HomeFeaturedCollection from "../../components/customer/home/HomeFeaturedCollection.jsx";
+import { ButterflyTransformationHero } from "../../components/customer/home/ButterflyTransformationHero/ButterflyTransformationHero.jsx";
+
+function SectionPlaceholder({
+  id,
+  eyebrow,
+  title,
+  description,
+  background = "ivory",
+  align = "left",
+}) {
+  const toneClasses = {
+    ivory: {
+      wash: "from-brand-ivory/88 via-brand-ivory/48 to-transparent",
+      panel: "border-white/55 bg-brand-ivory/72",
+      window: "border-brand-border/60 bg-white/10",
+      eyebrow: "eyebrow-text",
+      title: "text-brand-espresso",
+      description: "text-brand-muted",
+      label: "text-brand-bronze",
+    },
+
+    white: {
+      wash: "from-white/90 via-white/52 to-transparent",
+      panel: "border-white/65 bg-white/72",
+      window: "border-white/65 bg-white/10",
+      eyebrow: "eyebrow-text",
+      title: "text-brand-espresso",
+      description: "text-brand-muted",
+      label: "text-brand-bronze",
+    },
+
+    cream: {
+      wash: "from-brand-cream/90 via-brand-cream/50 to-transparent",
+      panel: "border-white/55 bg-brand-cream/72",
+      window: "border-brand-border/55 bg-brand-cream/10",
+      eyebrow: "eyebrow-text",
+      title: "text-brand-espresso",
+      description: "text-brand-muted",
+      label: "text-brand-bronze",
+    },
+
+    champagne: {
+      wash: "from-brand-pale-champagne/90 via-brand-pale-champagne/48 to-transparent",
+      panel: "border-white/55 bg-brand-pale-champagne/72",
+      window: "border-brand-champagne/45 bg-white/10",
+      eyebrow: "eyebrow-text",
+      title: "text-brand-espresso",
+      description: "text-brand-muted",
+      label: "text-brand-bronze",
+    },
+
+    forest: {
+      wash: "from-brand-forest/92 via-brand-forest/58 to-transparent",
+      panel: "border-white/20 bg-brand-forest/78",
+      window: "border-white/25 bg-white/5",
+      eyebrow:
+        "text-xs font-bold uppercase tracking-[0.2em] text-brand-champagne",
+      title: "text-white",
+      description: "text-white/72",
+      label: "text-brand-champagne",
+    },
+  };
+
+  const tone = toneClasses[background] ?? toneClasses.ivory;
+  const gradientDirection =
+    align === "right" ? "bg-gradient-to-l" : "bg-gradient-to-r";
+
+  return (
+    <section
+      id={id}
+      className="relative isolate flex min-h-[78svh] items-center overflow-hidden section-spacing"
+      aria-labelledby={`${id}-title`}
+      data-home-section={id}
+    >
+      {/* Translucent section wash */}
+      <div
+        className={`pointer-events-none absolute inset-0 -z-20 ${gradientDirection} ${tone.wash}`}
+        aria-hidden="true"
+      />
+
+      {/* Soft transition from the previous section */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-24 bg-gradient-to-b from-brand-ivory/65 to-transparent"
+        aria-hidden="true"
+      />
+
+      <div className="page-container w-full">
+        <div
+          className={`grid gap-8 lg:grid-cols-12 lg:items-center ${
+            align === "right" ? "lg:[&>*:first-child]:order-2" : ""
+          }`}
+        >
+          {/* Readable text surface */}
+          <div className="lg:col-span-5">
+            <div
+              className={`rounded-[1.75rem] border p-6 backdrop-blur-md sm:p-8 lg:p-10 ${tone.panel}`}
+            >
+              <p className={tone.eyebrow}>{eyebrow}</p>
+
+              <h2
+                id={`${id}-title`}
+                className={`section-heading mt-4 ${tone.title}`}
+              >
+                {title}
+              </h2>
+
+              <p
+                className={`mt-5 max-w-xl text-base leading-7 sm:text-lg ${tone.description}`}
+              >
+                {description}
+              </p>
+            </div>
+          </div>
+
+          {/* Transparent animation window */}
+          <div className="lg:col-span-7">
+            <div
+              className={`relative flex min-h-[320px] items-end overflow-hidden rounded-[1.75rem] border p-6 backdrop-blur-[1px] sm:min-h-[440px] sm:p-8 ${tone.window}`}
+              data-animation-window
+            >
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/12 via-transparent to-white/5"
+                aria-hidden="true"
+              />
+
+              <p
+                className={`relative z-10 max-w-xs text-xs font-bold uppercase tracking-[0.2em] ${tone.label}`}
+              >
+                The transformation continues
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HomeIntro() {
+  return (
+    <section
+      className="relative flex min-h-[100svh] items-end overflow-hidden"
+      aria-labelledby="home-intro-title"
+      data-home-section="intro"
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-brand-ivory/5 via-transparent to-brand-ivory/80" />
+
+      <div className="page-container relative z-10 w-full pb-14 pt-32 sm:pb-20 lg:pb-24">
+        <div className="max-w-xl">
+          <p className="eyebrow-text">Butterfly Dream</p>
+
+          <h1
+            id="home-intro-title"
+            className="mt-4 font-display text-5xl font-medium leading-[0.95] tracking-[-0.045em] text-brand-espresso sm:text-6xl lg:text-7xl"
+          >
+            Every dream begins with transformation.
+          </h1>
+
+          <p className="mt-6 max-w-lg text-base leading-7 text-brand-muted sm:text-lg">
+            Follow the journey from chrysalis to butterfly, and from butterfly
+            to a piece created to carry your story.
+          </p>
+
+          <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+            <Link
+              to="/products"
+              className="button-base button-primary w-fit rounded-full"
+            >
+              Shop the collection
+            </Link>
+
+            <a
+              href="#home-categories"
+              className="button-base button-outline w-fit rounded-full"
+            >
+              Explore Butterfly Dream
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function Home() {
-  const { isAuthenticated } = useAppContext();
+  const pageRef = useRef(null);
+
   return (
-    <>
-      <section className="overflow-hidden bg-gray-50">
-        <div className="mx-auto grid min-h-[650px] max-w-7xl items-center gap-12 px-5 py-16 lg:grid-cols-2 lg:px-8 lg:py-24">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-gray-500">
-              Butterfly Dream
-            </p>
+    <main
+      ref={pageRef}
+      className="relative isolate bg-transparent text-brand-espresso"
+      data-butterfly-homepage
+    >
+      <ButterflyTransformationHero pageRef={pageRef} />
 
-            <h1 className="mt-6 max-w-2xl text-5xl font-bold leading-tight tracking-tight text-gray-950 sm:text-6xl">
-              Accessories that express your unique style.
-            </h1>
+      <div className="relative z-10">
+        {/* 1. Opening animation scene */}
+        <HomeIntro />
 
-            <p className="mt-6 max-w-xl text-lg leading-8 text-gray-600">
-              Discover carefully selected accessories created to add a special
-              touch to every outfit and occasion.
-            </p>
+        {/* 2. Categories */}
+        <HomeCategories />
 
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/products"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gray-950 px-7 py-3.5 font-semibold text-white transition hover:bg-gray-800"
-              >
-                Shop collection
-                <ArrowForwardRoundedIcon fontSize="small" />
-              </Link>
-              {!isAuthenticated && (
-                <Link
-                  to="/register"
-                  className="inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-7 py-3.5 font-semibold text-gray-800 transition hover:border-gray-950"
-                >
-                  Create account
-                </Link>
-              )}
-            </div>
-          </div>
+        {/* 3. Featured collection */}
+        <HomeFeaturedCollection />
 
-          <div className="relative">
-            <div className="aspect-[4/5] overflow-hidden rounded-[2.5rem] bg-gray-200">
-              <div className="flex h-full items-center justify-center px-10 text-center">
-                <div>
-                  <span className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white text-5xl shadow-sm">
-                    🦋
-                  </span>
+        {/* 4. New arrivals */}
+        <SectionPlaceholder
+          id="home-new-arrivals"
+          eyebrow="Just arrived"
+          title="New expressions of elegance"
+          description="A clean product section highlighting the latest additions to the Butterfly Dream collection."
+          background="white"
+          align="right"
+        />
 
-                  <p className="mt-6 text-lg font-semibold text-gray-700">
-                    Main business photography will be added here.
-                  </p>
-                </div>
-              </div>
-            </div>
+        {/* 5. Customized accessories */}
+        <SectionPlaceholder
+          id="home-customized"
+          eyebrow="Made personal"
+          title="Accessories shaped around your story"
+          description="A premium introduction to customized jewelry and accessories designed for meaningful gifts and personal moments."
+          background="champagne"
+        />
 
-            <div className="absolute -bottom-5 -left-3 rounded-2xl bg-white px-5 py-4 shadow-xl sm:-left-8">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                Designed for
-              </p>
+        {/* 6. Promotional editorial banner */}
+        <SectionPlaceholder
+          id="home-editorial"
+          eyebrow="The seasonal edit"
+          title="A cinematic editorial moment"
+          description="A full-width campaign banner for seasonal collections, special releases, or limited Butterfly Dream stories."
+          background="cream"
+          align="right"
+        />
 
-              <p className="mt-1 text-lg font-bold text-gray-950">
-                Every unique style
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* 7. Trust and service benefits */}
+        <SectionPlaceholder
+          id="home-benefits"
+          eyebrow="The Butterfly Dream experience"
+          title="Thoughtful service at every step"
+          description="Delivery, payment, customer care, quality, and shopping reassurance presented without a generic dashboard appearance."
+          background="white"
+        />
 
-      <section className="border-y border-gray-200 bg-white">
-        <div className="mx-auto grid max-w-7xl divide-y divide-gray-200 px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0 lg:px-8">
-          {benefits.map(({ title, description, icon: Icon }) => (
-            <article key={title} className="flex gap-4 px-2 py-8 sm:px-6">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-950">
-                <Icon />
-              </span>
-
-              <div>
-                <h2 className="font-bold text-gray-950">{title}</h2>
-
-                <p className="mt-1 text-sm leading-6 text-gray-600">
-                  {description}
-                </p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
-        <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-gray-500">
-              Featured collection
-            </p>
-
-            <h2 className="mt-3 text-4xl font-bold tracking-tight text-gray-950">
-              Find your next favorite.
-            </h2>
-          </div>
-
-          <Link
-            to="/products"
-            className="inline-flex items-center gap-2 font-semibold text-gray-950"
-          >
-            View all products
-            <ArrowForwardRoundedIcon fontSize="small" />
-          </Link>
-        </div>
-
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({
-            length: 4,
-          }).map((_, index) => (
-            <article
-              key={index}
-              className="overflow-hidden rounded-3xl border border-gray-200 bg-white"
-            >
-              <div className="aspect-square bg-gray-100" />
-
-              <div className="p-5">
-                <div className="h-4 w-24 rounded bg-gray-100" />
-                <div className="mt-3 h-5 w-40 rounded bg-gray-200" />
-                <div className="mt-4 h-5 w-20 rounded bg-gray-100" />
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    </>
+        {/* 8. Newsletter */}
+        <SectionPlaceholder
+          id="home-newsletter"
+          eyebrow="Enter the dream"
+          title="Stories, new pieces, and private releases"
+          description="A refined newsletter invitation that closes the homepage before the customer footer."
+          background="forest"
+          align="right"
+        />
+      </div>
+    </main>
   );
 }
 

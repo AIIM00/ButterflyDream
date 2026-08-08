@@ -7,21 +7,25 @@ import {
   DialogTitle,
   Switch,
 } from "@mui/material";
-import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
+
+//MUI Icons
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArchiveRoundedIcon from "@mui/icons-material/ArchiveRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
+//React Toastify
 import { toast } from "react-toastify";
+//Components
 import ImageEditorDialog from "../../components/admin/products/ImageEditorDialog.jsx";
 import ProductStatusBadge from "../../components/admin/products/ProductStatusBadge.jsx";
 import VariantEditorDialog from "../../components/admin/products/VariantEditorDialog.jsx";
+import ProductImageUploader from "../../components/admin/products/ProductImageUploader.jsx";
+
+//Services
 import { fetchAdminCategories } from "../../services/adminCategoryApi.js";
 import {
   archiveAdminProduct,
   archiveAdminVariant,
-  createAdminProductImage,
   createAdminVariant,
   deleteAdminProductImage,
   fetchAdminProduct,
@@ -32,6 +36,8 @@ import {
   updateAdminVariantInventory,
   updateAdminVariantStatus,
 } from "../../services/adminProductApi.js";
+
+//Utils
 import {
   createAdminProductSlug,
   PRODUCT_STATUS_OPTIONS,
@@ -155,6 +161,90 @@ function ProductBasicsForm({ product, categories, isSaving, onSave }) {
       </div>
     </form>
   );
+}
+
+function VariantColorSwatch({ label, color }) {
+  if (!label) {
+    return null;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="
+          h-5 w-5
+          shrink-0
+          rounded-full
+          border border-black/10
+        "
+        style={{
+          backgroundColor: color || "#E6DFDA",
+        }}
+        aria-hidden="true"
+      />
+
+      <span className="text-sm font-semibold text-gray-800">{label}</span>
+    </div>
+  );
+}
+
+function VariantOptionBadge({ label, value }) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  return (
+    <div
+      className="
+        rounded-full
+        border
+        border-[var(--color-warm-light-gray)]
+        bg-[var(--color-soft-ivory)]
+        px-3 py-1.5
+      "
+    >
+      <span
+        className="
+          text-[0.65rem]
+          font-semibold
+          uppercase
+          tracking-[0.12em]
+          text-[var(--color-warm-gray)]
+        "
+      >
+        {label}
+      </span>
+
+      <span
+        className="
+          ml-2
+          text-sm
+          font-bold
+          text-[var(--color-deep-espresso)]
+        "
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function formatVariantSize(options) {
+  const size = options?.size;
+
+  if (size === undefined || size === null || size === "") {
+    return null;
+  }
+
+  if (options?.sizeType === "RING") {
+    return `Ring ${size}`;
+  }
+
+  if (options?.sizeType === "LENGTH") {
+    return String(size);
+  }
+
+  return String(size);
 }
 
 function AdminProductManage() {
@@ -317,24 +407,31 @@ function AdminProductManage() {
   }
 
   async function handleImageSubmit(payload) {
+    if (!imageDialog.item) {
+      return;
+    }
+
     const requestPayload = {
       ...payload,
     };
 
-    if (imageDialog.item?.isPrimary || payload.isPrimary === false) {
+    /*
+     * The current primary image cannot simply
+     * unset itself. Another image must first
+     * become primary.
+     */
+    if (imageDialog.item.isPrimary || payload.isPrimary === false) {
       delete requestPayload.isPrimary;
     }
 
     const response = await runMutation(
       () =>
-        imageDialog.item
-          ? updateAdminProductImage(
-              product.id,
-              imageDialog.item.id,
-              requestPayload,
-            )
-          : createAdminProductImage(product.id, requestPayload),
-      imageDialog.item ? "Unable to update image." : "Unable to create image.",
+        updateAdminProductImage(
+          product.id,
+          imageDialog.item.id,
+          requestPayload,
+        ),
+      "Unable to update image.",
     );
 
     if (response) {
@@ -344,6 +441,51 @@ function AdminProductManage() {
         item: null,
       }));
     }
+  }
+  function handleUploadedImage(image) {
+    setProduct((currentProduct) => {
+      if (!currentProduct) {
+        return currentProduct;
+      }
+
+      const currentImages = Array.isArray(currentProduct.images)
+        ? currentProduct.images
+        : [];
+
+      /*
+       * Protect against accidentally adding the
+       * same finalized image twice.
+       */
+      if (currentImages.some((currentImage) => currentImage.id === image.id)) {
+        return currentProduct;
+      }
+
+      let nextImages = [...currentImages, image];
+
+      /*
+       * If the backend marks the new image as
+       * primary, reflect that immediately in UI.
+       */
+      if (image.isPrimary) {
+        nextImages = nextImages.map((currentImage) => ({
+          ...currentImage,
+          isPrimary: currentImage.id === image.id,
+        }));
+      }
+
+      nextImages.sort((first, second) => {
+        if (first.isPrimary !== second.isPrimary) {
+          return first.isPrimary ? -1 : 1;
+        }
+
+        return Number(first.position ?? 0) - Number(second.position ?? 0);
+      });
+
+      return {
+        ...currentProduct,
+        images: nextImages,
+      };
+    });
   }
 
   return (
@@ -433,9 +575,62 @@ function AdminProductManage() {
         />
       )}
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold">Variants</h3>
+      <section
+        className="
+    overflow-hidden
+    border
+    border-[var(--color-warm-light-gray)]
+    bg-white
+    shadow-sm
+  "
+      >
+        <div
+          className="
+      flex flex-col gap-4
+      border-b
+      border-[var(--color-warm-light-gray)]
+      px-5 py-5
+      sm:flex-row
+      sm:items-center
+      sm:justify-between
+      sm:px-6
+    "
+        >
+          <div>
+            <p
+              className="
+          text-[0.6875rem]
+          font-semibold
+          uppercase
+          tracking-[0.16em]
+          text-[var(--color-deep-bronze)]
+        "
+            >
+              Product options
+            </p>
+
+            <h3
+              className="
+          mt-1
+          font-display
+          text-2xl
+          font-medium
+          text-[var(--color-deep-espresso)]
+        "
+            >
+              Variants
+            </h3>
+
+            <p
+              className="
+          mt-2
+          text-sm
+          text-[var(--color-warm-gray)]
+        "
+            >
+              Manage metal color, stone, size, price and inventory.
+            </p>
+          </div>
 
           {!product.archivedAt && (
             <button
@@ -447,7 +642,21 @@ function AdminProductManage() {
                   key: currentState.key + 1,
                 }))
               }
-              className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 font-semibold text-white"
+              className="
+          inline-flex
+          min-h-11
+          items-center
+          justify-center
+          gap-2
+          rounded-full
+          bg-[var(--color-deep-espresso)]
+          px-5
+          text-sm
+          font-semibold
+          text-white
+          transition-colors
+          hover:bg-[var(--color-deep-bronze)]
+        "
             >
               <AddRoundedIcon />
               Add variant
@@ -455,176 +664,446 @@ function AdminProductManage() {
           )}
         </div>
 
-        <div className="mt-6 space-y-4">
-          {product.variants.map((variant) => (
-            <article
-              key={variant.id}
-              className="rounded-xl border border-gray-200 p-5"
+        <div className="p-5 sm:p-6">
+          {product.variants.length === 0 && (
+            <div
+              className="
+          border
+          border-dashed
+          border-[var(--color-warm-light-gray)]
+          bg-[var(--color-soft-ivory)]
+          px-6 py-12
+          text-center
+        "
             >
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h4 className="font-bold">{variant.displayName}</h4>
+              <p
+                className="
+            font-semibold
+            text-[var(--color-deep-espresso)]
+          "
+              >
+                No variants yet
+              </p>
 
-                    {variant.isDefault && (
-                      <span className="text-xs font-bold text-emerald-700">
-                        Default
-                      </span>
-                    )}
-
-                    {variant.archivedAt && (
-                      <span className="text-xs font-bold text-gray-500">
-                        Archived
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-2 text-sm text-gray-500">
-                    {variant.sku} · ${variant.price} · Stock{" "}
-                    {variant.inventory?.stockQuantity ?? 0}
-                  </p>
-                </div>
-
-                {!product.archivedAt && !variant.archivedAt && (
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={isMutating}
-                      onClick={() =>
-                        void runMutation(
-                          () =>
-                            updateAdminVariantStatus(
-                              product.id,
-                              variant.id,
-                              !variant.isActive,
-                            ),
-                          "Unable to change variant status.",
-                        )
-                      }
-                      className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold"
-                    >
-                      {variant.isActive ? "Deactivate" : "Activate"}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setVariantDialog((currentState) => ({
-                          open: true,
-                          item: variant,
-                          key: currentState.key + 1,
-                        }))
-                      }
-                      className="rounded-xl border border-gray-300 p-2"
-                    >
-                      <EditRoundedIcon />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const confirmed = window.confirm(
-                          `Archive ${variant.displayName}?`,
-                        );
-
-                        if (confirmed) {
-                          void runMutation(
-                            () => archiveAdminVariant(product.id, variant.id),
-                            "Unable to archive variant.",
-                          );
-                        }
-                      }}
-                      className="rounded-xl border border-red-200 p-2 text-red-700"
-                    >
-                      <ArchiveRoundedIcon />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold">Images</h3>
-
-          {!product.archivedAt && (
-            <button
-              type="button"
-              onClick={() =>
-                setImageDialog((currentState) => ({
-                  open: true,
-                  item: null,
-                  key: currentState.key + 1,
-                }))
-              }
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold"
-            >
-              <AddPhotoAlternateRoundedIcon />
-              Add image
-            </button>
+              <p
+                className="
+            mt-2
+            text-sm
+            text-[var(--color-warm-gray)]
+          "
+              >
+                Add a color, stone or size combination for this product.
+              </p>
+            </div>
           )}
-        </div>
 
-        <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {product.images.map((image) => (
-            <article
-              key={image.id}
-              className="overflow-hidden rounded-xl border border-gray-200"
-            >
-              <img
-                src={image.imageUrl}
-                alt={image.altText || product.name}
-                className="aspect-square w-full object-cover"
-              />
+          <div className="space-y-4">
+            {product.variants.map((variant) => {
+              const options =
+                variant.options && typeof variant.options === "object"
+                  ? variant.options
+                  : {};
 
-              <div className="flex items-center justify-between p-3">
-                <span className="text-xs font-bold">
-                  {image.isPrimary ? "Primary" : `Position ${image.position}`}
-                </span>
+              const metalColor = options.metalColor ?? options.color ?? null;
 
-                {!product.archivedAt && (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setImageDialog((currentState) => ({
-                          open: true,
-                          item: image,
-                          key: currentState.key + 1,
-                        }))
-                      }
+              const metalColorHex =
+                options.metalColorHex ?? options.colorHex ?? null;
+
+              const stoneColor = options.stoneColor ?? null;
+
+              const stoneColorHex = options.stoneColorHex ?? null;
+
+              const size = formatVariantSize(options);
+
+              const stock = variant.inventory?.stockQuantity ?? 0;
+
+              const lowStockThreshold =
+                variant.inventory?.lowStockThreshold ?? 0;
+
+              const isLowStock = stock > 0 && stock <= lowStockThreshold;
+
+              const isOutOfStock = stock <= 0;
+
+              return (
+                <article
+                  key={variant.id}
+                  className="
+                border
+                border-[var(--color-warm-light-gray)]
+                bg-white
+              "
+                >
+                  {/* TOP */}
+
+                  <div
+                    className="
+                  flex flex-col
+                  gap-5 p-5
+                  lg:flex-row
+                  lg:items-start
+                  lg:justify-between
+                "
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className="
+                      flex
+                      flex-wrap
+                      items-center
+                      gap-2
+                    "
+                      >
+                        <h4
+                          className="
+                        text-lg
+                        font-bold
+                        text-[var(--color-deep-espresso)]
+                      "
+                        >
+                          {variant.displayName || "Product variant"}
+                        </h4>
+
+                        {variant.isDefault && (
+                          <span
+                            className="
+                          rounded-full
+                          bg-[var(--color-deep-espresso)]
+                          px-3 py-1
+                          text-[0.65rem]
+                          font-semibold
+                          uppercase
+                          tracking-[0.1em]
+                          text-white
+                        "
+                          >
+                            Default
+                          </span>
+                        )}
+
+                        {variant.archivedAt && (
+                          <span
+                            className="
+                          rounded-full
+                          bg-gray-100
+                          px-3 py-1
+                          text-[0.65rem]
+                          font-semibold
+                          uppercase
+                          tracking-[0.1em]
+                          text-gray-500
+                        "
+                          >
+                            Archived
+                          </span>
+                        )}
+
+                        {!variant.archivedAt && !variant.isActive && (
+                          <span
+                            className="
+                            rounded-full
+                            bg-[var(--color-muted-red)]/10
+                            px-3 py-1
+                            text-[0.65rem]
+                            font-semibold
+                            uppercase
+                            tracking-[0.1em]
+                            text-[var(--color-muted-red)]
+                          "
+                          >
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+
+                      <p
+                        className="
+                      mt-1
+                      text-xs
+                      font-medium
+                      uppercase
+                      tracking-[0.08em]
+                      text-[var(--color-warm-gray)]
+                    "
+                      >
+                        SKU: {variant.sku}
+                      </p>
+
+                      {/* OPTIONS */}
+
+                      <div
+                        className="
+                      mt-5
+                      flex
+                      flex-wrap
+                      items-center
+                      gap-x-6
+                      gap-y-3
+                    "
+                      >
+                        <VariantColorSwatch
+                          label={metalColor}
+                          color={metalColorHex}
+                        />
+
+                        <VariantColorSwatch
+                          label={stoneColor ? `${stoneColor} stone` : null}
+                          color={stoneColorHex}
+                        />
+
+                        <VariantOptionBadge label="Size" value={size} />
+
+                        {!metalColor && !stoneColor && !size && (
+                          <span
+                            className="
+                            text-sm
+                            text-[var(--color-warm-gray)]
+                          "
+                          >
+                            Standard product option
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* PRICE */}
+
+                    <div
+                      className="
+                    shrink-0
+                    lg:text-right
+                  "
                     >
-                      <EditRoundedIcon fontSize="small" />
-                    </button>
+                      <p
+                        className="
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-[0.12em]
+                      text-[var(--color-warm-gray)]
+                    "
+                      >
+                        Price
+                      </p>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const confirmed = window.confirm(
-                          "Delete this product image?",
-                        );
-
-                        if (confirmed) {
-                          void runMutation(
-                            () => deleteAdminProductImage(product.id, image.id),
-                            "Unable to delete image.",
-                          );
-                        }
-                      }}
-                      className="text-red-700"
-                    >
-                      <DeleteOutlineRoundedIcon fontSize="small" />
-                    </button>
+                      <p
+                        className="
+                      mt-1
+                      text-2xl
+                      font-bold
+                      text-[var(--color-deep-espresso)]
+                    "
+                      >
+                        ${variant.price}
+                      </p>
+                    </div>
                   </div>
-                )}
-              </div>
-            </article>
-          ))}
+
+                  {/* INVENTORY + ACTIONS */}
+
+                  <div
+                    className="
+                  flex flex-col
+                  gap-4
+                  border-t
+                  border-[var(--color-warm-light-gray)]
+                  bg-[var(--color-warm-cream)]
+                  px-5 py-4
+                  md:flex-row
+                  md:items-center
+                  md:justify-between
+                "
+                  >
+                    <div
+                      className="
+                    flex
+                    flex-wrap
+                    items-center
+                    gap-3
+                  "
+                    >
+                      <VariantOptionBadge label="Stock" value={stock} />
+
+                      <VariantOptionBadge
+                        label="Low stock"
+                        value={lowStockThreshold}
+                      />
+
+                      {isOutOfStock ? (
+                        <span
+                          className="
+                        rounded-full
+                        bg-[var(--color-muted-red)]/10
+                        px-3 py-1.5
+                        text-xs
+                        font-bold
+                        text-[var(--color-muted-red)]
+                      "
+                        >
+                          Out of stock
+                        </span>
+                      ) : isLowStock ? (
+                        <span
+                          className="
+                        rounded-full
+                        bg-[var(--color-pale-champagne)]
+                        px-3 py-1.5
+                        text-xs
+                        font-bold
+                        text-[var(--color-deep-bronze)]
+                      "
+                        >
+                          Low stock
+                        </span>
+                      ) : (
+                        <span
+                          className="
+                        rounded-full
+                        bg-[var(--color-deep-sage)]/10
+                        px-3 py-1.5
+                        text-xs
+                        font-bold
+                        text-[var(--color-deep-sage)]
+                      "
+                        >
+                          In stock
+                        </span>
+                      )}
+                    </div>
+
+                    {!product.archivedAt && !variant.archivedAt && (
+                      <div
+                        className="
+                        flex
+                        flex-wrap
+                        gap-2
+                      "
+                      >
+                        <button
+                          type="button"
+                          disabled={isMutating}
+                          onClick={() =>
+                            void runMutation(
+                              () =>
+                                updateAdminVariantStatus(
+                                  product.id,
+                                  variant.id,
+                                  !variant.isActive,
+                                ),
+                              "Unable to change variant status.",
+                            )
+                          }
+                          className="
+                          min-h-10
+                          rounded-full
+                          border
+                          border-[var(--color-warm-light-gray)]
+                          bg-white
+                          px-4
+                          text-sm
+                          font-semibold
+                          text-[var(--color-deep-espresso)]
+                          transition-colors
+                          hover:border-[var(--color-warm-champagne)]
+                          disabled:opacity-50
+                        "
+                        >
+                          {variant.isActive ? "Deactivate" : "Activate"}
+                        </button>
+
+                        <button
+                          type="button"
+                          aria-label={`Edit ${variant.displayName}`}
+                          onClick={() =>
+                            setVariantDialog((currentState) => ({
+                              open: true,
+                              item: variant,
+
+                              key: currentState.key + 1,
+                            }))
+                          }
+                          className="
+                          flex h-10 w-10
+                          items-center
+                          justify-center
+                          rounded-full
+                          border
+                          border-[var(--color-warm-light-gray)]
+                          bg-white
+                          text-[var(--color-deep-espresso)]
+                          transition-colors
+                          hover:border-[var(--color-warm-champagne)]
+                        "
+                        >
+                          <EditRoundedIcon fontSize="small" />
+                        </button>
+
+                        <button
+                          type="button"
+                          aria-label={`Archive ${variant.displayName}`}
+                          onClick={() => {
+                            const confirmed = window.confirm(
+                              `Archive ${variant.displayName}?`,
+                            );
+
+                            if (confirmed) {
+                              void runMutation(
+                                () =>
+                                  archiveAdminVariant(product.id, variant.id),
+                                "Unable to archive variant.",
+                              );
+                            }
+                          }}
+                          className="
+                          flex h-10 w-10
+                          items-center
+                          justify-center
+                          rounded-full
+                          border
+                          border-[var(--color-muted-red)]/25
+                          bg-white
+                          text-[var(--color-muted-red)]
+                          transition-colors
+                          hover:bg-[var(--color-muted-red)]/5
+                        "
+                        >
+                          <ArchiveRoundedIcon fontSize="small" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </section>
+
+      <ProductImageUploader
+        productId={product.id}
+        productName={product.name}
+        existingImages={Array.isArray(product.images) ? product.images : []}
+        disabled={Boolean(product.archivedAt) || isMutating}
+        onImageAdded={handleUploadedImage}
+        onEditImage={(image) =>
+          setImageDialog((currentState) => ({
+            open: true,
+            item: image,
+            key: currentState.key + 1,
+          }))
+        }
+        onDeleteImage={(image) => {
+          const confirmed = window.confirm("Delete this product image?");
+
+          if (!confirmed) {
+            return;
+          }
+
+          void runMutation(
+            () => deleteAdminProductImage(product.id, image.id),
+            "Unable to delete image.",
+          );
+        }}
+      />
 
       {variantDialog.open && (
         <VariantEditorDialog

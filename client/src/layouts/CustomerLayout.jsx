@@ -4,6 +4,7 @@ import CustomerHeader from "../components/customer/CustomerHeader.jsx";
 import { CartProvider } from "../context/cart/CartProvider.jsx";
 import { NotificationProvider } from "../context/notification/NotificationProvider.jsx";
 import { WishlistProvider } from "../context/wishlist/WishlistProvider.jsx";
+import AnnouncementBar from "../components/customer/AnnouncementBar.jsx";
 
 function CustomerLayout() {
   return (
@@ -12,7 +13,7 @@ function CustomerLayout() {
         <CartProvider>
           <div className="flex min-h-screen flex-col bg-white">
             <CustomerHeader />
-
+            <AnnouncementBar />
             <main className="flex-1">
               <Outlet />
             </main>

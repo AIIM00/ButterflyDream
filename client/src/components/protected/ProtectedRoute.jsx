@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+
 import useAppContext from "../../context/app/useAppContext.js";
 
 function LoadingAuthentication() {
@@ -41,6 +42,21 @@ function ProtectedRoute({ allowedRoles = [] }) {
     return (
       <Navigate to={user.role === "ADMIN" ? "/admin/dashboard" : "/"} replace />
     );
+  }
+
+  /*
+   * An ADMIN using the one-time temporary password may
+   * authenticate, but cannot enter the normal admin portal.
+   *
+   * The backend independently enforces this restriction for
+   * /api/admin/* routes.
+   */
+  if (
+    user.role === "ADMIN" &&
+    user.mustChangePassword === true &&
+    location.pathname !== "/admin/change-password"
+  ) {
+    return <Navigate to="/admin/change-password" replace />;
   }
 
   return <Outlet />;
