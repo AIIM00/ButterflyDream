@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ButterflyCanvas } from "./ButterflyCanvas.jsx";
 import { ButterflyHeroLoader } from "./ButterflyHeroLoader.jsx";
@@ -9,9 +9,9 @@ import {
 import { useButterflyScrollAnimation } from "./useButterflyScrollAnimation.js";
 import { useFrameSequence } from "./useFrameSequence.js";
 
-export function ButterflyTransformationHero({ pageRef }) {
+export function ButterflyTransformationHero({ sectionRef }) {
   const canvasControllerRef = useRef(null);
-
+  const [isVisible, setIsVisible] = useState(false);
   const framePaths = useMemo(() => getButterflyDesktopFramePaths(), []);
 
   const {
@@ -28,10 +28,11 @@ export function ButterflyTransformationHero({ pageRef }) {
   });
 
   useButterflyScrollAnimation({
-    pageRef,
+    sectionRef,
     canvasControllerRef,
     frameCount: totalFrames,
     enabled: isComplete,
+    onVisibilityChange: setIsVisible,
   });
 
   useEffect(() => {
@@ -46,7 +47,20 @@ export function ButterflyTransformationHero({ pageRef }) {
     <>
       {/* Fixed animation background */}
       <div
-        className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-brand-ivory"
+        className={`
+    pointer-events-none
+    fixed
+    inset-0
+    z-0
+    overflow-hidden
+    bg-brand-ivory
+
+    transition-opacity
+    duration-300
+    ease-out
+
+    ${isVisible ? "visible opacity-100" : "invisible opacity-0"}
+  `}
         aria-hidden="true"
         data-butterfly-transformation-background
       >
@@ -54,7 +68,12 @@ export function ButterflyTransformationHero({ pageRef }) {
           ref={canvasControllerRef}
           getFrameImage={getFrameImage}
           initialFrameIndex={0}
-          className="absolute inset-0"
+          className="
+    absolute inset-0
+    translate-x-[22%]
+    sm:translate-x-[20%]
+    lg:translate-x-[18%]
+  "
         />
       </div>
 

@@ -18,6 +18,7 @@ import catalogRoutes from "../routes/catalog.routes.js";
 import cartRoutes from "../routes/cart.routes.js";
 import checkoutRoutes from "../routes/checkout.routes.js";
 import customerRoutes from "../routes/customer.routes.js";
+import feedbackRoutes from "../routes/feedback.routes.js";
 
 // Admin routes
 import adminCategoryRoutes from "../routes/adminCategory.routes.js";
@@ -62,6 +63,7 @@ app.use("/api/catalog", catalogRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/customer", customerRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 // Admin routes
 app.use("/api/admin/dashboard", adminDashboardRoutes);

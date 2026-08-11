@@ -2,7 +2,6 @@ const CATEGORY_ID_MAX_LENGTH = 191;
 const CATEGORY_NAME_MAX_LENGTH = 100;
 const CATEGORY_SLUG_MAX_LENGTH = 120;
 const CATEGORY_DESCRIPTION_MAX_LENGTH = 1000;
-const CATEGORY_IMAGE_URL_MAX_LENGTH = 2048;
 const MAX_DISPLAY_ORDER = 100_000;
 
 const CATEGORY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -10,6 +9,7 @@ const CATEGORY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export class CategoryValidationError extends Error {
   constructor(message) {
     super(message);
+
     this.name = "CategoryValidationError";
     this.statusCode = 400;
   }
@@ -104,42 +104,6 @@ function parseDescription(value) {
   return normalizedDescription;
 }
 
-function parseImageUrl(value) {
-  if (value === undefined || value === null) {
-    return null;
-  }
-
-  if (typeof value !== "string") {
-    throw new CategoryValidationError("Category image URL must be text.");
-  }
-
-  const normalizedUrl = value.trim();
-
-  if (!normalizedUrl) {
-    return null;
-  }
-
-  if (normalizedUrl.length > CATEGORY_IMAGE_URL_MAX_LENGTH) {
-    throw new CategoryValidationError("Category image URL is too long.");
-  }
-
-  let parsedUrl;
-
-  try {
-    parsedUrl = new URL(normalizedUrl);
-  } catch {
-    throw new CategoryValidationError("Category image URL must be valid.");
-  }
-
-  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-    throw new CategoryValidationError(
-      "Category image URL must use HTTP or HTTPS.",
-    );
-  }
-
-  return parsedUrl.toString();
-}
-
 function parseBoolean(value, fieldName) {
   if (typeof value !== "boolean") {
     throw new CategoryValidationError(`${fieldName} must be true or false.`);
@@ -180,8 +144,6 @@ export function parseCreateCategoryInput(body) {
 
     description: parseDescription(body.description),
 
-    imageUrl: parseImageUrl(body.imageUrl),
-
     isActive:
       body.isActive === undefined
         ? true
@@ -209,10 +171,6 @@ export function parseUpdateCategoryInput(body) {
 
   if (hasOwn(body, "description")) {
     updateData.description = parseDescription(body.description);
-  }
-
-  if (hasOwn(body, "imageUrl")) {
-    updateData.imageUrl = parseImageUrl(body.imageUrl);
   }
 
   if (hasOwn(body, "displayOrder")) {

@@ -9,6 +9,10 @@ import {
 import requireAuthentication from "../middleware/authMiddleware.js";
 import requireRole from "../middleware/roleMiddleware.js";
 import requireCompletedAdminPasswordChange from "../middleware/adminPasswordChangeMiddleware.js";
+import {
+  createCategoryImageUploadUrl,
+  finalizeCategoryImageUpload,
+} from "../controllers/adminCategoryImageUpload.controller.js";
 
 const router = Router();
 
@@ -24,6 +28,10 @@ router.post("/", createCategory);
 router.patch("/reorder", reorderCategories);
 
 router.patch("/:categoryId/status", updateCategoryStatus);
+
+router.post("/:categoryId/image/upload-url", createCategoryImageUploadUrl);
+
+router.post("/:categoryId/image/finalize", finalizeCategoryImageUpload);
 
 router.patch("/:categoryId", updateCategory);
 

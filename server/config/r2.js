@@ -30,6 +30,10 @@ const productPrefix = (process.env.R2_PRODUCT_PREFIX?.trim() || "products")
   .replace(/^\/+/, "")
   .replace(/\/+$/, "");
 
+const categoryPrefix = (process.env.R2_CATEGORY_PREFIX?.trim() || "categories")
+  .replace(/^\/+/, "")
+  .replace(/\/+$/, "");
+
 const r2Client = new S3Client({
   region: "auto",
 
@@ -50,6 +54,7 @@ function createPublicR2Url(objectKey) {
 
 export {
   bucketName,
+  categoryPrefix,
   createPublicR2Url,
   productPrefix,
   publicBaseUrl,

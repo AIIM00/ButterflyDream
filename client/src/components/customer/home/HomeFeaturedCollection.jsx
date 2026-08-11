@@ -99,9 +99,16 @@ function FeaturedSpotlight({ product }) {
   return (
     <article
       className="
-        group relative min-h-[540px] overflow-hidden
-        border border-brand-border bg-white
-        shadow-sm sm:min-h-[640px]
+        group relative
+        h-[390px]
+        overflow-hidden
+        rounded-[1.25rem]
+        border border-brand-border/70
+        bg-white
+        shadow-[0_12px_35px_rgba(36,29,32,0.08)]
+
+        sm:h-[460px]
+        lg:h-[500px]
       "
     >
       <Link
@@ -112,46 +119,82 @@ function FeaturedSpotlight({ product }) {
         <ProductImage product={product} priority />
       </Link>
 
+      {/* Featured label */}
       <span
         className="
-          absolute left-4 top-4 rounded-full
-          bg-brand-forest px-4 py-2
-          text-[0.68rem] font-bold uppercase
-          tracking-[0.18em] text-white
-          sm:left-6 sm:top-6
+          absolute left-3 top-3 z-10
+          rounded-full
+          bg-brand-forest/90
+          px-3 py-1.5
+
+          text-[0.55rem]
+          font-bold
+          uppercase
+          tracking-[0.16em]
+          text-white
+
+          backdrop-blur-sm
+
+          sm:left-4
+          sm:top-4
+          sm:text-[0.62rem]
         "
       >
         Featured
       </span>
 
+      {/* Wishlist */}
       <WishlistToggleButton
         productId={product.id}
         className="
-          absolute right-4 top-4 z-10
-          !border-brand-border
-          !bg-brand-cream/95
+          absolute right-3 top-3 z-20
+
+          !border-white/60
+          !bg-white/85
           !text-brand-espresso
           !shadow-none
+
+          backdrop-blur-md
+
           hover:!border-brand-champagne
-          sm:right-6 sm:top-6
+
+          sm:right-4
+          sm:top-4
         "
       />
 
+      {/* Bottom information card */}
       <div
         className="
-          absolute inset-x-4 bottom-4
-          border border-white/50
-          bg-brand-cream/95 p-5
+          absolute
+          inset-x-3
+          bottom-3
+          z-10
+
+          rounded-[1rem]
+          border border-white/55
+          bg-brand-cream/92
+
+          p-4
+
           backdrop-blur-md
-          sm:inset-x-6 sm:bottom-6 sm:p-7
+
+          sm:inset-x-4
+          sm:bottom-4
+          sm:p-5
         "
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-end justify-between gap-4">
           <div className="min-w-0">
             <p
               className="
-                text-xs font-bold uppercase
-                tracking-[0.18em] text-brand-bronze
+                text-[0.55rem]
+                font-bold
+                uppercase
+                tracking-[0.16em]
+                text-brand-bronze
+
+                sm:text-[0.62rem]
               "
             >
               {product.category?.name || "Butterfly Dream"}
@@ -159,17 +202,32 @@ function FeaturedSpotlight({ product }) {
 
             <h3
               className="
-                mt-3 font-display
-                text-[2rem] font-medium leading-[1.02]
-                tracking-[-0.04em] text-brand-espresso
-                sm:text-[2.75rem]
+                mt-1.5
+                line-clamp-1
+
+                font-display
+                text-[1.35rem]
+                font-medium
+                leading-tight
+                tracking-[-0.03em]
+                text-brand-espresso
+
+                sm:text-[1.65rem]
               "
             >
               <Link to={`/products/${product.slug}`}>{product.name}</Link>
             </h3>
 
-            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
-              <p className="text-base font-bold text-brand-espresso sm:text-lg">
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+              <p
+                className="
+                  text-[0.78rem]
+                  font-bold
+                  text-brand-espresso
+
+                  sm:text-sm
+                "
+              >
                 {getProductPrice(product)}
               </p>
 
@@ -180,16 +238,45 @@ function FeaturedSpotlight({ product }) {
           <Link
             to={`/products/${product.slug}`}
             className="
-              flex h-12 w-12 shrink-0 items-center justify-center
-              rounded-full bg-brand-forest text-white
-              transition-colors hover:bg-brand-emerald
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+
+              rounded-full
+
+              bg-brand-forest
+              text-white
+
+              transition
+              hover:bg-brand-emerald
+
+              sm:h-10
+              sm:w-10
             "
             aria-label={`Open ${product.name}`}
           >
-            <ArrowOutwardRoundedIcon fontSize="small" />
+            <ArrowOutwardRoundedIcon sx={{ fontSize: 18 }} />
           </Link>
         </div>
       </div>
+
+      {/* subtle image gradient */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+
+          bg-gradient-to-t
+          from-brand-espresso/15
+          via-transparent
+          to-transparent
+        "
+        aria-hidden="true"
+      />
     </article>
   );
 }
@@ -198,18 +285,37 @@ function FeaturedProductCard({ product }) {
   return (
     <article
       className="
-        group grid min-h-[170px]
-        grid-cols-[7.5rem_minmax(0,1fr)]
-        overflow-hidden border border-brand-border bg-white
-        shadow-sm
-        sm:grid-cols-[10rem_minmax(0,1fr)]
-        lg:min-h-0 lg:flex-1
+        group
+
+        grid
+        h-[125px]
+        grid-cols-[6.5rem_minmax(0,1fr)]
+
+        overflow-hidden
+
+        rounded-[1rem]
+
+        border
+        border-brand-border/70
+
+        bg-white
+
+        shadow-[0_8px_24px_rgba(36,29,32,0.05)]
+
+        sm:h-[145px]
+        sm:grid-cols-[8rem_minmax(0,1fr)]
+
+        lg:flex-1
       "
     >
+      {/* Image */}
       <Link
         to={`/products/${product.slug}`}
         className="
-          relative block min-h-full overflow-hidden
+          relative
+          block
+          h-full
+          overflow-hidden
           bg-brand-pale-champagne
         "
         aria-label={`View ${product.name}`}
@@ -217,12 +323,30 @@ function FeaturedProductCard({ product }) {
         <ProductImage product={product} />
       </Link>
 
-      <div className="flex min-w-0 flex-col p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3">
+      {/* Content */}
+      <div
+        className="
+          flex
+          min-w-0
+          flex-col
+
+          p-3
+
+          sm:p-4
+        "
+      >
+        <div className="flex items-start justify-between gap-2">
           <p
             className="
-              truncate text-[0.68rem] font-bold uppercase
-              tracking-[0.16em] text-brand-bronze
+              truncate
+
+              text-[0.5rem]
+              font-bold
+              uppercase
+              tracking-[0.14em]
+              text-brand-bronze
+
+              sm:text-[0.58rem]
             "
           >
             {product.category?.name || "Collection"}
@@ -231,11 +355,14 @@ function FeaturedProductCard({ product }) {
           <WishlistToggleButton
             productId={product.id}
             className="
-              -mr-1 -mt-1
+              -mr-1
+              -mt-1
+
               !border-brand-border
-              !bg-white
+              !bg-transparent
               !text-brand-espresso
               !shadow-none
+
               hover:!border-brand-champagne
             "
           />
@@ -243,34 +370,66 @@ function FeaturedProductCard({ product }) {
 
         <h3
           className="
-            mt-2 line-clamp-2 font-display
-            text-xl font-medium leading-tight
-            tracking-[-0.025em] text-brand-espresso
-            sm:text-2xl
+            mt-1
+            line-clamp-1
+
+            font-display
+            text-[1rem]
+            font-medium
+            leading-tight
+            tracking-[-0.025em]
+            text-brand-espresso
+
+            sm:text-lg
           "
         >
           <Link to={`/products/${product.slug}`}>{product.name}</Link>
         </h3>
 
-        <p className="mt-3 text-sm font-bold text-brand-espresso">
+        <p
+          className="
+            mt-1.5
+
+            text-[0.7rem]
+            font-bold
+            text-brand-espresso
+
+            sm:text-xs
+          "
+        >
           {getProductPrice(product)}
         </p>
 
-        <div className="mt-auto flex items-end justify-between gap-3 pt-4">
+        <div
+          className="
+            mt-auto
+            flex
+            items-end
+            justify-between
+            gap-2
+          "
+        >
           <AvailabilityLabel inStock={product.inStock} />
 
           <Link
             to={`/products/${product.slug}`}
             className="
-              inline-flex min-h-11 items-center gap-1.5
-              rounded-full px-1
-              text-sm font-bold text-brand-bronze
-              transition-colors hover:text-brand-bronze-hover
+              inline-flex
+              items-center
+              gap-0.5
+
+              text-[0.62rem]
+              font-bold
+              text-brand-bronze
+
+              transition
+              hover:text-brand-espresso
+
+              sm:text-xs
             "
-            aria-label={`View details for ${product.name}`}
           >
             View
-            <ArrowForwardRoundedIcon fontSize="small" />
+            <ArrowForwardRoundedIcon sx={{ fontSize: 15 }} />
           </Link>
         </div>
       </div>
@@ -367,10 +526,8 @@ function HomeFeaturedCollection() {
         >
           <div
             className="
-              max-w-2xl rounded-[1.5rem]
-              border border-white/45
-              bg-brand-ivory/68 p-5
-              backdrop-blur-md sm:p-7
+              
+              
             "
           >
             <p className="eyebrow-text">Selected for you</p>
@@ -385,19 +542,6 @@ function HomeFeaturedCollection() {
               personal.
             </p>
           </div>
-
-          <Link
-            to="/products?featured=true"
-            className="
-              button-base button-outline
-              hidden w-fit shrink-0 rounded-full
-              bg-brand-ivory/80 backdrop-blur-md
-              sm:inline-flex
-            "
-          >
-            View featured pieces
-            <ArrowForwardRoundedIcon fontSize="small" />
-          </Link>
         </div>
 
         {isLoading && <FeaturedLoading />}

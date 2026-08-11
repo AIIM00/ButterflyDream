@@ -1,260 +1,453 @@
-import { useRef } from "react";
-import { Link } from "react-router-dom";
-
+import { useEffect, useRef, useState } from "react";
+import { usePublicProducts } from "../../hooks/useCatalogData.js";
+import { Link, useNavigate } from "react-router-dom";
 import HomeCategories from "../../components/customer/home/HomeCategories.jsx";
+import HomeCollection from "../../components/customer/home/HomeCollection.jsx";
 import HomeFeaturedCollection from "../../components/customer/home/HomeFeaturedCollection.jsx";
+import Feedback from "../../components/customer/home/HomeFeedback.jsx";
 import { ButterflyTransformationHero } from "../../components/customer/home/ButterflyTransformationHero/ButterflyTransformationHero.jsx";
+import HomeOpeningSlider from "../../components/customer/home/HomeOpeningSlider.jsx";
+import HomeCustomized from "../../components/customer/home/HomeCustomized.jsx";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+const HOME_INTRO_PRODUCTS_QUERY = "sort=newest&page=1&limit=3";
 
-function SectionPlaceholder({
-  id,
-  eyebrow,
-  title,
-  description,
-  background = "ivory",
-  align = "left",
-}) {
-  const toneClasses = {
-    ivory: {
-      wash: "from-brand-ivory/88 via-brand-ivory/48 to-transparent",
-      panel: "border-white/55 bg-brand-ivory/72",
-      window: "border-brand-border/60 bg-white/10",
-      eyebrow: "eyebrow-text",
-      title: "text-brand-espresso",
-      description: "text-brand-muted",
-      label: "text-brand-bronze",
-    },
+const introCardPositions = [
+  `
+    z-30
+    translate-x-0
+    translate-y-0
+    rotate-[-2deg]
+    scale-100
+    opacity-100
+  `,
+  `
+    z-20
+    translate-x-[22%]
+    translate-y-[8%]
+    rotate-[4deg]
+    scale-[0.92]
+    opacity-90
+  `,
+  `
+    z-10
+    translate-x-[42%]
+    translate-y-[15%]
+    rotate-[8deg]
+    scale-[0.84]
+    opacity-65
+  `,
+];
 
-    white: {
-      wash: "from-white/90 via-white/52 to-transparent",
-      panel: "border-white/65 bg-white/72",
-      window: "border-white/65 bg-white/10",
-      eyebrow: "eyebrow-text",
-      title: "text-brand-espresso",
-      description: "text-brand-muted",
-      label: "text-brand-bronze",
-    },
+function HomeIntroImageCard({ product, position }) {
+  const [hasImageError, setHasImageError] = useState(false);
 
-    cream: {
-      wash: "from-brand-cream/90 via-brand-cream/50 to-transparent",
-      panel: "border-white/55 bg-brand-cream/72",
-      window: "border-brand-border/55 bg-brand-cream/10",
-      eyebrow: "eyebrow-text",
-      title: "text-brand-espresso",
-      description: "text-brand-muted",
-      label: "text-brand-bronze",
-    },
+  const image = product?.image;
+  const hasImage = Boolean(image?.imageUrl) && !hasImageError;
 
-    champagne: {
-      wash: "from-brand-pale-champagne/90 via-brand-pale-champagne/48 to-transparent",
-      panel: "border-white/55 bg-brand-pale-champagne/72",
-      window: "border-brand-champagne/45 bg-white/10",
-      eyebrow: "eyebrow-text",
-      title: "text-brand-espresso",
-      description: "text-brand-muted",
-      label: "text-brand-bronze",
-    },
+  const card = (
+    <div
+      className={`
+        absolute
+        left-0
+        top-0
 
-    forest: {
-      wash: "from-brand-forest/92 via-brand-forest/58 to-transparent",
-      panel: "border-white/20 bg-brand-forest/78",
-      window: "border-white/25 bg-white/5",
-      eyebrow:
-        "text-xs font-bold uppercase tracking-[0.2em] text-brand-champagne",
-      title: "text-white",
-      description: "text-white/72",
-      label: "text-brand-champagne",
-    },
-  };
+        h-[10.5rem]
+        w-[7.6rem]
 
-  const tone = toneClasses[background] ?? toneClasses.ivory;
-  const gradientDirection =
-    align === "right" ? "bg-gradient-to-l" : "bg-gradient-to-r";
+        overflow-hidden
+        rounded-[1rem]
+
+        border
+        border-white/80
+
+        bg-brand-pale-champagne
+
+        shadow-[0_18px_42px_rgba(50,38,40,0.16)]
+
+        transition-all
+        duration-700
+        ease-[cubic-bezier(0.22,1,0.36,1)]
+
+        will-change-transform
+
+        sm:h-[13.5rem]
+        sm:w-[9.5rem]
+
+        lg:h-[17rem]
+        lg:w-[12rem]
+
+        ${introCardPositions[position]}
+      `}
+    >
+      {hasImage ? (
+        <img
+          src={image.imageUrl}
+          alt={image.altText || product?.name || "Butterfly Dream jewelry"}
+          loading={position === 0 ? "eager" : "lazy"}
+          onError={() => setHasImageError(true)}
+          className="
+            h-full
+            w-full
+            object-cover
+
+            transition-transform
+            duration-700
+
+            hover:scale-[1.035]
+          "
+        />
+      ) : (
+        <div
+          className="
+            relative
+            flex
+            h-full
+            w-full
+            items-end
+
+            overflow-hidden
+
+            bg-[linear-gradient(145deg,#F0E4D3_0%,#FBF8F3_52%,#E6D1B1_100%)]
+
+            p-3
+          "
+        >
+          <div
+            className="
+              absolute
+              -right-10
+              -top-8
+              h-28
+              w-28
+              rounded-full
+              border
+              border-brand-champagne/60
+            "
+          />
+
+          <div
+            className="
+              absolute
+              -bottom-10
+              -left-8
+              h-28
+              w-28
+              rounded-full
+              border
+              border-brand-bronze/20
+            "
+          />
+
+          <span
+            className="
+              relative
+              text-[0.5rem]
+              font-bold
+              uppercase
+              tracking-[0.2em]
+              text-brand-bronze
+            "
+          >
+            Butterfly Dream
+          </span>
+        </div>
+      )}
+
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          bg-gradient-to-t
+          from-brand-espresso/15
+          via-transparent
+          to-white/10
+        "
+      />
+    </div>
+  );
+
+  if (!product) {
+    return card;
+  }
 
   return (
-    <section
-      id={id}
-      className="relative isolate flex min-h-[78svh] items-center overflow-hidden section-spacing"
-      aria-labelledby={`${id}-title`}
-      data-home-section={id}
-    >
-      {/* Translucent section wash */}
-      <div
-        className={`pointer-events-none absolute inset-0 -z-20 ${gradientDirection} ${tone.wash}`}
-        aria-hidden="true"
-      />
-
-      {/* Soft transition from the previous section */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-24 bg-gradient-to-b from-brand-ivory/65 to-transparent"
-        aria-hidden="true"
-      />
-
-      <div className="page-container w-full">
-        <div
-          className={`grid gap-8 lg:grid-cols-12 lg:items-center ${
-            align === "right" ? "lg:[&>*:first-child]:order-2" : ""
-          }`}
-        >
-          {/* Readable text surface */}
-          <div className="lg:col-span-5">
-            <div
-              className={`rounded-[1.75rem] border p-6 backdrop-blur-md sm:p-8 lg:p-10 ${tone.panel}`}
-            >
-              <p className={tone.eyebrow}>{eyebrow}</p>
-
-              <h2
-                id={`${id}-title`}
-                className={`section-heading mt-4 ${tone.title}`}
-              >
-                {title}
-              </h2>
-
-              <p
-                className={`mt-5 max-w-xl text-base leading-7 sm:text-lg ${tone.description}`}
-              >
-                {description}
-              </p>
-            </div>
-          </div>
-
-          {/* Transparent animation window */}
-          <div className="lg:col-span-7">
-            <div
-              className={`relative flex min-h-[320px] items-end overflow-hidden rounded-[1.75rem] border p-6 backdrop-blur-[1px] sm:min-h-[440px] sm:p-8 ${tone.window}`}
-              data-animation-window
-            >
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/12 via-transparent to-white/5"
-                aria-hidden="true"
-              />
-
-              <p
-                className={`relative z-10 max-w-xs text-xs font-bold uppercase tracking-[0.2em] ${tone.label}`}
-              >
-                The transformation continues
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <Link to={`/products/${product.slug}`} aria-label={`View ${product.name}`}>
+      {card}
+    </Link>
   );
 }
 
 function HomeIntro() {
+  const navigate = useNavigate();
+  const { data } = usePublicProducts(HOME_INTRO_PRODUCTS_QUERY);
+
+  const products = data?.products ?? [];
+
+  const [activeCard, setActiveCard] = useState(0);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (reducedMotion) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setActiveCard((current) => (current + 1) % 3);
+    }, 3200);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   return (
     <section
-      className="relative flex min-h-[100svh] items-end overflow-hidden"
+      className="
+        relative
+        min-h-[100svh]
+        overflow-hidden
+      "
       aria-labelledby="home-intro-title"
       data-home-section="intro"
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-brand-ivory/5 via-transparent to-brand-ivory/80" />
+      {/* Soft readable wash only on the left */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-y-0
+          left-0
+          w-[82%]
 
-      <div className="page-container relative z-10 w-full pb-14 pt-32 sm:pb-20 lg:pb-24">
-        <div className="max-w-xl">
-          <p className="eyebrow-text">Butterfly Dream</p>
+          bg-gradient-to-r
+          from-brand-ivory/90
+          via-brand-ivory/50
+          to-transparent
 
+          sm:w-[72%]
+          lg:w-[58%]
+        "
+        aria-hidden="true"
+      />
+
+      <div className="page-container relative z-10 min-h-[100svh] py-12 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-20">
+        <div
+          className="
+            flex
+            h-full
+            max-w-[17rem]
+            flex-col
+
+            sm:max-w-[24rem]
+
+            lg:max-w-[34rem]
+          "
+        >
+          {/* Small brand label */}
+          <p
+            className="
+              text-[0.58rem]
+              font-bold
+              uppercase
+              tracking-[0.24em]
+              text-brand-bronze
+
+              sm:text-[0.65rem]
+            "
+          >
+            Butterfly Dream
+          </p>
+
+          {/* Main title */}
           <h1
             id="home-intro-title"
-            className="mt-4 font-display text-5xl font-medium leading-[0.95] tracking-[-0.045em] text-brand-espresso sm:text-6xl lg:text-7xl"
+            className="
+              mt-3
+
+              font-display
+              text-[2rem]
+              font-bold
+              leading-[0.95]
+              tracking-[-0.045em]
+              text-brand-espresso
+
+              sm:mt-4
+              sm:text-[3rem]
+
+              lg:text-[4.5rem]
+              lg:leading-[0.9]
+            "
           >
             Every dream begins with transformation.
           </h1>
 
-          <p className="mt-6 max-w-lg text-base leading-7 text-brand-muted sm:text-lg">
+          {/* Supporting copy */}
+          <p
+            className="
+              mt-4
+              max-w-[16rem]
+
+              text-[0.78rem]
+              leading-[1.65]
+              text-brand-muted
+
+              sm:mt-5
+              sm:max-w-sm
+              sm:text-sm
+              sm:leading-6
+
+              lg:mt-6
+              lg:max-w-md
+              lg:text-base
+              lg:leading-7
+            "
+          >
             Follow the journey from chrysalis to butterfly, and from butterfly
             to a piece created to carry your story.
           </p>
 
-          <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-            <Link
-              to="/products"
-              className="button-base button-primary w-fit rounded-full"
-            >
-              Shop the collection
-            </Link>
+          {/* Rotating editorial card stack */}
+          <div
+            className="
+              relative
 
-            <a
-              href="#home-categories"
-              className="button-base button-outline w-fit rounded-full"
+              mt-8
+
+              h-[13rem]
+              w-[15rem]
+
+              sm:mt-10
+              sm:h-[16.5rem]
+              sm:w-[20rem]
+
+              lg:mt-12
+              lg:h-[20rem]
+              lg:w-[27rem]
+            "
+            aria-label="Butterfly Dream selected pieces"
+          >
+            {[0, 1, 2].map((index) => {
+              const position = (index - activeCard + 3) % 3;
+
+              return (
+                <HomeIntroImageCard
+                  key={products[index]?.id ?? `intro-card-${index}`}
+                  product={products[index]}
+                  position={position}
+                />
+              );
+            })}
+          </div>
+
+          {/* Small navigation underneath */}
+          <div
+            className="
+              mt-4
+              flex
+              gap-6
+              items-center
+              sm:mt-4
+              
+            "
+          >
+            <div className="flex items-center gap-1.5" aria-hidden="true">
+              {[0, 1, 2].map((index) => (
+                <span
+                  key={index}
+                  className={`
+                    h-1
+                    rounded-full
+                    transition-all
+                    duration-500
+
+                    ${
+                      index === activeCard
+                        ? "w-5 bg-brand-bronze"
+                        : "w-1 bg-brand-bronze/25"
+                    }
+                  `}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/products")}
+              className="button-base button-primary w-fit rounded-full px-5 py-2.5 text-[0.52rem] uppercase tracking-[0.14em] sm:text-xs"
             >
-              Explore Butterfly Dream
-            </a>
+              Explore collection
+              <ArrowForwardRoundedIcon
+                aria-hidden="true"
+                className="
+              transition-transform
+              duration-200
+              group-hover:translate-x-0.5
+            "
+                sx={{
+                  fontSize: 14,
+                }}
+              />
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Bottom transition */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-x-0
+          bottom-0
+          h-24
+
+          bg-gradient-to-t
+          from-brand-ivory/80
+          to-transparent
+        "
+        aria-hidden="true"
+      />
     </section>
   );
 }
 
 function Home() {
-  const pageRef = useRef(null);
+  const transformationRef = useRef(null);
 
   return (
     <main
-      ref={pageRef}
       className="relative isolate bg-transparent text-brand-espresso"
       data-butterfly-homepage
     >
-      <ButterflyTransformationHero pageRef={pageRef} />
+      <ButterflyTransformationHero sectionRef={transformationRef} />
 
       <div className="relative z-10">
-        {/* 1. Opening animation scene */}
-        <HomeIntro />
+        <HomeOpeningSlider />
 
-        {/* 2. Categories */}
+        {/* TRANSFORMATION TIMELINE */}
+        <div
+          ref={transformationRef}
+          className="relative"
+          data-transformation-story
+        >
+          <HomeIntro />
+
+          <HomeCustomized />
+        </div>
+
+        {/* Animation has reached final frame here */}
+
         <HomeCategories />
 
-        {/* 3. Featured collection */}
         <HomeFeaturedCollection />
 
-        {/* 4. New arrivals */}
-        <SectionPlaceholder
-          id="home-new-arrivals"
-          eyebrow="Just arrived"
-          title="New expressions of elegance"
-          description="A clean product section highlighting the latest additions to the Butterfly Dream collection."
-          background="white"
-          align="right"
-        />
+        <HomeCollection />
+        <Feedback />
 
-        {/* 5. Customized accessories */}
-        <SectionPlaceholder
-          id="home-customized"
-          eyebrow="Made personal"
-          title="Accessories shaped around your story"
-          description="A premium introduction to customized jewelry and accessories designed for meaningful gifts and personal moments."
-          background="champagne"
-        />
-
-        {/* 6. Promotional editorial banner */}
-        <SectionPlaceholder
-          id="home-editorial"
-          eyebrow="The seasonal edit"
-          title="A cinematic editorial moment"
-          description="A full-width campaign banner for seasonal collections, special releases, or limited Butterfly Dream stories."
-          background="cream"
-          align="right"
-        />
-
-        {/* 7. Trust and service benefits */}
-        <SectionPlaceholder
-          id="home-benefits"
-          eyebrow="The Butterfly Dream experience"
-          title="Thoughtful service at every step"
-          description="Delivery, payment, customer care, quality, and shopping reassurance presented without a generic dashboard appearance."
-          background="white"
-        />
-
-        {/* 8. Newsletter */}
-        <SectionPlaceholder
-          id="home-newsletter"
-          eyebrow="Enter the dream"
-          title="Stories, new pieces, and private releases"
-          description="A refined newsletter invitation that closes the homepage before the customer footer."
-          background="forest"
-          align="right"
-        />
+        {/* ... */}
       </div>
     </main>
   );

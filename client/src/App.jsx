@@ -48,6 +48,7 @@ import Orders from "./pages/customer/Orders.jsx";
 import ProductDetails from "./pages/customer/ProductDetails.jsx";
 import Products from "./pages/customer/Products.jsx";
 import Wishlist from "./pages/customer/Wishlist.jsx";
+import PopupsPage from "./pages/customer/PopupsPage.jsx";
 
 function App() {
   const isDevelopmentRouting = runtimeSite === "development";
@@ -113,6 +114,7 @@ function App() {
 
               <Route path="orders/:orderId" element={<OrderDetails />} />
             </Route>
+            <Route path="popups" element={<PopupsPage />} />
           </Route>
 
           {/* Customer authentication pages */}

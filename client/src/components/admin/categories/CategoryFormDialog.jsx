@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 //MUI Materials
 import {
@@ -11,10 +11,10 @@ import {
 
 //MUI Icons
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-
+import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
 //Components
 import CategoryImagePreview from "./CategoryImagePreview.jsx";
-
+import { validateCategoryImageFile } from "../../../services/adminCategoryImageUploadApi.js";
 //Utils
 import validateCategoryForm, {
   createCategorySlug,
@@ -47,6 +47,10 @@ function CategoryFormDialog({
   onClose,
   onSubmit,
 }) {
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const [selectedImagePreviewUrl, setSelectedImagePreviewUrl] = useState("");
+
   const [formData, setFormData] = useState(() => createInitialState(category));
 
   const [slugEdited, setSlugEdited] = useState(Boolean(category));
@@ -85,6 +89,37 @@ function CategoryFormDialog({
       [name]: value,
     }));
   }
+  function handleImageChange(event) {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      validateCategoryImageFile(file);
+
+      const previewUrl = URL.createObjectURL(file);
+
+      setSelectedImage(file);
+      setSelectedImagePreviewUrl(previewUrl);
+      setValidationMessage("");
+    } catch (error) {
+      setSelectedImage(null);
+      setSelectedImagePreviewUrl("");
+
+      setValidationMessage(
+        error?.message || "The selected category image is not valid.",
+      );
+
+      event.target.value = "";
+    }
+  }
+  function removeSelectedImage() {
+    setSelectedImage(null);
+    setSelectedImagePreviewUrl("");
+    setValidationMessage("");
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -105,11 +140,18 @@ function CategoryFormDialog({
 
       description: formData.description.trim() || null,
 
-      imageUrl: formData.imageUrl.trim() || null,
-
       isActive: formData.isActive,
+
+      imageFile: selectedImage,
     });
   }
+  useEffect(() => {
+    return () => {
+      if (selectedImagePreviewUrl) {
+        URL.revokeObjectURL(selectedImagePreviewUrl);
+      }
+    };
+  }, [selectedImagePreviewUrl]);
 
   return (
     <Dialog
@@ -227,30 +269,90 @@ function CategoryFormDialog({
                 /1000
               </p>
             </div>
-
             <div>
-              <label
-                htmlFor="category-image-url"
-                className="mb-2 block text-sm font-semibold text-gray-800"
-              >
-                Image URL
-              </label>
+              <p className="mb-2 block text-sm font-semibold text-gray-800">
+                Category image
+              </p>
 
-              <input
-                id="category-image-url"
-                name="imageUrl"
-                type="url"
-                value={formData.imageUrl}
-                onChange={handleFieldChange}
-                disabled={isSubmitting}
-                placeholder="https://example.com/category.jpg"
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-950 focus:ring-2 focus:ring-gray-950/10 disabled:bg-gray-100"
-              />
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <label
+                  className={`
+        flex min-h-32 cursor-pointer flex-col
+        items-center justify-center
+        rounded-xl border-2 border-dashed
+        border-gray-300 bg-white
+        px-5 py-6 text-center
+        transition
+        hover:border-gray-950
+        ${
+          isSubmitting
+            ? "pointer-events-none cursor-not-allowed opacity-50"
+            : ""
+        }
+      `}
+                >
+                  <AddPhotoAlternateRoundedIcon
+                    className="text-gray-400"
+                    sx={{ fontSize: 36 }}
+                  />
+
+                  <span className="mt-3 text-sm font-semibold text-gray-900">
+                    {selectedImage
+                      ? "Choose another photo"
+                      : "Choose category photo"}
+                  </span>
+
+                  <span className="mt-1 text-xs text-gray-500">
+                    JPG, PNG or WebP · Maximum 10 MB
+                  </span>
+
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleImageChange}
+                    disabled={isSubmitting}
+                    className="sr-only"
+                  />
+                </label>
+
+                {selectedImage && (
+                  <div className="mt-3 flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-900">
+                        {selectedImage.name}
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-500">
+                        {(selectedImage.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={removeSelectedImage}
+                      disabled={isSubmitting}
+                      className="
+            shrink-0 rounded-full
+            border border-gray-300
+            px-4 py-2
+            text-xs font-semibold
+            text-gray-700
+            transition
+            hover:border-red-300
+            hover:text-red-600
+            disabled:opacity-50
+          "
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <CategoryImagePreview
-              key={formData.imageUrl}
-              imageUrl={formData.imageUrl}
+              key={selectedImagePreviewUrl || formData.imageUrl}
+              imageUrl={selectedImagePreviewUrl || formData.imageUrl}
               categoryName={formData.name}
             />
 

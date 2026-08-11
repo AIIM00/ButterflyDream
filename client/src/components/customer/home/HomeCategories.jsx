@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import ArrowOutwardRoundedIcon from "@mui/icons-material/ArrowOutwardRounded";
 import ImageNotSupportedOutlinedIcon from "@mui/icons-material/ImageNotSupportedOutlined";
 
 import { usePublicCategories } from "../../../hooks/useCatalogData";
@@ -72,7 +71,7 @@ function CategoryCard({ category, index }) {
 
   return (
     <article
-      className={`h-[430px] w-[78vw] max-w-[340px] shrink-0 snap-center sm:h-[420px] sm:w-auto sm:max-w-none ${layoutClass}`}
+      className={`h-[380px] w-[56vw] max-w-[240px] shrink-0 snap-center sm:h-[420px] sm:w-auto sm:max-w-none ${layoutClass}`}
     >
       <Link
         to={`/products?category=${encodeURIComponent(category.slug)}`}
@@ -81,28 +80,27 @@ function CategoryCard({ category, index }) {
       >
         <CategoryVisual category={category} />
 
-        <div className="absolute left-4 top-4 rounded-full border border-white/25 bg-brand-emerald/80 px-3 py-1.5 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-sm">
+        <div className="absolute left-4 top-4 rounded-full border border-white/25 bg-brand-emerald/80 px-2.5 py-1 text-[0.48rem] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-sm">
           {getProductCountLabel(category.productCount)}
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 border-t border-white/30 bg-brand-cream/95 p-5 backdrop-blur-md sm:p-6">
-          <div className="flex items-end justify-between gap-4">
+        <div className="absolute inset-x-0 bottom-0 border-t border-white/30 bg-brand-cream/95 p-3 backdrop-blur-md">
+          <div className="flex items-center justify-end gap-2">
             <div className="min-w-0">
-              <h3 className="font-display text-[1.8rem] font-medium leading-none tracking-[-0.035em] text-brand-espresso sm:text-[2rem]">
+              <h3 className="font-display text-[1.5rem] font-medium leading-none tracking-[-0.035em] text-brand-espresso sm:text-[2rem]">
                 {category.name}
               </h3>
 
-              <p className="mt-2 line-clamp-2 text-sm leading-6 text-brand-muted">
+              <p className="mt-2 line-clamp-2 text-xs leading-6 text-brand-muted">
                 {category.description ||
                   `Discover the Butterfly Dream ${category.name.toLowerCase()} collection.`}
               </p>
             </div>
-
             <span
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-brand-bronze text-brand-bronze transition duration-200 group-hover:bg-brand-bronze group-hover:text-white"
               aria-hidden="true"
             >
-              <ArrowOutwardRoundedIcon fontSize="small" />
+              <ArrowForwardRoundedIcon fontSize="small" />
             </span>
           </div>
         </div>
@@ -139,23 +137,6 @@ function HomeCategories() {
       aria-labelledby="home-categories-title"
       data-home-section="categories"
     >
-      {/* Translucent surface that keeps the animation visible */}
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-brand-cream/92 via-brand-cream/76 to-brand-ivory/84 backdrop-blur-[2px]"
-        aria-hidden="true"
-      />
-
-      {/* Soft edge transitions between homepage scenes */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-24 bg-gradient-to-b from-brand-ivory/80 to-transparent"
-        aria-hidden="true"
-      />
-
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-brand-ivory/80 to-transparent"
-        aria-hidden="true"
-      />
-
       <div className="page-container relative z-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl rounded-[1.5rem] border border-white/45 bg-brand-cream/68 p-5 backdrop-blur-md sm:p-7">
