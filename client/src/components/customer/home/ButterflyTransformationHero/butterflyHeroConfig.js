@@ -26,7 +26,9 @@ export const butterflyHeroConfig = {
   },
 
   preload: {
-    initialBatchSize: 12,
+    initialBatchSize: 36,
+    priorityStride: 8,
+    concurrentLoads: 8,
   },
 };
 

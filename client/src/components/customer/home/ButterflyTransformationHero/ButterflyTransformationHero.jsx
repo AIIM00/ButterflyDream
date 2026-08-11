@@ -18,20 +18,20 @@ export function ButterflyTransformationHero({ sectionRef }) {
     progress,
     loadedCount,
     failedCount,
-    isComplete,
+    isPriorityCoverageReady,
     getFrameImage,
     totalFrames,
   } = useFrameSequence({
     framePaths,
     initialBatchSize: butterflyHeroConfig.preload.initialBatchSize,
-    concurrentLoads: 6,
+    concurrentLoads: butterflyHeroConfig.preload.concurrentLoads,
+    priorityStride: butterflyHeroConfig.preload.priorityStride,
   });
-
   useButterflyScrollAnimation({
     sectionRef,
     canvasControllerRef,
     frameCount: totalFrames,
-    enabled: isComplete,
+    enabled: isPriorityCoverageReady,
     onVisibilityChange: setIsVisible,
   });
 
@@ -78,11 +78,11 @@ export function ButterflyTransformationHero({ sectionRef }) {
       </div>
 
       {/* Full-screen loader */}
-      {!isComplete && (
+      {!isPriorityCoverageReady && (
         <div className="fixed inset-0 z-[100]">
           <ButterflyHeroLoader
             progress={progress}
-            isInitialBatchReady={isComplete}
+            isInitialBatchReady={isPriorityCoverageReady}
           />
         </div>
       )}
