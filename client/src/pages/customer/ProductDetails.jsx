@@ -1,37 +1,84 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-//MUI Icons
+// MUI Icons
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
+import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
+import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 
-//Components
+// Components
 import ProductImageGallery from "../../components/catalog/ProductImageGallery.jsx";
 import StockBadge from "../../components/catalog/StockBadge.jsx";
 import VariantSelector from "../../components/catalog/VariantSelector.jsx";
 import WishlistToggleButton from "../../components/wishlist/WishlistToggleButton.jsx";
+import AddToCartSection from "../../components/cart/AddToCartSection.jsx";
 
-//Hooks
+// Hooks
 import { usePublicProduct } from "../../hooks/useCatalogData.js";
 
-//Utils
+// Utils
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
 
-import AddToCartSection from "../../components/cart/AddToCartSection.jsx";
 function ProductDetailsLoading() {
   return (
-    <section className="mx-auto grid max-w-7xl gap-12 px-5 py-12 lg:grid-cols-2 lg:px-8 lg:py-16">
-      <div className="aspect-square animate-pulse rounded-3xl bg-gray-100" />
+    <main className="min-h-screen bg-brand-ivory">
+      <section
+        className="
+          mx-auto
+          max-w-7xl
+          px-4
+          pb-20
+          pt-8
 
-      <div className="space-y-5 py-4">
-        <div className="h-4 w-28 animate-pulse rounded bg-gray-100" />
-        <div className="h-12 w-3/4 animate-pulse rounded bg-gray-200" />
-        <div className="h-7 w-32 animate-pulse rounded bg-gray-100" />
-        <div className="h-28 animate-pulse rounded bg-gray-100" />
-      </div>
-    </section>
+          sm:px-6
+          sm:pt-10
+
+          lg:px-8
+          lg:pb-28
+          lg:pt-14
+        "
+      >
+        <div className="mb-8 h-4 w-52 animate-pulse rounded-full bg-brand-cream" />
+
+        <div
+          className="
+            grid
+            gap-10
+
+            lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]
+            lg:gap-16
+          "
+        >
+          <div
+            className="
+              aspect-[4/5]
+              animate-pulse
+              rounded-[1.75rem]
+              bg-brand-cream
+
+              sm:aspect-square
+            "
+          />
+
+          <div className="space-y-5 py-2 lg:py-6">
+            <div className="h-3 w-28 animate-pulse rounded bg-brand-cream" />
+
+            <div className="h-16 w-4/5 animate-pulse rounded-xl bg-brand-cream" />
+
+            <div className="h-8 w-36 animate-pulse rounded bg-brand-cream" />
+
+            <div className="h-24 animate-pulse rounded-2xl bg-brand-cream" />
+
+            <div className="h-44 animate-pulse rounded-2xl bg-brand-cream" />
+
+            <div className="h-14 animate-pulse rounded-full bg-brand-cream" />
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
 
@@ -74,11 +121,6 @@ function ProductDetailsContent({ product }) {
       return;
     }
 
-    /*
-     * If the selected variant has no
-     * dedicated image, fall back to the
-     * primary/general product image.
-     */
     const fallbackImage =
       product.images.find((image) => image.isPrimary && !image.variantId) ??
       product.images.find((image) => !image.variantId) ??
@@ -88,60 +130,210 @@ function ProductDetailsContent({ product }) {
     setSelectedImageId(fallbackImage?.id ?? "");
   }
 
+  const displayPrice = selectedVariant
+    ? `$${selectedVariant.price}`
+    : product.pricing.hasPriceRange
+      ? `$${product.pricing.minimum} – $${product.pricing.maximum}`
+      : `$${product.pricing.minimum}`;
+
   return (
-    <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-16">
-      <nav className="mb-8 flex flex-wrap items-center gap-2 text-sm text-gray-500">
-        <Link to="/products" className="hover:text-gray-950">
-          Products
-        </Link>
+    <main className="min-h-screen bg-brand-ivory">
+      <section
+        className="
+          mx-auto
+          max-w-7xl
+          px-4
+          pb-20
+          pt-6
 
-        <span>/</span>
+          sm:px-6
+          sm:pt-8
 
-        <Link
-          to={`/products?category=${product.category.slug}`}
-          className="hover:text-gray-950"
+          lg:px-8
+          lg:pb-28
+          lg:pt-10
+        "
+      >
+        {/* BREADCRUMB */}
+        <nav
+          className="
+            mb-7
+            flex
+            flex-wrap
+            items-center
+            gap-2
+            text-[0.65rem]
+            font-semibold
+            uppercase
+            tracking-[0.14em]
+            text-brand-muted
+
+            sm:mb-9
+          "
         >
-          {product.category.name}
-        </Link>
+          <Link
+            to="/products"
+            className="
+              transition
+              hover:text-brand-espresso
+            "
+          >
+            Shop
+          </Link>
 
-        <span>/</span>
+          <span className="text-brand-border">/</span>
 
-        <span className="text-gray-800">{product.name}</span>
-      </nav>
+          <Link
+            to={`/products?category=${product.category.slug}`}
+            className="
+              transition
+              hover:text-brand-espresso
+            "
+          >
+            {product.category.name}
+          </Link>
 
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-        <ProductImageGallery
-          productName={product.name}
-          images={product.images}
-          selectedImageId={selectedImageId}
-          selectedVariantId={selectedVariantId}
-          onImageSelect={setSelectedImageId}
-        />
+          <span className="text-brand-border">/</span>
 
-        <div className="lg:py-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-gray-500">
-              {product.category.name}
-            </p>
+          <span className="max-w-[12rem] truncate text-brand-espresso sm:max-w-none">
+            {product.name}
+          </span>
+        </nav>
 
-            {product.isFeatured && (
-              <span className="rounded-full bg-gray-950 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
-                Featured
-              </span>
-            )}
+        <div
+          className="
+            grid
+            gap-10
+
+            lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]
+            lg:gap-16
+
+            xl:gap-20
+          "
+        >
+          {/* ==================================================
+              PRODUCT IMAGES
+          ================================================== */}
+          <div className="min-w-0">
+            <ProductImageGallery
+              productName={product.name}
+              images={product.images}
+              selectedImageId={selectedImageId}
+              selectedVariantId={selectedVariantId}
+              onImageSelect={setSelectedImageId}
+            />
           </div>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-gray-950 sm:text-5xl">
-                {product.name}
-              </h1>
-              <div className="mt-5 flex flex-wrap items-center gap-4">
-                <p className="text-3xl font-bold text-gray-950">
-                  {selectedVariant
-                    ? `$${selectedVariant.price}`
-                    : product.pricing.hasPriceRange
-                      ? `$${product.pricing.minimum} – $${product.pricing.maximum}`
-                      : `$${product.pricing.minimum}`}
+
+          {/* ==================================================
+              PRODUCT INFO
+          ================================================== */}
+          <div
+            className="
+              min-w-0
+
+              lg:sticky
+              lg:top-24
+              lg:self-start
+              lg:py-2
+            "
+          >
+            {/* CATEGORY / FEATURED */}
+            <div className="flex flex-wrap items-center gap-3">
+              <p
+                className="
+                  text-[0.65rem]
+                  font-bold
+                  uppercase
+                  tracking-[0.22em]
+                  text-brand-bronze
+                "
+              >
+                {product.category.name}
+              </p>
+
+              {product.isFeatured && (
+                <span
+                  className="
+                    inline-flex
+                    items-center
+                    gap-1.5
+                    rounded-full
+                    bg-brand-pale-champagne
+                    px-3
+                    py-1.5
+                    text-[0.6rem]
+                    font-bold
+                    uppercase
+                    tracking-[0.14em]
+                    text-brand-espresso
+                  "
+                >
+                  <AutoAwesomeOutlinedIcon
+                    sx={{
+                      fontSize: 14,
+                    }}
+                  />
+                  Featured
+                </span>
+              )}
+            </div>
+
+            {/* TITLE */}
+            <div className="mt-4">
+              <div
+                className="
+                  flex
+                  items-start
+                  justify-between
+                  gap-4
+                "
+              >
+                <h1
+                  className="
+                    min-w-0
+                    flex-1
+                    font-display
+                    text-[2.75rem]
+                    font-medium
+                    leading-[0.95]
+                    tracking-[-0.045em]
+                    text-brand-espresso
+
+                    sm:text-5xl
+
+                    lg:text-[3.4rem]
+                  "
+                >
+                  {product.name}
+                </h1>
+
+                <div className="shrink-0 pt-1">
+                  <WishlistToggleButton productId={product.id} showLabel />
+                </div>
+              </div>
+
+              {/* PRICE */}
+              <div
+                className="
+                  mt-6
+                  flex
+                  flex-wrap
+                  items-center
+                  gap-3
+                "
+              >
+                <p
+                  className="
+                    font-display
+                    text-3xl
+                    font-medium
+                    tracking-[-0.035em]
+                    text-brand-espresso
+
+                    sm:text-4xl
+                  "
+                >
+                  {displayPrice}
                 </p>
 
                 <StockBadge
@@ -150,65 +342,257 @@ function ProductDetailsContent({ product }) {
               </div>
             </div>
 
-            <WishlistToggleButton productId={product.id} showLabel />
-          </div>
+            {/* DESCRIPTION */}
+            {product.description && (
+              <div
+                className="
+                  mt-7
+                  border-y
+                  border-brand-border
+                  py-6
+                "
+              >
+                <p
+                  className="
+                    whitespace-pre-line
+                    text-sm
+                    leading-7
+                    text-brand-muted
 
-          {product.description && (
-            <p className="mt-7 whitespace-pre-line text-lg leading-8 text-gray-600">
-              {product.description}
-            </p>
-          )}
+                    sm:text-[0.95rem]
+                  "
+                >
+                  {product.description}
+                </p>
+              </div>
+            )}
 
-          <div className="mt-9 border-t border-gray-200 pt-8">
-            <VariantSelector
-              variants={product.variants}
-              selectedVariantId={selectedVariantId}
-              onVariantSelect={handleVariantSelect}
-            />
-          </div>
+            {/* VARIANTS */}
+            <section className="mt-7">
+              <p
+                className="
+                  mb-4
+                  text-[0.62rem]
+                  font-bold
+                  uppercase
+                  tracking-[0.18em]
+                  text-brand-bronze
+                "
+              >
+                Choose your piece
+              </p>
 
-          {selectedVariant && !selectedVariant.inStock && (
-            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-              The selected option is currently out of stock.
+              <VariantSelector
+                variants={product.variants}
+                selectedVariantId={selectedVariantId}
+                onVariantSelect={handleVariantSelect}
+              />
+            </section>
+
+            {/* OUT OF STOCK */}
+            {selectedVariant && !selectedVariant.inStock && (
+              <div
+                className="
+                  mt-5
+                  flex
+                  items-start
+                  gap-3
+                  rounded-[1.25rem]
+                  border
+                  border-red-200
+                  bg-red-50
+                  px-4
+                  py-4
+                  text-sm
+                  font-medium
+                  leading-6
+                  text-red-700
+                "
+              >
+                <ErrorOutlineRoundedIcon
+                  sx={{
+                    fontSize: 19,
+                  }}
+                  className="mt-0.5 shrink-0"
+                />
+
+                <span>
+                  The selected option is currently out of stock. You can choose
+                  another available option.
+                </span>
+              </div>
+            )}
+
+            {/* CART */}
+            <div className="mt-7">
+              <AddToCartSection selectedVariant={selectedVariant} />
             </div>
-          )}
-          <AddToCartSection selectedVariant={selectedVariant} />
-          <div className="mt-9 grid gap-4 border-t border-gray-200 pt-8 sm:grid-cols-2">
-            <div className="flex gap-3 rounded-2xl bg-gray-50 p-4">
-              <LocalShippingOutlinedIcon className="text-gray-700" />
 
-              <div>
-                <p className="font-bold text-gray-950">Delivery in Lebanon</p>
+            {/* TRUST / DELIVERY */}
+            <div
+              className="
+                mt-8
+                grid
+                gap-3
 
-                <p className="mt-1 text-sm leading-6 text-gray-500">
-                  Delivery is handled through our courier partner.
+                sm:grid-cols-2
+              "
+            >
+              <div
+                className="
+                  rounded-[1.4rem]
+                  border
+                  border-brand-border
+                  bg-brand-cream
+                  p-4
+                "
+              >
+                <span
+                  className="
+                    inline-flex
+                    h-10
+                    w-10
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-brand-pale-champagne
+                    text-brand-bronze
+                  "
+                >
+                  <LocalShippingOutlinedIcon fontSize="small" />
+                </span>
+
+                <p
+                  className="
+                    mt-4
+                    text-sm
+                    font-semibold
+                    text-brand-espresso
+                  "
+                >
+                  Delivery in Lebanon
+                </p>
+
+                <p
+                  className="
+                    mt-1
+                    text-xs
+                    leading-5
+                    text-brand-muted
+                  "
+                >
+                  Your order is prepared carefully and delivered through our
+                  courier partner.
+                </p>
+              </div>
+
+              <div
+                className="
+                  rounded-[1.4rem]
+                  border
+                  border-brand-border
+                  bg-brand-cream
+                  p-4
+                "
+              >
+                <span
+                  className="
+                    inline-flex
+                    h-10
+                    w-10
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-brand-pale-champagne
+                    text-brand-bronze
+                  "
+                >
+                  <PaymentsOutlinedIcon fontSize="small" />
+                </span>
+
+                <p
+                  className="
+                    mt-4
+                    text-sm
+                    font-semibold
+                    text-brand-espresso
+                  "
+                >
+                  Cash on delivery
+                </p>
+
+                <p
+                  className="
+                    mt-1
+                    text-xs
+                    leading-5
+                    text-brand-muted
+                  "
+                >
+                  Pay in USD when your Butterfly Dream order arrives.
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-3 rounded-2xl bg-gray-50 p-4">
-              <PaymentsOutlinedIcon className="text-gray-700" />
+            {/* SMALL CONFIDENCE STRIP */}
+            <div
+              className="
+                mt-4
+                flex
+                items-start
+                gap-3
+                rounded-[1.25rem]
+                bg-brand-espresso
+                px-4
+                py-4
+                text-brand-cream
+              "
+            >
+              <VerifiedOutlinedIcon
+                sx={{
+                  fontSize: 19,
+                }}
+                className="mt-0.5 shrink-0 text-brand-champagne"
+              />
 
               <div>
-                <p className="font-bold text-gray-950">Cash on delivery</p>
+                <p className="text-sm font-semibold">Chosen with intention.</p>
 
-                <p className="mt-1 text-sm leading-6 text-gray-500">
-                  Pay in USD when your order is delivered.
+                <p
+                  className="
+                    mt-1
+                    text-xs
+                    leading-5
+                    text-brand-cream/65
+                  "
+                >
+                  Each piece is prepared as part of your Butterfly Dream story.
                 </p>
               </div>
             </div>
-          </div>
 
-          <Link
-            to="/products"
-            className="mt-8 inline-flex items-center gap-2 font-semibold text-gray-700 hover:text-gray-950"
-          >
-            <ArrowBackRoundedIcon fontSize="small" />
-            Return to products
-          </Link>
+            {/* BACK */}
+            <Link
+              to="/products"
+              className="
+                mt-7
+                inline-flex
+                items-center
+                gap-2
+                text-sm
+                font-semibold
+                text-brand-muted
+                transition
+                hover:text-brand-espresso
+              "
+            >
+              <ArrowBackRoundedIcon fontSize="small" />
+              Back to collection
+            </Link>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
   );
 }
 
@@ -225,29 +609,110 @@ function ProductDetails() {
     const statusCode = error.response?.status;
 
     return (
-      <section className="mx-auto max-w-3xl px-5 py-20 text-center">
-        <ErrorOutlineRoundedIcon
-          className="text-gray-400"
-          sx={{
-            fontSize: 64,
-          }}
-        />
+      <main
+        className="
+          min-h-screen
+          bg-brand-ivory
+        "
+      >
+        <section
+          className="
+            mx-auto
+            max-w-2xl
+            px-4
+            py-20
+            text-center
 
-        <h1 className="mt-5 text-3xl font-bold text-gray-950">
-          {statusCode === 404 ? "Product not found" : "Unable to load product"}
-        </h1>
-
-        <p className="mt-4 text-gray-600">
-          {getApiErrorMessage(error, "The product could not be loaded.")}
-        </p>
-
-        <Link
-          to="/products"
-          className="mt-8 inline-flex rounded-xl bg-gray-950 px-6 py-3 font-semibold text-white hover:bg-gray-800"
+            sm:px-6
+            sm:py-28
+          "
         >
-          Browse products
-        </Link>
-      </section>
+          <span
+            className="
+              mx-auto
+              inline-flex
+              h-16
+              w-16
+              items-center
+              justify-center
+              rounded-full
+              bg-brand-cream
+              text-brand-bronze
+            "
+          >
+            <ErrorOutlineRoundedIcon
+              sx={{
+                fontSize: 32,
+              }}
+            />
+          </span>
+
+          <p
+            className="
+              mt-6
+              text-[0.65rem]
+              font-bold
+              uppercase
+              tracking-[0.2em]
+              text-brand-bronze
+            "
+          >
+            Butterfly Dream
+          </p>
+
+          <h1
+            className="
+              mt-3
+              font-display
+              text-4xl
+              font-medium
+              tracking-[-0.04em]
+              text-brand-espresso
+
+              sm:text-5xl
+            "
+          >
+            {statusCode === 404
+              ? "This piece could not be found."
+              : "We couldn't load this piece."}
+          </h1>
+
+          <p
+            className="
+              mx-auto
+              mt-4
+              max-w-md
+              text-sm
+              leading-7
+              text-brand-muted
+            "
+          >
+            {getApiErrorMessage(error, "The product could not be loaded.")}
+          </p>
+
+          <Link
+            to="/products"
+            className="
+              mt-8
+              inline-flex
+              items-center
+              gap-2
+              rounded-full
+              bg-brand-espresso
+              px-6
+              py-3
+              text-sm
+              font-semibold
+              text-white
+              transition
+              hover:bg-brand-emerald
+            "
+          >
+            <ArrowBackRoundedIcon fontSize="small" />
+            Browse collection
+          </Link>
+        </section>
+      </main>
     );
   }
 
