@@ -3,6 +3,40 @@
 @tailwind utilities;
 
 :root {
+  /*
+   * Default Butterfly Dream theme.
+   *
+   * These stay as the fallback theme and are also used by the admin
+   * application. The customer storefront can override them at runtime.
+   */
+
+  --brand-ivory: 248 245 241;
+  --brand-surface: 255 255 255;
+  --brand-cream: 251 248 243;
+
+  --brand-espresso: 36 29 32;
+  --brand-muted: 111 102 106;
+
+  --brand-forest: 22 59 43;
+  --brand-emerald: 11 33 24;
+
+  --brand-champagne: 201 166 107;
+  --brand-champagne-hover: 183 143 84;
+  --brand-pale-champagne: 242 232 216;
+
+  --brand-bronze: 107 74 46;
+  --brand-bronze-hover: 81 55 32;
+
+  --brand-border: 230 223 218;
+
+  --brand-success: 54 112 86;
+  --brand-error: 169 71 71;
+
+  /*
+   * Existing semantic variables.
+   *
+   * We keep these because several existing components already use them.
+   */
   --color-soft-ivory: #f8f5f1;
   --color-pure-white: #ffffff;
   --color-warm-cream: #fbf8f3;
@@ -14,6 +48,7 @@
   --color-midnight-emerald: #0b2118;
 
   --color-antique-champagne: #c9a66b;
+  --color-warm-champagne: #c9a66b;
   --color-champagne-hover: #b78f54;
   --color-pale-champagne: #f2e8d8;
 
@@ -35,6 +70,7 @@
   background-color: var(--color-soft-ivory);
 
   font-family: var(--font-body);
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 

@@ -6,42 +6,37 @@ export default {
     extend: {
       colors: {
         brand: {
-          ivory: "#F8F5F1",
-          surface: "#FFFFFF",
-          cream: "#FBF8F3",
+          ivory: "rgb(var(--brand-ivory) / <alpha-value>)",
+          surface: "rgb(var(--brand-surface) / <alpha-value>)",
+          cream: "rgb(var(--brand-cream) / <alpha-value>)",
 
-          espresso: "#241D20",
-          muted: "#6F666A",
+          espresso: "rgb(var(--brand-espresso) / <alpha-value>)",
+          muted: "rgb(var(--brand-muted) / <alpha-value>)",
 
-          forest: "#163B2B",
-          emerald: "#0B2118",
+          forest: "rgb(var(--brand-forest) / <alpha-value>)",
+          emerald: "rgb(var(--brand-emerald) / <alpha-value>)",
 
-          champagne: "#C9A66B",
-          "champagne-hover": "#B78F54",
-          "pale-champagne": "#F2E8D8",
+          champagne: "rgb(var(--brand-champagne) / <alpha-value>)",
 
-          bronze: "#6B4A2E",
-          "bronze-hover": "#513720",
+          "champagne-hover":
+            "rgb(var(--brand-champagne-hover) / <alpha-value>)",
 
-          border: "#E6DFDA",
+          "pale-champagne": "rgb(var(--brand-pale-champagne) / <alpha-value>)",
 
-          success: "#367056",
-          error: "#A94747",
+          bronze: "rgb(var(--brand-bronze) / <alpha-value>)",
+
+          "bronze-hover": "rgb(var(--brand-bronze-hover) / <alpha-value>)",
+
+          border: "rgb(var(--brand-border) / <alpha-value>)",
+
+          success: "rgb(var(--brand-success) / <alpha-value>)",
+          error: "rgb(var(--brand-error) / <alpha-value>)",
         },
       },
 
       fontFamily: {
-        display: ["Bodoni Moda", "Georgia", "serif"],
-
-        body: [
-          "Manrope",
-          "ui-sans-serif",
-          "system-ui",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          '"Segoe UI"',
-          "sans-serif",
-        ],
+        display: ["var(--font-display)"],
+        body: ["var(--font-body)"],
       },
     },
   },

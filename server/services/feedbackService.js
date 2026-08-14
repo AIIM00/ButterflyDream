@@ -1,6 +1,25 @@
 import prisma from "../src/prisma.js";
 
-const FEEDBACKS_PER_PAGE = 4;
+const DEFAULT_FEEDBACKS_PER_PAGE = 4;
+const MAX_FEEDBACKS_PER_PAGE = 8;
+
+function normalizeFeedbackLimit(value) {
+  const parsedValue = Number.parseInt(value, 10);
+
+  if (!Number.isInteger(parsedValue) || parsedValue < 1) {
+    return DEFAULT_FEEDBACKS_PER_PAGE;
+  }
+
+  return Math.min(parsedValue, MAX_FEEDBACKS_PER_PAGE);
+}
+
+function normalizeFeedbackSort(value) {
+  if (value === "highest_rating") {
+    return "highest_rating";
+  }
+
+  return "newest";
+}
 
 function createPublicCustomerName(fullName) {
   if (typeof fullName !== "string") {
@@ -48,18 +67,45 @@ function serializeCustomerFeedback(feedback) {
   };
 }
 
-export async function listPublicFeedback(page = 1) {
-  const skip = (page - 1) * FEEDBACKS_PER_PAGE;
+export async function listPublicFeedback({
+  page = 1,
+  limit = DEFAULT_FEEDBACKS_PER_PAGE,
+  sort = "newest",
+} = {}) {
+  const safeLimit = normalizeFeedbackLimit(limit);
+
+  const safeSort = normalizeFeedbackSort(sort);
+
+  const skip = (page - 1) * safeLimit;
 
   const where = {
     user: {
       is: {
         role: "CUSTOMER",
+
         status: "ACTIVE",
+
         deletedAt: null,
       },
     },
   };
+
+  const orderBy =
+    safeSort === "highest_rating"
+      ? [
+          {
+            rating: "desc",
+          },
+
+          {
+            createdAt: "desc",
+          },
+        ]
+      : [
+          {
+            createdAt: "desc",
+          },
+        ];
 
   const [feedbacks, totalFeedbacks, ratingSummary] = await prisma.$transaction([
     prisma.feedback.findMany({
@@ -79,12 +125,11 @@ export async function listPublicFeedback(page = 1) {
         },
       },
 
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy,
 
       skip,
-      take: FEEDBACKS_PER_PAGE,
+
+      take: safeLimit,
     }),
 
     prisma.feedback.count({
@@ -101,7 +146,7 @@ export async function listPublicFeedback(page = 1) {
   ]);
 
   const totalPages =
-    totalFeedbacks === 0 ? 0 : Math.ceil(totalFeedbacks / FEEDBACKS_PER_PAGE);
+    totalFeedbacks === 0 ? 0 : Math.ceil(totalFeedbacks / safeLimit);
 
   return {
     feedbacks: feedbacks.map(serializePublicFeedback),
@@ -117,9 +162,15 @@ export async function listPublicFeedback(page = 1) {
 
     pagination: {
       page,
-      limit: FEEDBACKS_PER_PAGE,
+
+      limit: safeLimit,
+
+      sort: safeSort,
+
       totalPages,
+
       hasPreviousPage: page > 1,
+
       hasNextPage: page < totalPages,
     },
   };

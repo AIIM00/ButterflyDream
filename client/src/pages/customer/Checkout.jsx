@@ -1,19 +1,33 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+
+// MUI Icons
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PaymentOutlinedIcon from "@mui/icons-material/PaymentOutlined";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
+
+// React Toastify
 import { toast } from "react-toastify";
+
+// Components
 import CheckoutAddressCard from "../../components/checkout/CheckoutAddressCard.jsx";
 import CheckoutOrderItem from "../../components/checkout/CheckoutOrderItem.jsx";
+
+// Context
 import useCart from "../../context/cart/useCart.js";
+
+// Services
 import {
   fetchCustomerCheckout,
   placeCustomerOrder,
 } from "../../services/checkoutApi.js";
+
+// Utils
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
 
 const CUSTOMER_NOTE_MAX_LENGTH = 1000;
@@ -48,15 +62,40 @@ function getCheckoutIssueMessage(summary) {
 
 function CheckoutLoading() {
   return (
-    <section className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_23rem]">
-        <div className="space-y-6">
-          <div className="h-36 animate-pulse rounded-2xl bg-gray-100" />
-          <div className="h-72 animate-pulse rounded-2xl bg-gray-100" />
-          <div className="h-52 animate-pulse rounded-2xl bg-gray-100" />
+    <section className="min-h-screen bg-brand-ivory">
+      <div
+        className="
+          mx-auto
+          max-w-7xl
+          px-4
+          py-8
+
+          sm:px-6
+          sm:py-10
+
+          lg:px-8
+          lg:py-14
+        "
+      >
+        <div className="mb-8 max-w-xl">
+          <div className="h-3 w-28 animate-pulse rounded-full bg-brand-pale-champagne" />
+
+          <div className="mt-4 h-11 w-72 animate-pulse rounded-xl bg-brand-cream" />
+
+          <div className="mt-3 h-5 w-80 max-w-full animate-pulse rounded-lg bg-brand-cream" />
         </div>
 
-        <div className="h-96 animate-pulse rounded-2xl bg-gray-100" />
+        <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_23rem]">
+          <div className="space-y-5">
+            <div className="h-72 animate-pulse rounded-[1.75rem] bg-brand-cream" />
+
+            <div className="h-80 animate-pulse rounded-[1.75rem] bg-brand-cream" />
+
+            <div className="h-52 animate-pulse rounded-[1.75rem] bg-brand-cream" />
+          </div>
+
+          <div className="h-[30rem] animate-pulse rounded-[1.75rem] bg-brand-cream" />
+        </div>
       </div>
     </section>
   );
@@ -64,6 +103,7 @@ function CheckoutLoading() {
 
 function Checkout() {
   const navigate = useNavigate();
+
   const location = useLocation();
 
   const { reloadCart } = useCart();
@@ -110,6 +150,7 @@ function Checkout() {
         if (isAuthenticationError(error)) {
           navigate("/login", {
             replace: true,
+
             state: {
               from: `${location.pathname}${location.search}`,
             },
@@ -154,6 +195,7 @@ function Checkout() {
       if (isAuthenticationError(error)) {
         navigate("/login", {
           replace: true,
+
           state: {
             from: "/checkout",
           },
@@ -188,7 +230,7 @@ function Checkout() {
         setSelectedAddressId(response.checkout.defaultAddressId ?? "");
       }
     } catch {
-      // The original order error remains visible through the toast.
+      // Keep the original order error visible through the toast.
     }
   }
 
@@ -214,6 +256,7 @@ function Checkout() {
 
       navigate(`/checkout/success/${response.order.id}`, {
         replace: true,
+
         state: {
           order: response.order,
         },
@@ -235,30 +278,119 @@ function Checkout() {
 
   if (checkoutState.status === "error") {
     return (
-      <section className="mx-auto max-w-3xl px-5 py-20 text-center">
-        <ErrorOutlineRoundedIcon
-          className="text-red-500"
-          sx={{
-            fontSize: 64,
-          }}
-        />
+      <section
+        className="
+          flex
+          min-h-[70vh]
+          items-center
+          bg-brand-ivory
+          px-4
+          py-12
 
-        <h1 className="mt-5 text-3xl font-bold text-gray-950">
-          Checkout could not be loaded
-        </h1>
+          sm:px-6
+        "
+      >
+        <div
+          className="
+            mx-auto
+            w-full
+            max-w-2xl
+            rounded-[2rem]
+            border
+            border-brand-error/20
+            bg-brand-surface
+            px-6
+            py-12
+            text-center
 
-        <p className="mt-4 text-gray-600">
-          {getApiErrorMessage(checkoutState.error, "Unable to load checkout.")}
-        </p>
-
-        <button
-          type="button"
-          onClick={() => void handleRetry()}
-          className="mt-8 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-6 py-3 font-semibold text-white"
+            sm:px-10
+          "
         >
-          <RefreshRoundedIcon />
-          Try again
-        </button>
+          <span
+            className="
+              mx-auto
+              inline-flex
+              h-16
+              w-16
+              items-center
+              justify-center
+              rounded-full
+              bg-brand-error/10
+              text-brand-error
+            "
+          >
+            <ErrorOutlineRoundedIcon
+              sx={{
+                fontSize: 32,
+              }}
+            />
+          </span>
+
+          <p
+            className="
+              mt-6
+              text-[0.65rem]
+              font-bold
+              uppercase
+              tracking-[0.2em]
+              text-brand-bronze
+            "
+          >
+            Checkout
+          </p>
+
+          <h1
+            className="
+              mt-2
+              font-display
+              text-4xl
+              font-medium
+              tracking-[-0.04em]
+              text-brand-espresso
+            "
+          >
+            Checkout could not be loaded.
+          </h1>
+
+          <p
+            className="
+              mx-auto
+              mt-4
+              max-w-lg
+              text-sm
+              leading-7
+              text-brand-muted
+            "
+          >
+            {getApiErrorMessage(
+              checkoutState.error,
+              "Unable to load checkout.",
+            )}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => void handleRetry()}
+            className="
+              mt-7
+              inline-flex
+              items-center
+              gap-2
+              rounded-full
+              bg-brand-espresso
+              px-6
+              py-3
+              text-sm
+              font-semibold
+              text-white
+              transition
+              hover:bg-brand-emerald
+            "
+          >
+            <RefreshRoundedIcon fontSize="small" />
+            Try again
+          </button>
+        </div>
       </section>
     );
   }
@@ -280,254 +412,854 @@ function Checkout() {
 
   if (items.length === 0) {
     return (
-      <section className="mx-auto max-w-3xl px-5 py-20 text-center">
-        <h1 className="text-3xl font-bold text-gray-950">Your cart is empty</h1>
+      <section
+        className="
+          flex
+          min-h-[70vh]
+          items-center
+          bg-brand-ivory
+          px-4
+          py-12
 
-        <p className="mt-4 text-gray-600">
-          Add products to your cart before starting checkout.
-        </p>
+          sm:px-6
+        "
+      >
+        <div
+          className="
+            mx-auto
+            w-full
+            max-w-2xl
+            rounded-[2rem]
+            border
+            border-brand-border
+            bg-brand-cream
+            px-6
+            py-12
+            text-center
 
-        <Link
-          to="/products"
-          className="mt-8 inline-flex rounded-xl bg-gray-950 px-6 py-3 font-semibold text-white"
+            sm:px-10
+            sm:py-16
+          "
         >
-          Browse products
-        </Link>
+          <span
+            className="
+              mx-auto
+              inline-flex
+              h-16
+              w-16
+              items-center
+              justify-center
+              rounded-full
+              bg-brand-surface
+              text-brand-bronze
+              shadow-sm
+            "
+          >
+            <ShoppingBagOutlinedIcon
+              sx={{
+                fontSize: 31,
+              }}
+            />
+          </span>
+
+          <p
+            className="
+              mt-6
+              text-[0.65rem]
+              font-bold
+              uppercase
+              tracking-[0.2em]
+              text-brand-bronze
+            "
+          >
+            Checkout
+          </p>
+
+          <h1
+            className="
+              mt-2
+              font-display
+              text-4xl
+              font-medium
+              tracking-[-0.04em]
+              text-brand-espresso
+
+              sm:text-5xl
+            "
+          >
+            Your cart is empty.
+          </h1>
+
+          <p
+            className="
+              mx-auto
+              mt-4
+              max-w-lg
+              text-sm
+              leading-7
+              text-brand-muted
+            "
+          >
+            Choose the pieces you love before continuing to checkout.
+          </p>
+
+          <Link
+            to="/products"
+            className="
+              mt-8
+              inline-flex
+              items-center
+              rounded-full
+              bg-brand-espresso
+              px-6
+              py-3
+              text-sm
+              font-semibold
+              text-white
+              transition
+              hover:bg-brand-emerald
+            "
+          >
+            Browse products
+          </Link>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">
-          Secure checkout
-        </p>
+    <section className="min-h-screen bg-brand-ivory">
+      <div
+        className="
+          mx-auto
+          max-w-7xl
+          px-4
+          pb-16
+          pt-7
 
-        <h1 className="mt-3 text-4xl font-bold tracking-tight text-gray-950">
-          Complete your order
-        </h1>
+          sm:px-6
+          sm:pt-10
 
-        <p className="mt-3 max-w-2xl leading-7 text-gray-600">
-          Review your delivery address and order details before placing your
-          cash-on-delivery order.
-        </p>
-      </header>
+          lg:px-8
+          lg:pb-24
+          lg:pt-14
+        "
+      >
+        {/* HEADER */}
+        <header className="max-w-3xl">
+          <Link
+            to="/cart"
+            className="
+              inline-flex
+              items-center
+              gap-1
+              text-xs
+              font-semibold
+              text-brand-muted
+              transition
+              hover:text-brand-espresso
+            "
+          >
+            <ArrowBackRoundedIcon
+              sx={{
+                fontSize: 17,
+              }}
+            />
+            Back to cart
+          </Link>
 
-      {!checkout.ordersEnabled && (
-        <div className="mt-8 flex gap-3 rounded-2xl border border-red-200 bg-red-50 p-5 text-red-800">
-          <WarningAmberRoundedIcon className="shrink-0" />
+          <p
+            className="
+              mt-5
+              text-[0.65rem]
+              font-bold
+              uppercase
+              tracking-[0.22em]
+              text-brand-bronze
+            "
+          >
+            Secure checkout
+          </p>
 
-          <div>
-            <h2 className="font-bold">Orders are temporarily unavailable</h2>
+          <h1
+            className="
+              mt-3
+              font-display
+              text-[2.65rem]
+              font-medium
+              leading-[0.95]
+              tracking-[-0.045em]
+              text-brand-espresso
 
-            <p className="mt-1 text-sm leading-6">
-              The store is not currently accepting new orders.
-            </p>
-          </div>
-        </div>
-      )}
+              sm:text-5xl
 
-      {issueMessage && (
-        <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-3">
-            <WarningAmberRoundedIcon className="shrink-0 text-amber-700" />
+              lg:text-6xl
+            "
+          >
+            Complete your order.
+          </h1>
+
+          <p
+            className="
+              mt-4
+              max-w-2xl
+              text-sm
+              leading-7
+              text-brand-muted
+
+              sm:text-base
+            "
+          >
+            Choose where your pieces should be delivered, review your order, and
+            place your cash-on-delivery request.
+          </p>
+        </header>
+
+        {/* ORDERS DISABLED */}
+        {!checkout.ordersEnabled && (
+          <div
+            className="
+              mt-7
+              flex
+              gap-3
+              rounded-[1.5rem]
+              border
+              border-brand-error/20
+              bg-brand-error/5
+              p-5
+            "
+          >
+            <WarningAmberRoundedIcon className="shrink-0 text-brand-error" />
 
             <div>
-              <h2 className="font-bold text-amber-900">
-                Your cart requires attention
+              <h2 className="font-semibold text-brand-error">
+                Orders are temporarily unavailable
               </h2>
 
-              <p className="mt-1 text-sm leading-6 text-amber-800">
-                {issueMessage}
+              <p className="mt-1 text-sm leading-6 text-brand-muted">
+                The store is not currently accepting new orders.
               </p>
             </div>
           </div>
+        )}
 
-          <Link
-            to="/cart"
-            className="shrink-0 rounded-xl bg-amber-800 px-5 py-2.5 text-center text-sm font-semibold text-white"
+        {/* CHECKOUT ISSUE */}
+        {issueMessage && (
+          <div
+            className="
+              mt-5
+              flex
+              flex-col
+              gap-4
+              rounded-[1.5rem]
+              border
+              border-amber-200
+              bg-amber-50
+              p-5
+
+              sm:flex-row
+              sm:items-center
+              sm:justify-between
+            "
           >
-            Review cart
-          </Link>
-        </div>
-      )}
-
-      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_23rem]">
-        <div className="space-y-8">
-          <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-700">
-                <LocalShippingOutlinedIcon />
-              </span>
+            <div className="flex gap-3">
+              <WarningAmberRoundedIcon className="shrink-0 text-amber-700" />
 
               <div>
-                <h2 className="text-xl font-bold text-gray-950">
-                  Delivery address
+                <h2 className="font-semibold text-amber-950">
+                  Your cart needs attention
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-500">
-                  Select where your order should be delivered.
+                <p className="mt-1 text-sm leading-6 text-amber-800">
+                  {issueMessage}
                 </p>
               </div>
             </div>
 
-            {addresses.length > 0 ? (
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {addresses.map((address) => (
-                  <CheckoutAddressCard
-                    key={address.id}
-                    address={address}
-                    selected={selectedAddressId === address.id}
-                    disabled={isSubmitting}
-                    onSelect={setSelectedAddressId}
-                  />
+            <Link
+              to="/cart"
+              className="
+                w-fit
+                shrink-0
+                rounded-full
+                bg-amber-900
+                px-5
+                py-2.5
+                text-center
+                text-sm
+                font-semibold
+                text-white
+              "
+            >
+              Review cart
+            </Link>
+          </div>
+        )}
+
+        <div
+          className="
+            mt-9
+            grid
+            gap-7
+
+            lg:grid-cols-[minmax(0,1fr)_23rem]
+
+            xl:gap-10
+          "
+        >
+          {/* MAIN */}
+          <div className="space-y-6">
+            {/* ADDRESS */}
+            <section
+              className="
+                rounded-[1.75rem]
+                border
+                border-brand-border
+                bg-brand-surface
+                p-5
+
+                sm:p-6
+              "
+            >
+              <div className="flex items-start gap-4">
+                <span
+                  className="
+                    inline-flex
+                    h-11
+                    w-11
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-brand-pale-champagne
+                    text-brand-bronze
+                  "
+                >
+                  <LocalShippingOutlinedIcon fontSize="small" />
+                </span>
+
+                <div>
+                  <p
+                    className="
+                      text-[0.6rem]
+                      font-bold
+                      uppercase
+                      tracking-[0.18em]
+                      text-brand-bronze
+                    "
+                  >
+                    Step 1
+                  </p>
+
+                  <h2
+                    className="
+                      mt-1
+                      font-display
+                      text-2xl
+                      font-medium
+                      tracking-[-0.03em]
+                      text-brand-espresso
+
+                      sm:text-3xl
+                    "
+                  >
+                    Delivery address
+                  </h2>
+
+                  <p className="mt-1 text-sm leading-6 text-brand-muted">
+                    Select where your Butterfly Dream order should be delivered.
+                  </p>
+                </div>
+              </div>
+
+              {addresses.length > 0 ? (
+                <div
+                  className="
+                    mt-6
+                    grid
+                    gap-4
+
+                    md:grid-cols-2
+                  "
+                >
+                  {addresses.map((address) => (
+                    <CheckoutAddressCard
+                      key={address.id}
+                      address={address}
+                      selected={selectedAddressId === address.id}
+                      disabled={isSubmitting}
+                      onSelect={setSelectedAddressId}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className="
+                    mt-6
+                    rounded-[1.25rem]
+                    border
+                    border-amber-200
+                    bg-amber-50
+                    p-5
+                  "
+                >
+                  <h3 className="font-semibold text-amber-950">
+                    No saved delivery address
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-amber-800">
+                    Add an address to your account before placing your order.
+                  </p>
+
+                  <Link
+                    to="/account"
+                    className="
+                      mt-4
+                      inline-flex
+                      rounded-full
+                      bg-amber-900
+                      px-4
+                      py-2.5
+                      text-sm
+                      font-semibold
+                      text-white
+                    "
+                  >
+                    Go to account
+                  </Link>
+                </div>
+              )}
+            </section>
+
+            {/* ORDER ITEMS */}
+            <section
+              className="
+                rounded-[1.75rem]
+                border
+                border-brand-border
+                bg-brand-surface
+                p-5
+
+                sm:p-6
+              "
+            >
+              <div className="flex items-start gap-4">
+                <span
+                  className="
+                    inline-flex
+                    h-11
+                    w-11
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-brand-pale-champagne
+                    text-brand-bronze
+                  "
+                >
+                  <ShoppingBagOutlinedIcon fontSize="small" />
+                </span>
+
+                <div>
+                  <p
+                    className="
+                      text-[0.6rem]
+                      font-bold
+                      uppercase
+                      tracking-[0.18em]
+                      text-brand-bronze
+                    "
+                  >
+                    Step 2
+                  </p>
+
+                  <h2
+                    className="
+                      mt-1
+                      font-display
+                      text-2xl
+                      font-medium
+                      tracking-[-0.03em]
+                      text-brand-espresso
+
+                      sm:text-3xl
+                    "
+                  >
+                    Review your pieces
+                  </h2>
+
+                  <p className="mt-1 text-sm leading-6 text-brand-muted">
+                    Check your selected products and quantities before placing
+                    the order.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                {items.map((item) => (
+                  <CheckoutOrderItem key={item.id} item={item} />
                 ))}
               </div>
-            ) : (
-              <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5">
-                <h3 className="font-bold text-amber-900">
-                  No saved delivery address
-                </h3>
+            </section>
 
-                <p className="mt-2 text-sm leading-6 text-amber-800">
-                  Add a delivery address to your customer account before placing
-                  an order.
-                </p>
+            {/* DELIVERY NOTE */}
+            <section
+              className="
+                rounded-[1.75rem]
+                border
+                border-brand-border
+                bg-brand-surface
+                p-5
 
-                <Link
-                  to="/account"
-                  className="mt-4 inline-flex rounded-xl bg-amber-800 px-4 py-2.5 text-sm font-semibold text-white"
-                >
-                  Go to account
-                </Link>
-              </div>
-            )}
-          </section>
-
-          <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-gray-950">Order items</h2>
-
-            <p className="mt-1 text-sm text-gray-500">
-              Review your selected products and quantities.
-            </p>
-
-            <div className="mt-4">
-              {items.map((item) => (
-                <CheckoutOrderItem key={item.id} item={item} />
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <label
-              htmlFor="customer-note"
-              className="text-xl font-bold text-gray-950"
+                sm:p-6
+              "
             >
-              Delivery note
-            </label>
-
-            <p className="mt-1 text-sm text-gray-500">
-              Optional instructions for the store or courier.
-            </p>
-
-            <textarea
-              id="customer-note"
-              value={customerNote}
-              onChange={(event) => setCustomerNote(event.target.value)}
-              maxLength={CUSTOMER_NOTE_MAX_LENGTH}
-              rows={5}
-              disabled={isSubmitting}
-              placeholder="Example: Please call me before delivery."
-              className="mt-5 w-full resize-y rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-gray-950 focus:ring-2 focus:ring-gray-950/10 disabled:bg-gray-100"
-            />
-
-            <p className="mt-2 text-right text-xs text-gray-500">
-              {customerNote.length}/{CUSTOMER_NOTE_MAX_LENGTH}
-            </p>
-          </section>
-        </div>
-
-        <aside className="h-fit rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:sticky lg:top-24">
-          <h2 className="text-xl font-bold text-gray-950">Order summary</h2>
-
-          <div className="mt-6 space-y-4 border-b border-gray-200 pb-6">
-            <div className="flex justify-between gap-4 text-gray-600">
-              <span>Items ({summary?.totalQuantity ?? 0})</span>
-
-              <span className="font-semibold text-gray-950">
-                ${summary?.subtotal ?? "0.00"}
-              </span>
-            </div>
-
-            <div className="flex justify-between gap-4 text-gray-600">
-              <span>Delivery fee</span>
-
-              <span className="font-semibold text-gray-950">
-                ${summary?.deliveryFee ?? "0.00"}
-              </span>
-            </div>
-
-            <div className="flex justify-between gap-4 text-gray-600">
-              <span>Discount</span>
-
-              <span className="font-semibold text-gray-950">
-                -${summary?.discountAmount ?? "0.00"}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex justify-between gap-4 pt-6">
-            <span className="text-lg font-bold text-gray-950">Total</span>
-
-            <span className="text-2xl font-bold text-gray-950">
-              ${summary?.totalAmount ?? "0.00"}
-            </span>
-          </div>
-
-          <div className="mt-6 rounded-xl bg-gray-50 p-4">
-            <div className="flex items-center gap-3">
-              <PaymentOutlinedIcon className="text-gray-600" />
-
               <div>
-                <p className="font-semibold text-gray-950">Cash on delivery</p>
+                <p
+                  className="
+                    text-[0.6rem]
+                    font-bold
+                    uppercase
+                    tracking-[0.18em]
+                    text-brand-bronze
+                  "
+                >
+                  Optional
+                </p>
 
-                <p className="mt-1 text-xs leading-5 text-gray-500">
-                  Pay when your order is delivered.
+                <label
+                  htmlFor="customer-note"
+                  className="
+                    mt-1
+                    block
+                    font-display
+                    text-2xl
+                    font-medium
+                    tracking-[-0.03em]
+                    text-brand-espresso
+
+                    sm:text-3xl
+                  "
+                >
+                  Delivery note
+                </label>
+
+                <p className="mt-1 text-sm leading-6 text-brand-muted">
+                  Add any useful instructions for the store or courier.
                 </p>
               </div>
-            </div>
+
+              <textarea
+                id="customer-note"
+                value={customerNote}
+                onChange={(event) => setCustomerNote(event.target.value)}
+                maxLength={CUSTOMER_NOTE_MAX_LENGTH}
+                rows={5}
+                disabled={isSubmitting}
+                placeholder="Example: Please call me before delivery."
+                className="
+                  mt-5
+                  w-full
+                  resize-y
+                  rounded-[1.25rem]
+                  border
+                  border-brand-border
+                  bg-brand-cream
+                  px-4
+                  py-3
+                  text-sm
+                  text-brand-espresso
+                  outline-none
+                  transition
+                  placeholder:text-brand-muted/60
+                  focus:border-brand-bronze
+                  focus:ring-2
+                  focus:ring-brand-bronze/10
+                  disabled:opacity-60
+                "
+              />
+
+              <p className="mt-2 text-right text-xs text-brand-muted">
+                {customerNote.length}/{CUSTOMER_NOTE_MAX_LENGTH}
+              </p>
+            </section>
           </div>
 
-          <button
-            type="button"
-            onClick={() => void handlePlaceOrder()}
-            disabled={!canSubmit}
-            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3.5 font-bold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+          {/* SUMMARY */}
+          <aside
+            className="
+              h-fit
+              overflow-hidden
+              rounded-[1.75rem]
+              bg-brand-espresso
+              text-brand-cream
+
+              lg:sticky
+              lg:top-24
+            "
           >
-            <LockOutlinedIcon fontSize="small" />
+            <div className="px-5 pb-6 pt-6 sm:px-6">
+              <p
+                className="
+                  text-[0.62rem]
+                  font-bold
+                  uppercase
+                  tracking-[0.2em]
+                  text-brand-champagne
+                "
+              >
+                Order summary
+              </p>
 
-            {isSubmitting ? "Placing order..." : "Place order"}
-          </button>
+              <h2
+                className="
+                  mt-2
+                  font-display
+                  text-3xl
+                  font-medium
+                  tracking-[-0.035em]
+                "
+              >
+                Almost yours.
+              </h2>
 
-          {!selectedAddressId && (
-            <p className="mt-3 text-center text-xs leading-5 text-red-600">
-              Select a delivery address before placing your order.
-            </p>
-          )}
+              <div
+                className="
+                  mt-6
+                  space-y-4
+                  border-b
+                  border-white/10
+                  pb-6
+                "
+              >
+                <div className="flex justify-between gap-4 text-sm text-brand-cream/65">
+                  <span>Items ({summary?.totalQuantity ?? 0})</span>
 
-          <p className="mt-4 text-center text-xs leading-5 text-gray-500">
-            Product prices and inventory are checked again before the order is
-            confirmed.
-          </p>
+                  <span className="font-semibold text-brand-cream">
+                    ${summary?.subtotal ?? "0.00"}
+                  </span>
+                </div>
 
-          <Link
-            to="/cart"
-            className="mt-5 block text-center text-sm font-semibold text-gray-700 hover:text-gray-950"
-          >
-            Return to cart
-          </Link>
-        </aside>
+                <div className="flex justify-between gap-4 text-sm text-brand-cream/65">
+                  <span>Delivery</span>
+
+                  <span className="font-semibold text-brand-cream">
+                    ${summary?.deliveryFee ?? "0.00"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between gap-4 text-sm text-brand-cream/65">
+                  <span>Discount</span>
+
+                  <span className="font-semibold text-brand-cream">
+                    -$
+                    {summary?.discountAmount ?? "0.00"}
+                  </span>
+                </div>
+              </div>
+
+              <div
+                className="
+                  flex
+                  items-end
+                  justify-between
+                  gap-4
+                  pt-6
+                "
+              >
+                <span className="text-sm font-medium text-brand-cream/70">
+                  Total
+                </span>
+
+                <span
+                  className="
+                    font-display
+                    text-3xl
+                    font-medium
+                    tracking-[-0.035em]
+
+                    sm:text-4xl
+                  "
+                >
+                  ${summary?.totalAmount ?? "0.00"}
+                </span>
+              </div>
+
+              {/* PAYMENT */}
+              <div
+                className="
+                  mt-6
+                  rounded-[1.25rem]
+                  border
+                  border-white/10
+                  bg-white/5
+                  p-4
+                "
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className="
+                      inline-flex
+                      h-9
+                      w-9
+                      shrink-0
+                      items-center
+                      justify-center
+                      rounded-full
+                      bg-brand-champagne/10
+                      text-brand-champagne
+                    "
+                  >
+                    <PaymentOutlinedIcon fontSize="small" />
+                  </span>
+
+                  <div>
+                    <p className="text-sm font-semibold text-brand-cream">
+                      Cash on delivery
+                    </p>
+
+                    <p className="mt-0.5 text-xs leading-5 text-brand-cream/50">
+                      Pay when your order arrives.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void handlePlaceOrder()}
+                disabled={!canSubmit}
+                className="
+                  mt-6
+                  inline-flex
+                  w-full
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-full
+                  bg-brand-champagne
+                  px-5
+                  py-3.5
+                  text-sm
+                  font-bold
+                  text-brand-espresso
+                  transition
+                  hover:bg-brand-champagne-hover
+                  disabled:cursor-not-allowed
+                  disabled:bg-white/10
+                  disabled:text-white/35
+                "
+              >
+                <LockOutlinedIcon fontSize="small" />
+
+                {isSubmitting ? "Placing order..." : "Place order"}
+              </button>
+
+              {!selectedAddressId && (
+                <p className="mt-3 text-center text-xs leading-5 text-red-300">
+                  Select a delivery address before placing your order.
+                </p>
+              )}
+
+              {!summary?.canPlaceOrder && selectedAddressId && (
+                <p className="mt-3 text-center text-xs leading-5 text-red-300">
+                  Resolve the cart issues before placing your order.
+                </p>
+              )}
+
+              <p
+                className="
+                  mt-4
+                  text-center
+                  text-[0.65rem]
+                  leading-5
+                  text-brand-cream/45
+                "
+              >
+                Product prices and inventory are checked again before your order
+                is confirmed.
+              </p>
+
+              <Link
+                to="/cart"
+                className="
+                  mt-5
+                  flex
+                  items-center
+                  justify-center
+                  gap-1
+                  text-xs
+                  font-semibold
+                  text-brand-cream/65
+                  transition
+                  hover:text-brand-champagne
+                "
+              >
+                <ArrowBackRoundedIcon
+                  sx={{
+                    fontSize: 16,
+                  }}
+                />
+                Return to cart
+              </Link>
+            </div>
+
+            {/* TRUST STRIP */}
+            <div
+              className="
+                grid
+                grid-cols-2
+                border-t
+                border-white/10
+                bg-black/10
+              "
+            >
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  border-r
+                  border-white/10
+                  px-4
+                  py-4
+                "
+              >
+                <LockOutlinedIcon
+                  sx={{
+                    fontSize: 16,
+                  }}
+                  className="text-brand-champagne"
+                />
+
+                <span className="text-[0.62rem] font-semibold leading-4 text-brand-cream/60">
+                  Secure order
+                </span>
+              </div>
+
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  px-4
+                  py-4
+                "
+              >
+                <LocalShippingOutlinedIcon
+                  sx={{
+                    fontSize: 17,
+                  }}
+                  className="text-brand-champagne"
+                />
+
+                <span className="text-[0.62rem] font-semibold leading-4 text-brand-cream/60">
+                  Delivery details
+                </span>
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
     </section>
   );

@@ -5,12 +5,23 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
+
+// MUI Icons
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import ImageNotSupportedOutlinedIcon from "@mui/icons-material/ImageNotSupportedOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+
+// Components
 import OrderStatusBadge from "../../components/orders/OrderStatusBadge.jsx";
+
+// Services
 import { fetchCustomerOrders } from "../../services/customerApi.js";
+
+// Utils
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
 
 const ORDER_STATUS_OPTIONS = [
@@ -54,6 +65,7 @@ function formatStatusLabel(status) {
 
 function Orders() {
   const navigate = useNavigate();
+
   const location = useLocation();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -106,8 +118,11 @@ function Orders() {
 
         setOrderState({
           requestKey,
+
           orders: response.orders ?? [],
+
           pagination: response.pagination ?? null,
+
           error: null,
         });
       } catch (error) {
@@ -118,6 +133,7 @@ function Orders() {
         if (isAuthenticationError(error)) {
           navigate("/login", {
             replace: true,
+
             state: {
               from: `${location.pathname}${location.search}`,
             },
@@ -178,236 +194,843 @@ function Orders() {
     });
   }
 
+  const hasFilters = Boolean(status) || sort === "oldest";
+
   return (
-    <section className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">
-          Customer account
-        </p>
+    <section className="min-h-screen bg-brand-ivory">
+      <div
+        className="
+          mx-auto
+          max-w-7xl
+          px-4
+          pb-16
+          pt-7
 
-        <h1 className="mt-3 text-4xl font-bold tracking-tight text-gray-950">
-          My orders
-        </h1>
+          sm:px-6
+          sm:pt-10
 
-        <p className="mt-3 text-gray-600">
-          Review your previous and current orders.
-        </p>
-      </header>
-
-      <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 sm:flex-row">
-        <label className="flex-1">
-          <span className="text-sm font-semibold text-gray-700">Status</span>
-
-          <select
-            value={status}
-            onChange={handleStatusChange}
-            className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
+          lg:px-8
+          lg:pb-24
+          lg:pt-14
+        "
+      >
+        {/* PAGE HEADER */}
+        <header className="max-w-2xl">
+          <p
+            className="
+              text-[0.65rem]
+              font-bold
+              uppercase
+              tracking-[0.22em]
+              text-brand-bronze
+            "
           >
-            {ORDER_STATUS_OPTIONS.map((option) => (
-              <option key={option || "all"} value={option}>
-                {formatStatusLabel(option)}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex-1">
-          <span className="text-sm font-semibold text-gray-700">Sort</span>
-
-          <select
-            value={sort}
-            onChange={handleSortChange}
-            className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
-          >
-            <option value="newest">Newest first</option>
-
-            <option value="oldest">Oldest first</option>
-          </select>
-        </label>
-      </div>
-
-      {isLoading && (
-        <div className="mt-8 space-y-5">
-          {Array.from({
-            length: 3,
-          }).map((_, index) => (
-            <div
-              key={index}
-              className="h-64 animate-pulse rounded-2xl bg-gray-100"
-            />
-          ))}
-        </div>
-      )}
-
-      {!isLoading && orderState.error && (
-        <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
-          <ErrorOutlineRoundedIcon
-            className="text-red-500"
-            sx={{
-              fontSize: 52,
-            }}
-          />
-
-          <h2 className="mt-4 text-xl font-bold text-red-900">
-            Orders could not be loaded
-          </h2>
-
-          <p className="mt-2 text-red-700">
-            {getApiErrorMessage(orderState.error, "Unable to load orders.")}
+            Your Butterfly Dream
           </p>
 
-          <button
-            type="button"
-            onClick={() =>
-              setOrderState((currentState) => ({
-                ...currentState,
-                requestKey: null,
-              }))
-            }
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-700 px-5 py-2.5 font-semibold text-white"
+          <h1
+            className="
+              mt-3
+              font-display
+              text-[2.65rem]
+              font-medium
+              leading-[0.95]
+              tracking-[-0.045em]
+              text-brand-espresso
+
+              sm:text-5xl
+
+              lg:text-6xl
+            "
           >
-            <RefreshRoundedIcon />
-            Try again
-          </button>
-        </div>
-      )}
+            My orders
+          </h1>
 
-      {!isLoading && !orderState.error && orderState.orders.length === 0 && (
-        <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-12 text-center">
-          <Inventory2OutlinedIcon
-            className="text-gray-400"
-            sx={{
-              fontSize: 56,
-            }}
-          />
+          <p
+            className="
+              mt-4
+              max-w-xl
+              text-sm
+              leading-7
+              text-brand-muted
 
-          <h2 className="mt-4 text-2xl font-bold text-gray-950">
-            No orders found
-          </h2>
-
-          <p className="mt-2 text-gray-600">
-            Your matching orders will appear here.
+              sm:text-base
+            "
+          >
+            Follow your current orders and revisit the pieces that have already
+            become part of your story.
           </p>
+        </header>
 
-          <Link
-            to="/products"
-            className="mt-6 inline-flex rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white"
+        {/* FILTERS */}
+        <section
+          className="
+            mt-8
+            overflow-hidden
+            rounded-[1.75rem]
+            border
+            border-brand-border
+            bg-brand-surface
+          "
+        >
+          <div
+            className="
+              flex
+              items-center
+              gap-3
+              border-b
+              border-brand-border
+              px-5
+              py-4
+
+              sm:px-6
+            "
           >
-            Start shopping
-          </Link>
-        </div>
-      )}
-
-      {!isLoading && !orderState.error && orderState.orders.length > 0 && (
-        <div className="mt-8 space-y-5">
-          {orderState.orders.map((order) => (
-            <article
-              key={order.id}
-              className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+            <span
+              className="
+                inline-flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                rounded-full
+                bg-brand-pale-champagne
+                text-brand-bronze
+              "
             >
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Order</p>
-
-                  <h2 className="mt-1 text-lg font-bold text-gray-950">
-                    {order.orderNumber}
-                  </h2>
-
-                  <p className="mt-2 text-sm text-gray-500">
-                    {formatDate(order.createdAt)}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                  <OrderStatusBadge status={order.status} />
-
-                  <span className="text-xl font-bold text-gray-950">
-                    ${order.totalAmount}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-5 flex gap-3 overflow-x-auto border-y border-gray-100 py-5">
-                {order.previewItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100"
-                  >
-                    {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt={item.productName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-full items-center justify-center text-gray-400">
-                        <ImageNotSupportedOutlinedIcon />
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-sm text-gray-600">
-                  <p>
-                    {order.itemCount}{" "}
-                    {order.itemCount === 1 ? "product" : "products"}
-                  </p>
-
-                  <p className="mt-1">
-                    Delivery to {order.deliveryLocation.city},{" "}
-                    {order.deliveryLocation.governorate}
-                  </p>
-                </div>
-
-                <Link
-                  to={`/orders/${order.id}`}
-                  className="rounded-xl bg-gray-950 px-5 py-2.5 text-center text-sm font-semibold text-white"
-                >
-                  View order
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-
-      {!isLoading &&
-        orderState.pagination &&
-        orderState.pagination.totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-4">
-            <button
-              type="button"
-              onClick={() =>
-                updateFilters({
-                  page: page - 1,
-                })
-              }
-              disabled={!orderState.pagination.hasPreviousPage}
-              className="rounded-xl border border-gray-300 px-5 py-2.5 font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Previous
-            </button>
-
-            <span className="text-sm font-semibold text-gray-600">
-              Page {page} of {orderState.pagination.totalPages}
+              <FilterAltOutlinedIcon fontSize="small" />
             </span>
 
+            <div>
+              <p
+                className="
+                  text-[0.6rem]
+                  font-bold
+                  uppercase
+                  tracking-[0.18em]
+                  text-brand-bronze
+                "
+              >
+                Refine
+              </p>
+
+              <h2
+                className="
+                  font-display
+                  text-xl
+                  font-medium
+                  tracking-[-0.025em]
+                  text-brand-espresso
+                "
+              >
+                Find an order
+              </h2>
+            </div>
+          </div>
+
+          <div
+            className="
+              grid
+              gap-4
+              p-5
+
+              sm:grid-cols-2
+              sm:p-6
+            "
+          >
+            <label>
+              <span
+                className="
+                  text-xs
+                  font-semibold
+                  text-brand-espresso
+                "
+              >
+                Status
+              </span>
+
+              <select
+                value={status}
+                onChange={handleStatusChange}
+                className="
+                  mt-2
+                  w-full
+                  rounded-[1rem]
+                  border
+                  border-brand-border
+                  bg-brand-cream
+                  px-4
+                  py-3
+                  text-sm
+                  text-brand-espresso
+                  outline-none
+                  transition
+                  focus:border-brand-bronze
+                  focus:ring-2
+                  focus:ring-brand-bronze/10
+                "
+              >
+                {ORDER_STATUS_OPTIONS.map((option) => (
+                  <option key={option || "all"} value={option}>
+                    {formatStatusLabel(option)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span
+                className="
+                  text-xs
+                  font-semibold
+                  text-brand-espresso
+                "
+              >
+                Sort
+              </span>
+
+              <select
+                value={sort}
+                onChange={handleSortChange}
+                className="
+                  mt-2
+                  w-full
+                  rounded-[1rem]
+                  border
+                  border-brand-border
+                  bg-brand-cream
+                  px-4
+                  py-3
+                  text-sm
+                  text-brand-espresso
+                  outline-none
+                  transition
+                  focus:border-brand-bronze
+                  focus:ring-2
+                  focus:ring-brand-bronze/10
+                "
+              >
+                <option value="newest">Newest first</option>
+
+                <option value="oldest">Oldest first</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        {/* LOADING */}
+        {isLoading && (
+          <div className="mt-7 space-y-5">
+            {Array.from({
+              length: 3,
+            }).map((_, index) => (
+              <div
+                key={index}
+                className="
+                    h-64
+                    animate-pulse
+                    rounded-[1.75rem]
+                    border
+                    border-brand-border
+                    bg-brand-cream
+                  "
+              />
+            ))}
+          </div>
+        )}
+
+        {/* ERROR */}
+        {!isLoading && orderState.error && (
+          <div
+            className="
+                mt-7
+                rounded-[1.75rem]
+                border
+                border-brand-error/20
+                bg-brand-surface
+                px-6
+                py-12
+                text-center
+              "
+          >
+            <span
+              className="
+                  mx-auto
+                  inline-flex
+                  h-16
+                  w-16
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-brand-error/10
+                  text-brand-error
+                "
+            >
+              <ErrorOutlineRoundedIcon
+                sx={{
+                  fontSize: 32,
+                }}
+              />
+            </span>
+
+            <h2
+              className="
+                  mt-5
+                  font-display
+                  text-3xl
+                  font-medium
+                  tracking-[-0.035em]
+                  text-brand-espresso
+                "
+            >
+              Orders could not be loaded.
+            </h2>
+
+            <p
+              className="
+                  mx-auto
+                  mt-3
+                  max-w-lg
+                  text-sm
+                  leading-7
+                  text-brand-muted
+                "
+            >
+              {getApiErrorMessage(orderState.error, "Unable to load orders.")}
+            </p>
+
             <button
               type="button"
               onClick={() =>
-                updateFilters({
-                  page: page + 1,
-                })
+                setOrderState((currentState) => ({
+                  ...currentState,
+
+                  requestKey: null,
+                }))
               }
-              disabled={!orderState.pagination.hasNextPage}
-              className="rounded-xl border border-gray-300 px-5 py-2.5 font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="
+                  mt-6
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-full
+                  bg-brand-espresso
+                  px-5
+                  py-3
+                  text-sm
+                  font-semibold
+                  text-white
+                  transition
+                  hover:bg-brand-emerald
+                "
             >
-              Next
+              <RefreshRoundedIcon fontSize="small" />
+              Try again
             </button>
           </div>
         )}
+
+        {/* EMPTY */}
+        {!isLoading && !orderState.error && orderState.orders.length === 0 && (
+          <div
+            className="
+                mt-7
+                rounded-[1.75rem]
+                border
+                border-dashed
+                border-brand-border
+                bg-brand-cream
+                px-6
+                py-14
+                text-center
+
+                sm:py-16
+              "
+          >
+            <span
+              className="
+                  mx-auto
+                  inline-flex
+                  h-16
+                  w-16
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-brand-surface
+                  text-brand-bronze
+                  shadow-sm
+                "
+            >
+              <Inventory2OutlinedIcon
+                sx={{
+                  fontSize: 30,
+                }}
+              />
+            </span>
+
+            <p
+              className="
+                  mt-6
+                  text-[0.62rem]
+                  font-bold
+                  uppercase
+                  tracking-[0.2em]
+                  text-brand-bronze
+                "
+            >
+              Your orders
+            </p>
+
+            <h2
+              className="
+                  mt-2
+                  font-display
+                  text-3xl
+                  font-medium
+                  tracking-[-0.035em]
+                  text-brand-espresso
+
+                  sm:text-4xl
+                "
+            >
+              No orders found.
+            </h2>
+
+            <p
+              className="
+                  mx-auto
+                  mt-3
+                  max-w-lg
+                  text-sm
+                  leading-7
+                  text-brand-muted
+                "
+            >
+              {hasFilters
+                ? "No orders match the filters you selected."
+                : "When you place your first Butterfly Dream order, it will appear here."}
+            </p>
+
+            {hasFilters ? (
+              <button
+                type="button"
+                onClick={() => setSearchParams(new URLSearchParams())}
+                className="
+                    mt-7
+                    inline-flex
+                    rounded-full
+                    border
+                    border-brand-espresso
+                    px-6
+                    py-3
+                    text-sm
+                    font-semibold
+                    text-brand-espresso
+                    transition
+                    hover:bg-brand-espresso
+                    hover:text-white
+                  "
+              >
+                Clear filters
+              </button>
+            ) : (
+              <Link
+                to="/products"
+                className="
+                    mt-7
+                    inline-flex
+                    items-center
+                    gap-2
+                    rounded-full
+                    bg-brand-espresso
+                    px-6
+                    py-3
+                    text-sm
+                    font-semibold
+                    text-white
+                    transition
+                    hover:bg-brand-emerald
+                  "
+              >
+                Start shopping
+                <ArrowForwardRoundedIcon fontSize="small" />
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* ORDERS */}
+        {!isLoading && !orderState.error && orderState.orders.length > 0 && (
+          <section className="mt-8">
+            <div
+              className="
+                  mb-4
+                  flex
+                  items-end
+                  justify-between
+                  gap-4
+                "
+            >
+              <div>
+                <p
+                  className="
+                      text-[0.62rem]
+                      font-bold
+                      uppercase
+                      tracking-[0.18em]
+                      text-brand-bronze
+                    "
+                >
+                  Order history
+                </p>
+
+                <h2
+                  className="
+                      mt-1
+                      font-display
+                      text-2xl
+                      font-medium
+                      tracking-[-0.03em]
+                      text-brand-espresso
+
+                      sm:text-3xl
+                    "
+                >
+                  Your purchases
+                </h2>
+              </div>
+
+              {orderState.pagination?.total !== undefined && (
+                <span
+                  className="
+                      rounded-full
+                      bg-brand-pale-champagne
+                      px-3
+                      py-1.5
+                      text-[0.65rem]
+                      font-bold
+                      uppercase
+                      tracking-[0.12em]
+                      text-brand-bronze
+                    "
+                >
+                  {orderState.pagination.total} orders
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              {orderState.orders.map((order) => (
+                <article
+                  key={order.id}
+                  className="
+                        overflow-hidden
+                        rounded-[1.75rem]
+                        border
+                        border-brand-border
+                        bg-brand-surface
+                        transition
+                        hover:border-brand-champagne/70
+                      "
+                >
+                  {/* ORDER TOP */}
+                  <div
+                    className="
+                          flex
+                          flex-col
+                          gap-5
+                          px-5
+                          py-5
+
+                          sm:flex-row
+                          sm:items-start
+                          sm:justify-between
+                          sm:px-6
+                        "
+                  >
+                    <div>
+                      <p
+                        className="
+                              text-[0.62rem]
+                              font-bold
+                              uppercase
+                              tracking-[0.17em]
+                              text-brand-bronze
+                            "
+                      >
+                        Order
+                      </p>
+
+                      <h3
+                        className="
+                              mt-1
+                              font-display
+                              text-2xl
+                              font-medium
+                              tracking-[-0.03em]
+                              text-brand-espresso
+                            "
+                      >
+                        {order.orderNumber}
+                      </h3>
+
+                      <p
+                        className="
+                              mt-2
+                              text-xs
+                              text-brand-muted
+                            "
+                      >
+                        {formatDate(order.createdAt)}
+                      </p>
+                    </div>
+
+                    <div
+                      className="
+                            flex
+                            flex-wrap
+                            items-center
+                            gap-3
+
+                            sm:justify-end
+                          "
+                    >
+                      <OrderStatusBadge status={order.status} />
+
+                      <span
+                        className="
+                              font-display
+                              text-2xl
+                              font-medium
+                              tracking-[-0.03em]
+                              text-brand-espresso
+                            "
+                      >
+                        ${order.totalAmount}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* PRODUCT PREVIEW */}
+                  <div
+                    className="
+                          border-y
+                          border-brand-border
+                          bg-brand-cream/40
+                          px-5
+                          py-4
+
+                          sm:px-6
+                        "
+                  >
+                    <div
+                      className="
+                            flex
+                            gap-3
+                            overflow-x-auto
+                            pb-1
+                          "
+                    >
+                      {order.previewItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="
+                                  h-20
+                                  w-20
+                                  shrink-0
+                                  overflow-hidden
+                                  rounded-[1rem]
+                                  bg-brand-cream
+
+                                  sm:h-24
+                                  sm:w-24
+                                "
+                        >
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.productName}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span
+                              className="
+                                      flex
+                                      h-full
+                                      items-center
+                                      justify-center
+                                      text-brand-muted/50
+                                    "
+                            >
+                              <ImageNotSupportedOutlinedIcon fontSize="small" />
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ORDER FOOTER */}
+                  <div
+                    className="
+                          flex
+                          flex-col
+                          gap-5
+                          px-5
+                          py-5
+
+                          sm:flex-row
+                          sm:items-center
+                          sm:justify-between
+                          sm:px-6
+                        "
+                  >
+                    <div
+                      className="
+                            space-y-2
+                            text-sm
+                            text-brand-muted
+                          "
+                    >
+                      <p>
+                        <span className="font-semibold text-brand-espresso">
+                          {order.itemCount}
+                        </span>{" "}
+                        {order.itemCount === 1 ? "piece" : "pieces"}
+                      </p>
+
+                      <div className="flex items-start gap-2">
+                        <LocalShippingOutlinedIcon
+                          sx={{
+                            fontSize: 17,
+                            marginTop: "2px",
+                          }}
+                          className="shrink-0 text-brand-bronze"
+                        />
+
+                        <p>
+                          Delivery to{" "}
+                          <span className="font-medium text-brand-espresso">
+                            {order.deliveryLocation.city},{" "}
+                            {order.deliveryLocation.governorate}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <Link
+                      to={`/orders/${order.id}`}
+                      className="
+                            inline-flex
+                            w-fit
+                            items-center
+                            justify-center
+                            gap-2
+                            rounded-full
+                            bg-brand-espresso
+                            px-5
+                            py-2.5
+                            text-sm
+                            font-semibold
+                            text-white
+                            transition
+                            hover:bg-brand-emerald
+                          "
+                    >
+                      View order
+                      <ArrowForwardRoundedIcon fontSize="small" />
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* PAGINATION */}
+        {!isLoading &&
+          orderState.pagination &&
+          orderState.pagination.totalPages > 1 && (
+            <div
+              className="
+                mt-8
+                flex
+                flex-wrap
+                items-center
+                justify-center
+                gap-3
+              "
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  updateFilters({
+                    page: page - 1,
+                  })
+                }
+                disabled={!orderState.pagination.hasPreviousPage}
+                className="
+                  rounded-full
+                  border
+                  border-brand-border
+                  bg-brand-surface
+                  px-5
+                  py-2.5
+                  text-sm
+                  font-semibold
+                  text-brand-espresso
+                  transition
+                  hover:border-brand-espresso
+                  disabled:cursor-not-allowed
+                  disabled:opacity-40
+                "
+              >
+                Previous
+              </button>
+
+              <span
+                className="
+                  rounded-full
+                  bg-brand-pale-champagne
+                  px-4
+                  py-2.5
+                  text-xs
+                  font-semibold
+                  text-brand-bronze
+                "
+              >
+                Page {page} of {orderState.pagination.totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateFilters({
+                    page: page + 1,
+                  })
+                }
+                disabled={!orderState.pagination.hasNextPage}
+                className="
+                  rounded-full
+                  border
+                  border-brand-border
+                  bg-brand-surface
+                  px-5
+                  py-2.5
+                  text-sm
+                  font-semibold
+                  text-brand-espresso
+                  transition
+                  hover:border-brand-espresso
+                  disabled:cursor-not-allowed
+                  disabled:opacity-40
+                "
+              >
+                Next
+              </button>
+            </div>
+          )}
+      </div>
     </section>
   );
 }

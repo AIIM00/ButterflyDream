@@ -13,6 +13,7 @@ import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import ShoppingBagRoundedIcon from "@mui/icons-material/ShoppingBagRounded";
 import WarehouseRoundedIcon from "@mui/icons-material/WarehouseRounded";
 import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
+import WebRoundedIcon from "@mui/icons-material/WebRounded";
 const adminNavigation = [
   {
     label: "Dashboard",
@@ -53,6 +54,11 @@ const adminNavigation = [
     label: "Notifications",
     path: "/admin/notifications",
     icon: NotificationsRoundedIcon,
+  },
+  {
+    label: "Website",
+    path: "/admin/website",
+    icon: WebRoundedIcon,
   },
   {
     label: "Settings",

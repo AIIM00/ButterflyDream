@@ -125,10 +125,41 @@ function CategoriesLoading() {
   );
 }
 
-function HomeCategories() {
+function HomeCategories(content) {
   const { categories, isLoading, error } = usePublicCategories();
 
-  const visibleCategories = categories.slice(0, 8);
+  const categoryIds = Array.isArray(content?.categoryIds)
+    ? content.categoryIds
+    : [];
+
+  const categoryById = new Map(
+    categories.map((category) => [category.id, category]),
+  );
+
+  const visibleCategories =
+    categoryIds.length > 0
+      ? categoryIds
+          .map((categoryId) => categoryById.get(categoryId))
+          .filter(Boolean)
+          .slice(0, 8)
+      : categories.slice(0, 8);
+
+  const eyebrow = content?.eyebrow || "Explore the collection";
+
+  const title = content?.title || "Find the piece that feels like you.";
+
+  const description =
+    content?.description ||
+    "Move through our collections and discover accessories designed for everyday expression, meaningful moments, and personal transformation.";
+
+  const buttonText = content?.buttonText || "View all categories";
+
+  const buttonUrl =
+    typeof content?.buttonUrl === "string" &&
+    content.buttonUrl.startsWith("/") &&
+    !content.buttonUrl.startsWith("//")
+      ? content.buttonUrl
+      : "/products";
 
   return (
     <section
@@ -140,26 +171,37 @@ function HomeCategories() {
       <div className="page-container relative z-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl rounded-[1.5rem] border border-white/45 bg-brand-cream/68 p-5 backdrop-blur-md sm:p-7">
-            <p className="eyebrow-text">Explore the collection</p>
+            {eyebrow && <p className="eyebrow-text">{eyebrow}</p>}
 
             <h2 id="home-categories-title" className="section-heading mt-4">
-              Find the piece that feels like you.
+              {title}
             </h2>
 
-            <p className="body-large mt-5 max-w-xl">
-              Move through our collections and discover accessories designed for
-              everyday expression, meaningful moments, and personal
-              transformation.
-            </p>
+            {description && (
+              <p className="body-large mt-5 max-w-xl">{description}</p>
+            )}
           </div>
 
-          <Link
-            to="/products"
-            className="button-base button-outline hidden w-fit shrink-0 rounded-full bg-brand-cream/80 backdrop-blur-md sm:inline-flex"
-          >
-            View all categories
-            <ArrowForwardRoundedIcon fontSize="small" />
-          </Link>
+          {buttonText && (
+            <Link
+              to={buttonUrl}
+              className="
+      button-base
+      button-outline
+      hidden
+      w-fit
+      shrink-0
+      rounded-full
+      bg-brand-cream/80
+      backdrop-blur-md
+      sm:inline-flex
+    "
+            >
+              {buttonText}
+
+              <ArrowForwardRoundedIcon fontSize="small" />
+            </Link>
+          )}
         </div>
 
         {isLoading && <CategoriesLoading />}
@@ -213,15 +255,25 @@ function HomeCategories() {
           </div>
         )}
 
-        <div className="mt-8 flex justify-center sm:hidden">
-          <Link
-            to="/products"
-            className="button-base button-outline w-fit rounded-full bg-brand-cream/80 backdrop-blur-md"
-          >
-            View all categories
-            <ArrowForwardRoundedIcon fontSize="small" />
-          </Link>
-        </div>
+        {buttonText && (
+          <div className="mt-8 flex justify-center sm:hidden">
+            <Link
+              to={buttonUrl}
+              className="
+        button-base
+        button-outline
+        w-fit
+        rounded-full
+        bg-brand-cream/80
+        backdrop-blur-md
+      "
+            >
+              {buttonText}
+
+              <ArrowForwardRoundedIcon fontSize="small" />
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

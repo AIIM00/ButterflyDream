@@ -703,6 +703,47 @@ export async function getPublicProducts(filters) {
   };
 }
 
+export async function getPublicProductsByIds(productIds) {
+  if (!Array.isArray(productIds) || productIds.length === 0) {
+    return [];
+  }
+
+  const uniqueProductIds = [...new Set(productIds)];
+
+  const products = await prisma.product.findMany({
+    where: {
+      id: {
+        in: uniqueProductIds,
+      },
+
+      status: "ACTIVE",
+
+      archivedAt: null,
+
+      category: {
+        is: {
+          isActive: true,
+        },
+      },
+
+      variants: {
+        some: activeVariantWhere,
+      },
+    },
+
+    select: productCardSelect,
+  });
+
+  const productById = new Map(products.map((product) => [product.id, product]));
+
+  /*
+   * Preserve the exact order chosen by admin.
+   */
+  return uniqueProductIds
+    .map((productId) => productById.get(productId))
+    .filter(Boolean)
+    .map(serializeProductCard);
+}
 export async function getPublicProductBySlug(slug) {
   const product = await prisma.product.findFirst({
     where: {

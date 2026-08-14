@@ -27,6 +27,12 @@ import adminOrderRoutes from "../routes/adminOrder.routes.js";
 import adminProductRoutes from "../routes/adminProduct.routes.js";
 import adminStoreSettingRoutes from "../routes/adminStoreSetting.routes.js";
 import adminInStoreSaleRouter from "../routes/adminInStoreSale.routes.js";
+import adminSiteRoutes from "../routes/adminSite.routes.js";
+import popupEventRoutes from "../routes/popupEvent.routes.js";
+import adminPopupEventRoutes from "../routes/adminPopupEvent.routes.js";
+//site routes
+import siteRoutes from "../routes/site.routes.js";
+
 const app = express();
 
 applySecurityMiddleware(app);
@@ -60,10 +66,13 @@ app.get("/api/health", async (request, response, next) => {
 // Authentication and customer routes
 app.use("/api/auth", authRoutes);
 app.use("/api/catalog", catalogRoutes);
+app.use("/api/popups", popupEventRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/feedback", feedbackRoutes);
+
+app.use("/api/site", siteRoutes);
 
 // Admin routes
 app.use("/api/admin/dashboard", adminDashboardRoutes);
@@ -72,6 +81,9 @@ app.use("/api/admin/categories", adminCategoryRoutes);
 app.use("/api/admin/products", adminProductRoutes);
 app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/api/admin/in-store-sales", adminInStoreSaleRouter);
+app.use("/api/admin/popups", adminPopupEventRoutes);
+
+app.use("/api/admin/site", adminSiteRoutes);
 // 404 handler
 app.use((request, response) => {
   return response.status(404).json({

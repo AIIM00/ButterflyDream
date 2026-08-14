@@ -31,8 +31,7 @@ const publicNavigation = [
 ];
 
 const desktopIconClass =
-  "relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-transparent text-[#241D20] transition-colors duration-200 hover:border-[#E6DFDA] hover:bg-[#F8F5F1] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50";
-
+  "relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-transparent text-brand-espresso transition-colors duration-200 hover:border-brand-border hover:bg-brand-ivory focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50";
 function formatCount(count) {
   return count > 99 ? "99+" : count;
 }
@@ -43,17 +42,19 @@ function getFirstName(user) {
 
 function getDesktopNavigationClass({ isActive }) {
   return [
-    "group relative inline-flex min-h-11 items-center px-1 font-[Manrope] text-[0.72rem] font-semibold uppercase tracking-[0.18em] transition-colors duration-200",
-    isActive ? "text-[#241D20]" : "text-[#756C70] hover:text-[#241D20]",
+    "group relative inline-flex min-h-11 items-center px-1 font-body text-[0.72rem] font-semibold uppercase tracking-[0.18em] transition-colors duration-200",
+    isActive
+      ? "text-brand-espresso"
+      : "text-brand-muted hover:text-brand-espresso",
   ].join(" ");
 }
 
 function getMobileNavigationClass({ isActive }) {
   return [
-    "flex min-h-12 items-center justify-content border-b px-1 py-3 font-[Manrope] text-[0.95rem] font-semibold transition-colors duration-200",
+    "flex min-h-12 items-center justify-content border-b px-1 py-3 font-body text-[0.95rem] font-semibold transition-colors duration-200",
     isActive
-      ? "border-[#E2C79C] text-[#241D20]"
-      : "border-[#E6DFDA] text-[#756C70] hover:text-[#241D20]",
+      ? "border-brand-champagne text-brand-espresso"
+      : "border-brand-border text-brand-muted hover:text-brand-espresso",
   ].join(" ");
 }
 
@@ -63,11 +64,11 @@ function HeaderBadge({ count, tone = "dark" }) {
   }
 
   const toneClass =
-    tone === "red" ? "bg-[#A94747] text-white" : "bg-[#5B4632] text-white";
+    tone === "red" ? "bg-brand-error text-white" : "bg-brand-bronze text-white";
 
   return (
     <span
-      className={`absolute -right-0.5 -top-0.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 font-[Manrope] text-[9px] font-bold leading-none ${toneClass}`}
+      className={`absolute -right-0.5 -top-0.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 font-body text-[9px] font-bold leading-none ${toneClass}`}
       aria-hidden="true"
     >
       {formatCount(count)}
@@ -81,7 +82,7 @@ function MobileMenuCount({ count }) {
   }
 
   return (
-    <span className="flex min-h-6 min-w-6 items-center justify-center rounded-full bg-[#F2E8D8] px-2 text-xs font-bold text-[#5B4632]">
+    <span className="flex min-h-6 min-w-6 items-center justify-center rounded-full bg-brand-pale-champagne px-2 text-xs font-bold text-brand-bronze">
       {formatCount(count)}
     </span>
   );
@@ -124,7 +125,7 @@ function CustomerHeader() {
 
   return (
     <header
-      className="sticky top-0 z-40 border-b border-[#E6DFDA] bg-[#FBF8F3]/95 font-[Manrope] text-[#241D20] backdrop-blur-md"
+      className="sticky top-0 z-40 border-b border-brand-border bg-brand-cream/95 font-body text-brand-espresso backdrop-blur-md"
       onKeyDown={handleHeaderKeyDown}
     >
       <div className="mx-auto flex h-[72px] max-w-7xl items-center px-5 sm:px-8 lg:h-[84px] lg:px-12">
@@ -145,7 +146,7 @@ function CustomerHeader() {
                     <span>{label}</span>
 
                     <span
-                      className={`absolute inset-x-1 bottom-1 h-px origin-left bg-[#E2C79C] transition-transform duration-200 ${
+                      className={`absolute inset-x-1 bottom-1 h-px origin-left bg-brand-champagne transition-transform duration-200 ${
                         isActive
                           ? "scale-x-100"
                           : "scale-x-0 group-hover:scale-x-100"
@@ -164,10 +165,10 @@ function CustomerHeader() {
             className="inline-flex flex-col min-h-11 min-w-0 items-center lg:hidden"
             aria-label="Butterfly Dream home"
           >
-            <span className="truncate font-['Bodoni_Moda'] text-[1.55rem] font-medium leading-none tracking-[-0.025em] text-[#241D20] sm:text-[1.75rem] py-0.5">
+            <span className="truncate font-display text-[1.55rem] font-medium leading-none tracking-[-0.025em] text-brand-espresso sm:text-[1.75rem] py-0.5">
               Butterfly <span className="italic">Dream</span>
             </span>
-            <span className="mt-1.5 font-[Manrope] text-[0.56rem] font-semibold uppercase tracking-[0.34em] text-[#756C70]">
+            <span className="mt-1.5 font-body text-[0.56rem] font-semibold uppercase tracking-[0.34em] text-brand-muted">
               Jewelry &amp; Accessories
             </span>
           </Link>
@@ -179,11 +180,11 @@ function CustomerHeader() {
           className="hidden min-h-11 shrink-0 flex-col items-center justify-center px-4 lg:flex lg:basis-1/3"
           aria-label="Butterfly Dream home"
         >
-          <span className="font-['Bodoni_Moda'] text-[2rem] font-medium leading-none tracking-[-0.03em] text-[#241D20] xl:text-[2.15rem]">
+          <span className="font-display text-[2rem] font-medium leading-none tracking-[-0.03em] text-brand-espresso xl:text-[2.15rem]">
             Butterfly <span className="italic">Dream</span>
           </span>
 
-          <span className="mt-1.5 font-[Manrope] text-[0.56rem] font-semibold uppercase tracking-[0.34em] text-[#756C70]">
+          <span className="mt-1.5 font-body text-[0.56rem] font-semibold uppercase tracking-[0.34em] text-brand-muted">
             Jewelry &amp; Accessories
           </span>
         </Link>
@@ -232,7 +233,7 @@ function CustomerHeader() {
               {isCustomer ? (
                 <Link
                   to="/account"
-                  className="hidden min-h-11 items-center gap-2 border-l border-[#E6DFDA] pl-4 text-sm font-semibold text-[#241D20] transition-colors hover:text-[#5B4632] lg:flex"
+                  className="hidden min-h-11 items-center gap-2 border-l border-brand-border pl-4 text-sm font-semibold text-brand-espresso transition-colors hover:text-brand-bronze lg:flex"
                   aria-label={`Open ${customerFirstName}'s account`}
                 >
                   <PersonOutlineRoundedIcon fontSize="small" />
@@ -244,7 +245,7 @@ function CustomerHeader() {
                   type="button"
                   onClick={() => void handleCustomerLogout()}
                   disabled={isLoggingOut}
-                  className="hidden min-h-11 items-center justify-center border border-[#E6DFDA] px-4 text-sm font-semibold text-[#241D20] transition-colors hover:border-[#5B4632] hover:text-[#5B4632] disabled:cursor-not-allowed disabled:opacity-50 lg:inline-flex"
+                  className="hidden min-h-11 items-center justify-center border border-brand-border px-4 text-sm font-semibold text-brand-espresso transition-colors hover:border-brand-bronze hover:text-brand-bronze disabled:cursor-not-allowed disabled:opacity-50 lg:inline-flex"
                 >
                   {isLoggingOut ? "Signing out..." : "Sign out"}
                 </button>
@@ -252,14 +253,14 @@ function CustomerHeader() {
                 <div className="hidden items-center gap-2 lg:flex">
                   <Link
                     to="/login"
-                    className="inline-flex min-h-11 items-center px-3 text-sm font-semibold text-[#241D20] transition-colors hover:text-[#5B4632]"
+                    className="inline-flex min-h-11 items-center px-3 text-sm font-semibold text-brand-espresso transition-colors hover:text-brand-bronze"
                   >
                     Sign in
                   </Link>
 
                   <Link
                     to="/register"
-                    className="inline-flex min-h-11 items-center justify-center bg-[#5B4632] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#463526]"
+                    className="inline-flex min-h-11 items-center justify-center bg-brand-bronze px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-bronze-hover"
                   >
                     Create account
                   </Link>
@@ -272,7 +273,7 @@ function CustomerHeader() {
                   onClick={() => void handleCustomerLogout()}
                   disabled={isLoggingOut}
                   aria-label="Log out"
-                  className={`${desktopIconClass} hidden lg:inline-flex hover:border-[#A94747]/30 hover:bg-[#A94747]/5 hover:text-[#A94747]`}
+                  className={`${desktopIconClass} hidden lg:inline-flex hover:border-brand-error/30 hover:bg-brand-error/5 hover:text-brand-error`}
                 >
                   <LogoutRoundedIcon fontSize="small" />
                 </button>
@@ -291,7 +292,7 @@ function CustomerHeader() {
             }
             aria-controls="customer-mobile-navigation"
             aria-expanded={isMobileMenuOpen}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#E6DFDA] text-[#241D20] transition-colors hover:border-[#E2C79C] hover:bg-white focus-visible:outline-none lg:hidden"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-brand-border text-brand-espresso transition-colors hover:border-brand-champagne hover:bg-brand-surface focus-visible:outline-none lg:hidden"
           >
             {isMobileMenuOpen ? (
               <CloseRoundedIcon fontSize="small" />
@@ -305,16 +306,16 @@ function CustomerHeader() {
       {isMobileMenuOpen && (
         <div
           id="customer-mobile-navigation"
-          className="max-h-[calc(100dvh-72px)] overflow-y-auto border-t border-[#E6DFDA] bg-[#FBF8F3] lg:hidden"
+          className="max-h-[calc(100dvh-72px)] overflow-y-auto border-t border-brand-border bg-brand-cream lg:hidden"
         >
           <div className="mx-auto max-w-7xl px-5 pb-7 pt-4 sm:px-8">
             {isCustomer && (
-              <div className="mb-4 border-b border-[#E6DFDA] pb-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#756C70]">
+              <div className="mb-4 border-b border-brand-border pb-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">
                   Welcome back
                 </p>
 
-                <p className="mt-1 font-['Bodoni_Moda'] text-2xl font-medium text-[#241D20]">
+                <p className="mt-1 font-display text-2xl font-medium text-brand-espresso">
                   {customerFirstName}
                 </p>
               </div>
@@ -394,13 +395,13 @@ function CustomerHeader() {
         gap-2
         rounded-full
         border
-        border-[#A94747]/45
+        border-brand-error/45
         px-5
         text-sm
         font-semibold
-        text-[#A94747]
+        text-brand-error
         transition-colors
-        hover:bg-[#A94747]/5
+        hover:bg-brand-error/5
         disabled:cursor-not-allowed
         disabled:opacity-50
       "
@@ -422,11 +423,11 @@ function CustomerHeader() {
           justify-center
           rounded-full
           border
-          border-[#5B4632]
+          border-brand-bronze
           px-8
           text-sm
           font-semibold
-          text-[#5B4632]
+          text-brand-bronze
           transition-colors
           hover:bg-white
         "
@@ -444,13 +445,13 @@ function CustomerHeader() {
           items-center
           justify-center
           rounded-full
-          bg-[#5B4632]
+          bg-brand-bronze
           px-8
           text-sm
           font-semibold
           text-white
           transition-colors
-          hover:bg-[#463526]
+          hover:bg-brand-bronze-hover
         "
                       >
                         Create account
@@ -461,7 +462,7 @@ function CustomerHeader() {
               </div>
             )}
 
-            <p className="mt-6 text-center text-xs leading-5 text-[#756C70]">
+            <p className="mt-6 text-center text-xs leading-5 text-brand-muted">
               Thoughtful accessories for every transformation.
             </p>
           </div>

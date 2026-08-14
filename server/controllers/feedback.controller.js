@@ -17,15 +17,40 @@ function parseFeedbackPage(value) {
 
   return Math.min(parsedPage, 100000);
 }
+function parseFeedbackLimit(value) {
+  const parsedLimit = Number.parseInt(value, 10);
 
+  if (!Number.isInteger(parsedLimit) || parsedLimit < 1) {
+    return 4;
+  }
+
+  return Math.min(parsedLimit, 8);
+}
+
+function parseFeedbackSort(value) {
+  if (value === "highest_rating") {
+    return "highest_rating";
+  }
+
+  return "newest";
+}
 export async function listFeedback(request, response, next) {
   try {
     const page = parseFeedbackPage(request.query.page);
 
-    const result = await listPublicFeedback(page);
+    const limit = parseFeedbackLimit(request.query.limit);
+
+    const sort = parseFeedbackSort(request.query.sort);
+
+    const result = await listPublicFeedback({
+      page,
+      limit,
+      sort,
+    });
 
     return response.status(200).json({
       success: true,
+
       ...result,
     });
   } catch (error) {

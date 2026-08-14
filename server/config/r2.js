@@ -34,6 +34,12 @@ const categoryPrefix = (process.env.R2_CATEGORY_PREFIX?.trim() || "categories")
   .replace(/^\/+/, "")
   .replace(/\/+$/, "");
 
+const siteMediaPrefix = (
+  process.env.R2_SITE_MEDIA_PREFIX?.trim() || "site/media"
+)
+  .replace(/^\/+/, "")
+  .replace(/\/+$/, "");
+
 const r2Client = new S3Client({
   region: "auto",
 
@@ -59,4 +65,5 @@ export {
   productPrefix,
   publicBaseUrl,
   r2Client,
+  siteMediaPrefix,
 };

@@ -5,23 +5,63 @@ export function ButterflyHeroLoader({ progress, isInitialBatchReady }) {
 
   return (
     <div
-      className="absolute inset-0 z-20 flex items-center justify-center bg-[#F7F3EC]"
+      className="
+        absolute
+        inset-0
+        flex
+        items-center
+        justify-center
+
+        bg-gradient-to-l
+        from-[#F7F3EC]
+        via-[#F7F3EC]/90
+        to-transparent
+      "
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="flex w-full max-w-64 flex-col items-center gap-4 px-6 text-center">
+      <div
+        className="
+          mr-[8vw]
+          flex
+          w-full
+          max-w-44
+          flex-col
+          items-center
+          gap-3
+          text-center
+
+          sm:max-w-52
+          lg:max-w-56
+        "
+      >
         <div className="h-px w-full overflow-hidden bg-black/10">
           <div
-            className="h-full bg-[#355E4A] transition-[width] duration-300"
-            style={{ width: `${progress}%` }}
+            className="
+              h-full
+              bg-[#355E4A]
+              transition-[width]
+              duration-300
+            "
+            style={{
+              width: `${progress}%`,
+            }}
           />
         </div>
 
-        <p className="text-sm font-medium tracking-wide text-[#355E4A]">
+        <p
+          className="
+            text-[0.65rem]
+            font-medium
+            uppercase
+            tracking-[0.16em]
+            text-[#355E4A]
+          "
+        >
           Preparing the transformation
         </p>
 
-        <span className="text-xs text-black/55">{progress}%</span>
+        <span className="text-[0.65rem] text-black/45">{progress}%</span>
       </div>
     </div>
   );

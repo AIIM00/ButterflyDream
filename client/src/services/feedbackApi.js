@@ -1,10 +1,16 @@
 import apiClient from "./apiClient.js";
 
-export async function fetchFeedbacks(page = 1, { signal } = {}) {
+export async function fetchFeedbacks(
+  page = 1,
+  { signal, limit = 4, sort = "newest" } = {},
+) {
   const response = await apiClient.get("/feedback", {
     params: {
       page,
+      limit,
+      sort,
     },
+
     signal,
   });
 

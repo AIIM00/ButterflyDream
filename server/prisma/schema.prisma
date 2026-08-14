@@ -87,6 +87,22 @@ enum InventoryMovementType {
   RETURN
 }
 
+enum HomeSectionType {
+  ANNOUNCEMENT_BAR
+  OPENING_SLIDER
+  TRANSFORMATION_STORY
+  CATEGORIES
+  FEATURED_PRODUCTS
+  COLLECTIONS
+  FEEDBACK
+  IMAGE_TEXT
+  IMAGE_BANNER
+}
+enum PopupEventStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
 // ======================================================
 // Users and Authentication
 // ======================================================
@@ -118,7 +134,10 @@ model User {
   orderStatusChanges OrderStatusHistory[] @relation("OrderStatusChangedBy")
   inStoreSales       InStoreSale[]        @relation("InStoreSaleRecordedBy")
   inventoryMovements InventoryMovement[]  @relation("InventoryMovementCreatedBy")
-
+  popupEventsCreated   PopupEvent[]           @relation("PopupEventCreatedBy")
+  popupEventLikes      PopupEventLike[]
+  popupEventAttendances PopupEventAttendance[]
+  popupEventComments   PopupEventComment[]
   @@index([role, status])
   @@index([status, createdAt])
 }
@@ -265,15 +284,20 @@ model ProductVariant {
 }
 
 model Feedback {
-  id      String @id @default(cuid())
-  rating  Int
+  id String @id @default(cuid())
+
+  rating Int
+
   comment String
 
   userId String @unique @db.Uuid
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
 }
 
 // ======================================================
@@ -580,4 +604,168 @@ model StoreSetting {
   ordersEnabled      Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+}
+
+// ======================================================
+// Website Content / CMS
+// ======================================================
+
+model HomeSection {
+  id        String          @id @default(uuid()) @db.Uuid
+  type      HomeSectionType
+  name      String          @db.VarChar(120)
+  position  Int             @default(0)
+  isEnabled Boolean         @default(true)
+
+  // Section-specific content:
+  // titles, descriptions, buttons, images, settings, etc.
+  content Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isEnabled, position])
+  @@index([type])
+}
+
+model MediaAsset {
+  id String @id @default(uuid()) @db.Uuid
+
+  fileName   String @db.VarChar(255)
+  imageUrl   String @db.Text
+  storageKey String @unique @db.Text
+
+  contentType String @db.VarChar(100)
+  fileSize    Int
+
+  altText String? @db.VarChar(300)
+
+  width  Int?
+  height Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  popupEventImages PopupEventImage[]
+  @@index([createdAt])
+}
+
+model SiteTheme {
+  id String @id @default("default")
+
+  // Website color palette
+  colors Json
+
+  // Display/body font configuration
+  fonts Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model SitePublication {
+  id String @id @default("default")
+
+  homepage Json
+  theme    Json
+
+  publishedAt        DateTime @default(now())
+  publishedByUserId  String?  @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+
+model PopupEvent {
+  id              String           @id @default(uuid()) @db.Uuid
+  title           String           @db.VarChar(160)
+  location        String?          @db.VarChar(180)
+  dateLabel       String?          @db.VarChar(80)
+  caption         String           @db.Text
+
+  status          PopupEventStatus @default(DRAFT)
+  commentsEnabled Boolean          @default(true)
+  position        Int              @default(0)
+
+  createdByUserId String?          @db.Uuid
+  publishedAt     DateTime?
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  createdBy   User?                    @relation("PopupEventCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  images      PopupEventImage[]
+  likes       PopupEventLike[]
+  attendances PopupEventAttendance[]
+  comments    PopupEventComment[]
+
+  @@index([status, position])
+  @@index([publishedAt])
+  @@index([createdByUserId])
+}
+
+model PopupEventImage {
+  id           String   @id @default(uuid()) @db.Uuid
+  popupEventId String   @db.Uuid
+  mediaAssetId String   @db.Uuid
+
+  position     Int      @default(0)
+  altText      String?  @db.VarChar(300)
+
+  createdAt    DateTime @default(now())
+
+  popupEvent PopupEvent @relation(fields: [popupEventId], references: [id], onDelete: Cascade)
+  mediaAsset MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+
+  @@unique([popupEventId, mediaAssetId])
+  @@index([popupEventId, position])
+  @@index([mediaAssetId])
+}
+
+model PopupEventLike {
+  id           String   @id @default(uuid()) @db.Uuid
+  popupEventId String   @db.Uuid
+  userId       String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  popupEvent PopupEvent @relation(fields: [popupEventId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /*
+   * One like per customer per popup.
+   */
+  @@unique([popupEventId, userId])
+  @@index([userId])
+}
+
+model PopupEventAttendance {
+  id           String   @id @default(uuid()) @db.Uuid
+  popupEventId String   @db.Uuid
+  userId       String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  popupEvent PopupEvent @relation(fields: [popupEventId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /*
+   * A customer can confirm attendance only once.
+   */
+  @@unique([popupEventId, userId])
+  @@index([userId])
+}
+
+model PopupEventComment {
+  id           String   @id @default(uuid()) @db.Uuid
+  popupEventId String   @db.Uuid
+  userId       String   @db.Uuid
+  body         String   @db.VarChar(1000)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  popupEvent PopupEvent @relation(fields: [popupEventId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([popupEventId, createdAt])
+  @@index([userId])
 }

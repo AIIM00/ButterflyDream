@@ -27,6 +27,7 @@ import AdminSettings from "./pages/admin/AdminSettings.jsx";
 import AdminInStoreSales from "./pages/admin/AdminInStoreSales.jsx";
 import AdminInStoreSalesHistory from "./pages/admin/AdminInStoreSalesHistory.jsx";
 import AdminInitialPasswordChange from "./pages/auth/AdminInitialPasswordChange.jsx";
+import AdminWebsite from "./pages/admin/AdminWebsite.jsx";
 // Authentication pages
 import AdminLogin from "./pages/auth/AdminLogin.jsx";
 import EmailVerification from "./pages/auth/EmailVerification.jsx";
@@ -186,6 +187,7 @@ function App() {
               <Route path="orders" element={<AdminOrders />} />
 
               <Route path="orders/:orderId" element={<AdminOrderManage />} />
+              <Route path="website" element={<AdminWebsite />} />
 
               <Route path="settings" element={<AdminSettings />} />
 

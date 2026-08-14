@@ -4,9 +4,86 @@ import { useNavigate } from "react-router-dom";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 
-function HomeCustomized() {
-  const [hasImageError, setHasImageError] = useState(false);
+const DEFAULT_CONTENT = {
+  imageUrl: null,
+
+  imageAlt: "Customized Butterfly Dream accessories",
+
+  imagePosition: "center",
+
+  badge: "Made for you",
+
+  eyebrow: "Made personal",
+
+  title: "Accessories shaped around your story.",
+
+  description:
+    "Create something more personal — an accessory designed to hold meaning, celebrate a moment, or become part of someone's story.",
+
+  details: [
+    {
+      label: "Personal",
+      text: "Made meaningful",
+    },
+    {
+      label: "Thoughtful",
+      text: "Made for moments",
+    },
+    {
+      label: "Yours",
+      text: "Made to keep",
+    },
+  ],
+
+  buttonText: "Explore customization",
+
+  buttonUrl: "/products",
+};
+
+const IMAGE_POSITION_CLASSES = {
+  center: "object-center",
+  top: "object-top",
+  bottom: "object-bottom",
+  left: "object-left",
+  right: "object-right",
+};
+
+function getSafeInternalPath(value, fallback = "/products") {
+  if (
+    typeof value !== "string" ||
+    !value.startsWith("/") ||
+    value.startsWith("//")
+  ) {
+    return fallback;
+  }
+
+  return value;
+}
+
+function HomeCustomized({ content }) {
   const navigate = useNavigate();
+
+  const customized = {
+    ...DEFAULT_CONTENT,
+    ...(content ?? {}),
+  };
+
+  const details = Array.isArray(customized.details)
+    ? customized.details
+    : DEFAULT_CONTENT.details;
+
+  const [failedImageUrl, setFailedImageUrl] = useState("");
+
+  const imageUrl = customized.imageUrl ?? "";
+
+  const hasImage = Boolean(imageUrl) && failedImageUrl !== imageUrl;
+
+  const imagePositionClass =
+    IMAGE_POSITION_CLASSES[customized.imagePosition] ??
+    IMAGE_POSITION_CLASSES.center;
+
+  const buttonUrl = getSafeInternalPath(customized.buttonUrl);
+
   return (
     <section
       id="home-customized"
@@ -20,19 +97,6 @@ function HomeCustomized() {
       aria-labelledby="home-customized-title"
       data-home-section="customized"
     >
-      {/* Background */}
-      <div
-        className="
-          pointer-events-none
-          absolute
-          inset-0
-          -z-20
-          
-        "
-        aria-hidden="true"
-      />
-
-      {/* Decorative glow */}
       <div
         className="
           pointer-events-none
@@ -44,9 +108,9 @@ function HomeCustomized() {
           w-72
           rounded-full
           bg-gradient-to-br
-from-brand-pale-champagne/90
-via-brand-cream/90
-to-brand-ivory
+          from-brand-pale-champagne/90
+          via-brand-cream/90
+          to-brand-ivory
         "
         aria-hidden="true"
       />
@@ -56,6 +120,7 @@ to-brand-ivory
           className="
             overflow-hidden
             rounded-[1.6rem]
+
             lg:grid
             lg:grid-cols-[0.95fr_1.05fr]
           "
@@ -69,24 +134,27 @@ to-brand-ivory
               bg-brand-pale-champagne
 
               sm:h-[430px]
-
               lg:h-[560px]
             "
           >
-            {!hasImageError ? (
+            {hasImage ? (
               <img
-                src="/media/home/customized/customized-accessories.jpg"
-                alt="Customized Butterfly Dream accessories"
+                src={imageUrl}
+                alt={
+                  customized.imageAlt ||
+                  "Customized Butterfly Dream accessories"
+                }
                 loading="lazy"
-                onError={() => setHasImageError(true)}
-                className="
+                onError={() => setFailedImageUrl(imageUrl)}
+                className={`
                   h-full
                   w-full
                   object-cover
                   transition-transform
                   duration-1000
                   hover:scale-[1.025]
-                "
+                  ${imagePositionClass}
+                `}
               />
             ) : (
               <div
@@ -99,7 +167,10 @@ to-brand-ivory
                   justify-center
                   overflow-hidden
 
-                  bg-[linear-gradient(145deg,#E9D9C3_0%,#F7F1E8_48%,#D7BE98_100%)]
+                  bg-gradient-to-br
+                  from-brand-pale-champagne
+                  via-brand-cream
+                  to-brand-champagne/40
                 "
               >
                 <div
@@ -129,7 +200,11 @@ to-brand-ivory
                 />
 
                 <div className="relative text-center text-brand-bronze">
-                  <AutoAwesomeRoundedIcon sx={{ fontSize: 26 }} />
+                  <AutoAwesomeRoundedIcon
+                    sx={{
+                      fontSize: 26,
+                    }}
+                  />
 
                   <p
                     className="
@@ -146,7 +221,6 @@ to-brand-ivory
               </div>
             )}
 
-            {/* Overlay */}
             <div
               className="
                 pointer-events-none
@@ -160,65 +234,71 @@ to-brand-ivory
               aria-hidden="true"
             />
 
-            {/* Floating label */}
-            <div
-              className="
-                absolute
-                bottom-4
-                left-4
+            {customized.badge && (
+              <div
+                className="
+                  absolute
+                  bottom-4
+                  left-4
 
-                rounded-full
-                border
-                border-white/50
-                bg-white/75
+                  rounded-full
+                  border
+                  border-white/50
+                  bg-white/75
 
-                px-3
-                py-1.5
+                  px-3
+                  py-1.5
 
-                text-[0.55rem]
-                font-bold
-                uppercase
-                tracking-[0.16em]
-                text-brand-bronze
+                  text-[0.55rem]
+                  font-bold
+                  uppercase
+                  tracking-[0.16em]
+                  text-brand-bronze
 
-                backdrop-blur-md
+                  backdrop-blur-md
 
-                sm:bottom-5
-                sm:left-5
-              "
-            >
-              Made for you
-            </div>
+                  sm:bottom-5
+                  sm:left-5
+                "
+              >
+                {customized.badge}
+              </div>
+            )}
           </div>
 
           {/* CONTENT */}
           <div
             className="
               flex
+              max-w-[24rem]
               flex-col
               justify-center
-              max-w-[24rem]
+
               px-5
               py-8
+
               sm:px-8
               sm:py-10
+
               lg:px-12
               lg:py-14
             "
           >
-            <p
-              className="
-                text-[0.58rem]
-                font-bold
-                uppercase
-                tracking-[0.22em]
-                text-brand-bronze
+            {customized.eyebrow && (
+              <p
+                className="
+                  text-[0.58rem]
+                  font-bold
+                  uppercase
+                  tracking-[0.22em]
+                  text-brand-bronze
 
-                sm:text-xs
-              "
-            >
-              Made personal
-            </p>
+                  sm:text-xs
+                "
+              >
+                {customized.eyebrow}
+              </p>
+            )}
 
             <h2
               id="home-customized-title"
@@ -232,136 +312,107 @@ to-brand-ivory
                 text-brand-espresso
 
                 sm:text-[3rem]
-
                 lg:text-[3.8rem]
               "
             >
-              Accessories shaped around your story.
+              {customized.title}
             </h2>
 
-            <p
-              className="
-                mt-5
-                
+            {customized.description && (
+              <p
+                className="
+                  mt-5
+                  text-xs
+                  text-brand-muted
 
-                text-xs
-                text-brand-muted
+                  sm:text-base
+                  sm:leading-7
+                "
+              >
+                {customized.description}
+              </p>
+            )}
 
-                sm:text-base
-                sm:leading-7
-              "
-            >
-              Create something more personal — an accessory designed to hold
-              meaning, celebrate a moment, or become part of someone&apos;s
-              story.
-            </p>
-
-            {/* Editorial details */}
-            <div
-              className="
-              max-w-[12rem]
-    mt-7
-    flex
-    flex-col
-    border-y
-    border-brand-bronze/15
-  "
-            >
-              <div className="py-4">
-                <p
-                  className="
-        text-[0.54rem]
-        font-bold
-        uppercase
-        tracking-[0.14em]
-        text-brand-bronze
-      "
-                >
-                  Personal
-                </p>
-
-                <p className="mt-1 text-xs text-brand-muted">Made meaningful</p>
-              </div>
-
+            {details.length > 0 && (
               <div
                 className="
-      border-t
-      border-brand-bronze/15
-      py-4
-    "
+                  mt-7
+                  flex
+                  max-w-[12rem]
+                  flex-col
+                  border-y
+                  border-brand-bronze/15
+                "
               >
-                <p
-                  className="
-        text-[0.54rem]
-        font-bold
-        uppercase
-        tracking-[0.14em]
-        text-brand-bronze
-      "
-                >
-                  Thoughtful
-                </p>
+                {details.map((detail, index) => (
+                  <div
+                    key={`${detail.label}-${index}`}
+                    className={
+                      index === 0
+                        ? "py-4"
+                        : "border-t border-brand-bronze/15 py-4"
+                    }
+                  >
+                    {detail.label && (
+                      <p
+                        className="
+                            text-[0.54rem]
+                            font-bold
+                            uppercase
+                            tracking-[0.14em]
+                            text-brand-bronze
+                          "
+                      >
+                        {detail.label}
+                      </p>
+                    )}
 
-                <p className="mt-1 text-xs text-brand-muted">
-                  Made for moments
-                </p>
+                    {detail.text && (
+                      <p className="mt-1 text-xs text-brand-muted">
+                        {detail.text}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
+            )}
 
-              <div
-                className="
-      border-t
-      border-brand-bronze/15
-      py-4
-    "
-              >
-                <p
+            {customized.buttonText && (
+              <div className="mt-7 max-w-[12rem]">
+                <button
+                  type="button"
+                  onClick={() => navigate(buttonUrl)}
                   className="
-        text-[0.54rem]
-        font-bold
-        uppercase
-        tracking-[0.14em]
-        text-brand-bronze
-      "
+                    button-base
+                    button-primary
+                    group
+                    w-fit
+                    rounded-full
+                    px-5
+
+                    text-[0.68rem]
+                    uppercase
+                    tracking-[0.13em]
+
+                    sm:text-xs
+                  "
                 >
-                  Yours
-                </p>
+                  {customized.buttonText}
 
-                <p className="mt-1 text-xs text-brand-muted">Made to keep</p>
+                  <ArrowForwardRoundedIcon
+                    aria-hidden="true"
+                    className="
+                      transition-transform
+                      duration-200
+                      group-hover:translate-x-1
+                    "
+                    sx={{
+                      fontSize: 17,
+                    }}
+                  />
+                </button>
               </div>
-            </div>
-
-            {/* CTA */}
-            <div className="max-w-[12rem] mt-7">
-              <button
-                type="button"
-                onClick={() => navigate("/products")}
-                className="
-      button-base
-      button-primary
-      group
-      w-fit
-      rounded-full
-      px-5
-
-      text-[0.68rem]
-      uppercase
-      tracking-[0.13em]
-
-      sm:text-xs
-    "
-              >
-                Explore customization
-                <ArrowForwardRoundedIcon
-                  aria-hidden="true"
-                  className="
-        transition-transform
-        duration-200
-        group-hover:translate-x-1
-      "
-                  sx={{ fontSize: 17 }}
-                />
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>

@@ -8,8 +8,6 @@ import WishlistToggleButton from "../../wishlist/WishlistToggleButton.jsx";
 import { usePublicProducts } from "../../../hooks/useCatalogData.js";
 import formatCurrency from "../../../utils/formatCurrency.js";
 
-const FEATURED_QUERY_STRING = "featured=true&sort=newest&page=1&limit=4";
-
 function getProductPrice(product) {
   const minimum = product.pricing?.minimum;
   const maximum = product.pricing?.maximum;
@@ -473,12 +471,51 @@ function FeaturedLoading() {
   );
 }
 
-function HomeFeaturedCollection() {
-  const { data, error, isLoading } = usePublicProducts(FEATURED_QUERY_STRING);
+function HomeFeaturedCollection({ content }) {
+  const selectionMode =
+    content?.selectionMode === "manual" ? "manual" : "automatic";
 
-  const featuredProducts = data?.products ?? [];
+  const requestedLimit = Number(content?.productLimit);
+
+  const productLimit = Number.isFinite(requestedLimit)
+    ? Math.min(4, Math.max(1, requestedLimit))
+    : 4;
+
+  const automaticQueryString = `featured=true&sort=newest&page=1&limit=${productLimit}`;
+
+  const { data, error, isLoading } = usePublicProducts(automaticQueryString);
+
+  const manualProducts = Array.isArray(content?.products)
+    ? content.products.slice(0, 4)
+    : [];
+
+  const featuredProducts =
+    selectionMode === "manual" ? manualProducts : (data?.products ?? []);
+
+  const effectiveLoading = selectionMode === "automatic" ? isLoading : false;
+
+  const effectiveError = selectionMode === "automatic" ? error : null;
+
   const spotlightProduct = featuredProducts[0] ?? null;
+
   const supportingProducts = featuredProducts.slice(1, 4);
+
+  const eyebrow = content?.eyebrow || "Selected for you";
+
+  const title = content?.title || "Pieces chosen to carry your story.";
+
+  const description =
+    content?.description ||
+    "Discover signature Butterfly Dream accessories selected for their elegance, meaning, and ability to make an everyday moment feel personal.";
+
+  const buttonText = content?.buttonText || "View featured pieces";
+
+  const buttonUrl =
+    typeof content?.buttonUrl === "string" &&
+    content.buttonUrl.startsWith("/") &&
+    !content.buttonUrl.startsWith("//")
+      ? content.buttonUrl
+      : "/products?featured=true";
 
   return (
     <section
@@ -530,23 +567,20 @@ function HomeFeaturedCollection() {
               
             "
           >
-            <p className="eyebrow-text">Selected for you</p>
+            {eyebrow && <p className="eyebrow-text">{eyebrow}</p>}
 
             <h2 id="home-featured-title" className="section-heading mt-4">
-              Pieces chosen to carry your story.
+              {title}
             </h2>
-
-            <p className="body-large mt-5 max-w-xl">
-              Discover signature Butterfly Dream accessories selected for their
-              elegance, meaning, and ability to make an everyday moment feel
-              personal.
-            </p>
+            {description && (
+              <p className="body-large mt-5 max-w-xl">{description}</p>
+            )}
           </div>
         </div>
 
-        {isLoading && <FeaturedLoading />}
+        {effectiveLoading && <FeaturedLoading />}
 
-        {!isLoading && error && (
+        {!effectiveLoading && effectiveError && (
           <div
             className="
               mt-10 border border-brand-border
@@ -572,7 +606,7 @@ function HomeFeaturedCollection() {
           </div>
         )}
 
-        {!isLoading && !error && !spotlightProduct && (
+        {!effectiveLoading && !effectiveError && !spotlightProduct && (
           <div
             className="
               mt-10 border border-brand-border
@@ -600,7 +634,7 @@ function HomeFeaturedCollection() {
           </div>
         )}
 
-        {!isLoading && !error && spotlightProduct && (
+        {!effectiveLoading && !effectiveError && spotlightProduct && (
           <div
             className={
               supportingProducts.length > 0
@@ -624,17 +658,21 @@ function HomeFeaturedCollection() {
         )}
 
         <div className="mt-8 flex justify-center sm:hidden">
-          <Link
-            to="/products?featured=true"
-            className="
-              button-base button-outline
-              w-fit rounded-full
-              bg-brand-ivory/80 backdrop-blur-md
-            "
-          >
-            View featured pieces
-            <ArrowForwardRoundedIcon fontSize="small" />
-          </Link>
+          {buttonText && (
+            <Link
+              to={buttonUrl}
+              className="
+      button-base button-outline
+      hidden w-fit shrink-0 rounded-full
+      bg-brand-ivory/80 backdrop-blur-md
+      sm:inline-flex
+    "
+            >
+              {buttonText}
+
+              <ArrowForwardRoundedIcon fontSize="small" />
+            </Link>
+          )}
         </div>
       </div>
     </section>

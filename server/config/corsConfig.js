@@ -33,8 +33,12 @@ const corsConfig = {
 
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "X-Site-Preview-Token",
+  ],
   exposedHeaders: ["RateLimit", "RateLimit-Policy", "Retry-After"],
 
   optionsSuccessStatus: 204,

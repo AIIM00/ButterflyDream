@@ -15,10 +15,11 @@ export function ButterflyTransformationHero({ sectionRef }) {
   const framePaths = useMemo(() => getButterflyDesktopFramePaths(), []);
 
   const {
-    progress,
+    initialProgress,
     loadedCount,
     failedCount,
     isPriorityCoverageReady,
+    isInitialBatchReady,
     getFrameImage,
     totalFrames,
   } = useFrameSequence({
@@ -77,12 +78,22 @@ export function ButterflyTransformationHero({ sectionRef }) {
         />
       </div>
 
-      {/* Full-screen loader */}
-      {!isPriorityCoverageReady && (
-        <div className="fixed inset-0 z-[100]">
+      {!isInitialBatchReady?.current && (
+        <div
+          className="
+      pointer-events-none
+      absolute
+      inset-y-0
+      right-0
+      z-[20]
+      w-[48%]
+      sm:w-[46%]
+      lg:w-[42%]
+    "
+        >
           <ButterflyHeroLoader
-            progress={progress}
-            isInitialBatchReady={isPriorityCoverageReady}
+            progress={initialProgress}
+            isInitialBatchReady={isInitialBatchReady}
           />
         </div>
       )}

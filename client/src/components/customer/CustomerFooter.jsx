@@ -42,7 +42,7 @@ const footerSections = [
     title: "ABOUT BUTTERFLY DREAM",
     customContent: (
       <div className="max-w-sm space-y-4">
-        <p className="text-[0.78rem] leading-6 text-[#211914]/65">
+        <p className="text-[0.78rem] leading-6 text-brand-espresso/65">
           Thoughtful jewelry and accessories created to celebrate beauty,
           confidence, individuality and transformation.
         </p>
@@ -58,7 +58,7 @@ const footerSections = [
           font-medium
           uppercase
           tracking-[0.12em]
-          text-[#211914]
+          text-brand-espresso
         "
         >
           Pop-ups & Events
@@ -162,7 +162,7 @@ function SocialSymbol({ social }) {
 
 function FooterAccordion({ section, isOpen, onToggle }) {
   return (
-    <div className="border-b border-[#211914]/15">
+    <div className="border-b border-brand-espresso/15">
       <button
         type="button"
         onClick={onToggle}
@@ -183,7 +183,7 @@ function FooterAccordion({ section, isOpen, onToggle }) {
             font-medium
             uppercase
             tracking-[0.12em]
-            text-[#211914]
+            text-brand-espresso
           "
         >
           {section.title}
@@ -206,7 +206,7 @@ function FooterAccordion({ section, isOpen, onToggle }) {
               absolute
               h-px
               w-[17px]
-              bg-[#211914]
+              bg-brand-espresso
             "
           />
 
@@ -215,7 +215,7 @@ function FooterAccordion({ section, isOpen, onToggle }) {
               absolute
               h-[17px]
               w-px
-              bg-[#211914]
+              bg-brand-espresso
               transition-transform
               duration-300
               ${isOpen ? "rotate-90 scale-y-0" : "rotate-0 scale-y-100"}
@@ -247,10 +247,10 @@ function FooterAccordion({ section, isOpen, onToggle }) {
                         inline-block
                         text-[0.8rem]
                         leading-6
-                        text-[#211914]/65
+                        text-brand-espresso/65
                         transition-colors
                         duration-200
-                        hover:text-[#211914]
+                        hover:text-brand-espresso
                       "
                     >
                       {label}
@@ -279,13 +279,13 @@ function CustomerFooter() {
   return (
     <footer
       className="
-        relative
-        z-10
-        overflow-hidden
-        bg-[#FCFBF9]
-        font-[Manrope]
-        text-[#211914]
-      "
+    relative
+    z-10
+    overflow-hidden
+    bg-brand-cream
+    font-body
+    text-brand-espresso
+  "
     >
       <div
         className="
@@ -300,7 +300,7 @@ function CustomerFooter() {
         {/* =========================
             ACCORDION NAVIGATION
         ========================== */}
-        <div className="border-t border-[#211914]/15">
+        <div className="border-t border-brand-espresso/15">
           {footerSections.map((section, index) => (
             <FooterAccordion
               key={section.title}
@@ -339,12 +339,12 @@ function CustomerFooter() {
                 justify-center
                 rounded-full
                 border
-                border-[#211914]/15
-                text-[#211914]
+                border-brand-espresso/15
+                text-brand-espresso
                 transition-all
                 duration-300
-                hover:border-[#211914]
-                hover:bg-[#211914]
+                hover:border-brand-espresso
+                hover:bg-brand-espresso
                 hover:text-white
                 sm:h-[46px]
                 sm:w-[46px]
@@ -372,20 +372,20 @@ function CustomerFooter() {
             type="button"
             className="
               border-b
-              border-[#211914]/25
+              border-brand-espresso/25
               pb-1
               text-[0.8rem]
               font-medium
               uppercase
               tracking-[0.12em]
               transition-colors
-              hover:border-[#211914]
+              hover:border-brand-espresso
             "
           >
             Lebanon
           </button>
 
-          <span className="text-[0.9rem] text-[#211914]">English</span>
+          <span className="text-[0.9rem] text-brand-espresso">English</span>
         </div>
 
         {/* =========================
@@ -398,7 +398,7 @@ function CustomerFooter() {
               font-medium
               uppercase
               tracking-[0.06em]
-              text-[#211914]
+              text-brand-espresso
             "
           >
             © All rights reserved. {currentYear} Butterfly Dream
@@ -423,18 +423,15 @@ function CustomerFooter() {
             to="/"
             aria-label="Butterfly Dream home"
             className="
-              block
-              whitespace-nowrap
-              font-['Bodoni_Moda']
-              text-[3.5rem]
-              leading-[0.85]
-              tracking-[-0.065em]
-              text-[#211914]
-              font-semibold
-              leading-[0.85]
-              tracking-[-0.065em]
-              text-[#211914]
-            "
+  block
+  whitespace-nowrap
+  font-display
+  text-[3.5rem]
+  font-semibold
+  leading-[0.85]
+  tracking-[-0.065em]
+  text-brand-espresso
+"
           >
             Butterfly <span className="italic font-normal">Dream</span>
           </Link>

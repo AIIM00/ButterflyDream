@@ -587,7 +587,35 @@ function GuestReviewInvitation() {
   );
 }
 
-function HomeFeedback() {
+function HomeFeedback(content) {
+  const feedbackContent = {
+    eyebrow: "Customer stories",
+
+    title: "What our",
+
+    titleAccent: "customers say.",
+
+    reviewsPerPage: 4,
+
+    sort: "newest",
+
+    showRatingSummary: true,
+
+    ...(content ?? {}),
+  };
+
+  const eyebrow = feedbackContent.eyebrow ?? "";
+
+  const title = feedbackContent.title ?? "";
+
+  const titleAccent = feedbackContent.titleAccent ?? "";
+
+  const reviewsPerPage = Number(feedbackContent.reviewsPerPage) === 8 ? 8 : 4;
+
+  const reviewSort =
+    feedbackContent.sort === "highest_rating" ? "highest_rating" : "newest";
+
+  const showRatingSummary = feedbackContent.showRatingSummary !== false;
   const [page, setPage] = useState(1);
 
   const [feedbackState, setFeedbackState] = useState({
@@ -599,9 +627,13 @@ function HomeFeedback() {
     },
     pagination: {
       page: 1,
-      limit: 4,
+
+      limit: reviewsPerPage,
+
       totalPages: 0,
+
       hasPreviousPage: false,
+
       hasNextPage: false,
     },
     error: null,
@@ -637,6 +669,10 @@ function HomeFeedback() {
       try {
         const response = await fetchFeedbacks(page, {
           signal: controller.signal,
+
+          limit: reviewsPerPage,
+
+          sort: reviewSort,
         });
 
         if (controller.signal.aborted) {
@@ -657,9 +693,13 @@ function HomeFeedback() {
 
           pagination: response.pagination ?? {
             page,
-            limit: 4,
+
+            limit: reviewsPerPage,
+
             totalPages: 0,
+
             hasPreviousPage: false,
+
             hasNextPage: false,
           },
 
@@ -683,7 +723,7 @@ function HomeFeedback() {
     return () => {
       controller.abort();
     };
-  }, [page, refreshKey]);
+  }, [page, refreshKey, reviewsPerPage, reviewSort]);
 
   /*
    * Check whether the current visitor is an
@@ -836,43 +876,45 @@ function HomeFeedback() {
           "
         >
           <div>
-            <p
-              className="
-                text-[0.6rem]
-                font-bold
-                uppercase
-                tracking-[0.24em]
-                text-brand-bronze
-              "
-            >
-              Customer stories
-            </p>
+            {eyebrow && (
+              <p
+                className="
+      text-[0.6rem]
+      font-bold
+      uppercase
+      tracking-[0.24em]
+      text-brand-bronze
+    "
+              >
+                {eyebrow}
+              </p>
+            )}
 
             <h2
               id="customer-feedback-heading"
               className="
-                mt-3
-                max-w-lg
-                font-display
-
-                text-[2.7rem]
-                font-medium
-                leading-[0.9]
-                tracking-[-0.05em]
-
-                text-brand-espresso
-
-                sm:text-[3.5rem]
-                lg:text-[4.5rem]
-              "
+    mt-3
+    max-w-lg
+    font-display
+    text-[2.7rem]
+    font-medium
+    leading-[0.9]
+    tracking-[-0.05em]
+    text-brand-espresso
+    sm:text-[3.5rem]
+    lg:text-[4.5rem]
+  "
             >
-              What our
-              <span className="block italic">customers say.</span>
+              {title}
+
+              {titleAccent && (
+                <span className="block italic">{titleAccent}</span>
+              )}
             </h2>
           </div>
-
-          <div
-            className="
+          {showRatingSummary && (
+            <div
+              className="
               flex
               items-end
               justify-between
@@ -880,11 +922,11 @@ function HomeFeedback() {
 
               lg:justify-end
             "
-          >
-            <div>
-              <div className="flex items-end gap-2">
-                <span
-                  className="
+            >
+              <div>
+                <div className="flex items-end gap-2">
+                  <span
+                    className="
                     font-display
                     text-[2.4rem]
                     font-medium
@@ -892,42 +934,43 @@ function HomeFeedback() {
                     tracking-[-0.04em]
                     text-brand-espresso
                   "
-                >
-                  {totalFeedbacks > 0 ? averageRating.toFixed(1) : "—"}
-                </span>
+                  >
+                    {totalFeedbacks > 0 ? averageRating.toFixed(1) : "—"}
+                  </span>
 
-                <span
-                  className="
+                  <span
+                    className="
                     mb-1
                     text-sm
                     text-brand-espresso/45
                   "
-                >
-                  / 5
-                </span>
-              </div>
+                  >
+                    / 5
+                  </span>
+                </div>
 
-              <div className="mt-2">
-                <Stars rating={Math.round(averageRating)} size={17} />
-              </div>
+                <div className="mt-2">
+                  <Stars rating={Math.round(averageRating)} size={17} />
+                </div>
 
-              <p
-                className="
+                <p
+                  className="
                   mt-2
                   text-[0.64rem]
                   uppercase
                   tracking-[0.12em]
                   text-brand-espresso/45
                 "
-              >
-                {totalFeedbacks === 0
-                  ? "No reviews yet"
-                  : `${totalFeedbacks} ${
-                      totalFeedbacks === 1 ? "review" : "reviews"
-                    }`}
-              </p>
+                >
+                  {totalFeedbacks === 0
+                    ? "No reviews yet"
+                    : `${totalFeedbacks} ${
+                        totalFeedbacks === 1 ? "review" : "reviews"
+                      }`}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* --------------------------------
@@ -948,9 +991,9 @@ function HomeFeedback() {
             "
           >
             {loading &&
-              Array.from({ length: 4 }).map((_, index) => (
-                <ReviewSkeleton key={index} />
-              ))}
+              Array.from({
+                length: reviewsPerPage,
+              }).map((_, index) => <ReviewSkeleton key={index} />)}
 
             {!loading &&
               !error &&

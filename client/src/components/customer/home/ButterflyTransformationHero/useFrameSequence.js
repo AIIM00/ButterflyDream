@@ -7,6 +7,7 @@ const createInitialStatus = () => ({
   failedCount: 0,
   completedCount: 0,
 
+  initialProgress: 0,
   // Progress shown by the startup loader.
   // This now represents only the important startup batch.
   progress: 0,

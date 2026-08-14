@@ -32,6 +32,16 @@ import {
   updateProfile,
 } from "../controllers/customerProfile.controller.js";
 
+import {
+  addPopupComment,
+  confirmAttendance,
+  deletePopupComment,
+  getPopupInteractions,
+  likePopup,
+  removeAttendance,
+  unlikePopup,
+} from "../controllers/customerPopupEvent.controller.js";
+
 const router = Router();
 
 router.use(requireAuthentication, requireRole("CUSTOMER"));
@@ -84,5 +94,21 @@ router.delete("/notifications/:notificationId", removeNotification);
 router.get("/orders", listCustomerOrders);
 
 router.get("/orders/:orderId", getCustomerOrder);
+
+// Popup event social interactions
+
+router.get("/popups/interactions", getPopupInteractions);
+
+router.post("/popups/:popupEventId/like", likePopup);
+
+router.delete("/popups/:popupEventId/like", unlikePopup);
+
+router.post("/popups/:popupEventId/attendance", confirmAttendance);
+
+router.delete("/popups/:popupEventId/attendance", removeAttendance);
+
+router.post("/popups/:popupEventId/comments", addPopupComment);
+
+router.delete("/popups/comments/:commentId", deletePopupComment);
 
 export default router;

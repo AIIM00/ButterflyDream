@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-//Services
+// Services
 import {
   addCustomerCartItem,
   clearCustomerCart,
@@ -10,11 +10,19 @@ import {
   updateCustomerCartItem,
 } from "../../services/cartApi.js";
 
-//Context
+// App auth context
+import useAppContext from "../app/useAppContext.js";
+
+// Context
 import CartContext from "./CartContext.jsx";
 
 function isCancelledRequest(error, signal) {
-  return signal?.aborted || error?.code === "ERR_CANCELED";
+  return (
+    signal?.aborted ||
+    error?.name === "AbortError" ||
+    error?.name === "CanceledError" ||
+    error?.code === "ERR_CANCELED"
+  );
 }
 
 function isAuthenticationError(error) {
@@ -22,6 +30,8 @@ function isAuthenticationError(error) {
 }
 
 export function CartProvider({ children }) {
+  const { user, isAuthenticated, authLoading } = useAppContext();
+
   const [cartState, setCartState] = useState({
     status: "loading",
     cart: null,
@@ -30,10 +40,23 @@ export function CartProvider({ children }) {
 
   const [mutationKey, setMutationKey] = useState(null);
 
+  /*
+   * Only CUSTOMER accounts are allowed to
+   * access /api/cart.
+   *
+   * This is especially important during the
+   * admin CMS draft preview because localhost
+   * may still contain the ADMIN authentication
+   * cookie.
+   */
+  const isCustomer = isAuthenticated && user?.role === "CUSTOMER";
+
   const applyCartResponse = useCallback((response) => {
     setCartState({
       status: "ready",
+
       cart: response?.cart ?? null,
+
       error: null,
     });
   }, []);
@@ -41,7 +64,35 @@ export function CartProvider({ children }) {
   useEffect(() => {
     const controller = new AbortController();
 
-    async function loadInitialCart() {
+    async function synchronizeCart() {
+      /*
+       * Keep state updates asynchronous relative
+       * to the effect body.
+       *
+       * This also avoids the strict
+       * react-hooks/set-state-in-effect lint rule.
+       */
+      await Promise.resolve();
+
+      if (controller.signal.aborted || authLoading) {
+        return;
+      }
+
+      /*
+       * Guest or ADMIN:
+       *
+       * Do not request /api/cart.
+       */
+      if (!isCustomer) {
+        setCartState({
+          status: "guest",
+          cart: null,
+          error: null,
+        });
+
+        return;
+      }
+
       try {
         const response = await fetchCustomerCart({
           signal: controller.signal,
@@ -75,17 +126,33 @@ export function CartProvider({ children }) {
       }
     }
 
-    void loadInitialCart();
+    void synchronizeCart();
 
     return () => {
       controller.abort();
     };
-  }, [applyCartResponse]);
+  }, [applyCartResponse, authLoading, isCustomer, user?.id]);
 
   const reloadCart = useCallback(async () => {
+    /*
+     * Don't call the CUSTOMER cart API
+     * for guests or ADMIN accounts.
+     */
+    if (!isCustomer) {
+      setCartState({
+        status: "guest",
+        cart: null,
+        error: null,
+      });
+
+      return null;
+    }
+
     setCartState((currentState) => ({
       ...currentState,
+
       status: "loading",
+
       error: null,
     }));
 
@@ -112,7 +179,7 @@ export function CartProvider({ children }) {
 
       throw error;
     }
-  }, [applyCartResponse]);
+  }, [applyCartResponse, isCustomer]);
 
   const runMutation = useCallback(
     async (key, operation) => {
@@ -172,11 +239,15 @@ export function CartProvider({ children }) {
   const value = useMemo(
     () => ({
       cart: cartState.cart,
+
       status: cartState.status,
+
       error: cartState.error,
+
       mutationKey,
 
       isLoading: cartState.status === "loading",
+
       isGuest: cartState.status === "guest",
 
       distinctItemCount: cartState.cart?.summary?.distinctItemCount ?? 0,
@@ -184,10 +255,15 @@ export function CartProvider({ children }) {
       totalQuantity: cartState.cart?.summary?.totalQuantity ?? 0,
 
       addItem,
+
       updateItemQuantity,
+
       removeItem,
+
       clearCart,
+
       refreshPrices,
+
       reloadCart,
     }),
     [

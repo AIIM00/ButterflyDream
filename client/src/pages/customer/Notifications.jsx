@@ -6,25 +6,30 @@ import {
   useSearchParams,
 } from "react-router-dom";
 
-//Context and hooks
+// Context and hooks
 import useNotifications from "../../context/notification/useNotifications.js";
-//Services
+
+// Services
 import { fetchCustomerNotifications } from "../../services/notificationApi.js";
+
+// Utils
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
 
-//React Toastify
+// React Toastify
 import { toast } from "react-toastify";
 
-//Components
+// Components
 import ClearReadNotificationsDialog from "../../components/notifications/ClearReadNotificationsDialog.jsx";
 import CustomerNotificationCard from "../../components/notifications/CustomerNotificationCard.jsx";
 
 // MUI Icons
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import FilterAltOffOutlinedIcon from "@mui/icons-material/FilterAltOffOutlined";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 
 const NOTIFICATION_STATUS_OPTIONS = [
   {
@@ -150,8 +155,11 @@ function Notifications() {
 
         setNotificationState({
           requestKey,
+
           notifications: response.notifications ?? [],
+
           pagination: response.pagination ?? null,
+
           error: null,
         });
 
@@ -164,6 +172,7 @@ function Notifications() {
         if (isAuthenticationError(error)) {
           navigate("/login", {
             replace: true,
+
             state: {
               from: `${location.pathname}${location.search}`,
             },
@@ -174,8 +183,11 @@ function Notifications() {
 
         setNotificationState({
           requestKey,
+
           notifications: [],
+
           pagination: null,
+
           error,
         });
       }
@@ -291,244 +303,783 @@ function Notifications() {
   const hasFilters = status !== "all" || Boolean(type);
 
   return (
-    <section className="mx-auto max-w-5xl px-5 py-12 lg:px-8 lg:py-16">
-      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">
-            Customer account
-          </p>
+    <section className="min-h-screen bg-brand-ivory">
+      <div
+        className="
+          mx-auto
+          w-full
+          max-w-6xl
+          px-4
+          pb-16
+          pt-7
 
-          <h1 className="mt-3 text-4xl font-bold tracking-tight text-gray-950">
-            Notifications
-          </h1>
+          sm:px-6
+          sm:pt-10
 
-          <p className="mt-3 text-gray-600">
-            {unreadCount} unread{" "}
-            {unreadCount === 1 ? "notification" : "notifications"}
-          </p>
-        </div>
+          lg:px-8
+          lg:pb-24
+          lg:pt-14
+        "
+      >
+        {/* PAGE HEADER */}
+        <header
+          className="
+            flex
+            flex-col
+            gap-6
 
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => void handleMarkAllRead()}
-            disabled={unreadCount === 0 || Boolean(mutationKey)}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-gray-950 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <DoneAllRoundedIcon fontSize="small" />
+            sm:flex-row
+            sm:items-end
+            sm:justify-between
+          "
+        >
+          <div className="max-w-2xl">
+            <Link
+              to="/account"
+              className="
+                inline-flex
+                items-center
+                gap-1
+                text-xs
+                font-semibold
+                text-brand-muted
+                transition
+                hover:text-brand-espresso
+              "
+            >
+              <ArrowBackRoundedIcon
+                sx={{
+                  fontSize: 17,
+                }}
+              />
+              Back to account
+            </Link>
 
-            {mutationKey === "read-all" ? "Updating..." : "Mark all read"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setClearDialogOpen(true)}
-            disabled={Boolean(mutationKey)}
-            className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40"
-          >
-            Clear read
-          </button>
-        </div>
-      </header>
-
-      <div className="mt-8 grid gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
-        <label>
-          <span className="text-sm font-semibold text-gray-700">
-            Read status
-          </span>
-
-          <select
-            value={status}
-            onChange={(event) =>
-              updateFilters({
-                status: event.target.value,
-                page: 1,
-              })
-            }
-            className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
-          >
-            {NOTIFICATION_STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span className="text-sm font-semibold text-gray-700">
-            Notification type
-          </span>
-
-          <select
-            value={type}
-            onChange={(event) =>
-              updateFilters({
-                type: event.target.value,
-                page: 1,
-              })
-            }
-            className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
-          >
-            {NOTIFICATION_TYPE_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="flex items-end">
-          <button
-            type="button"
-            onClick={() => setSearchParams(new URLSearchParams())}
-            disabled={!hasFilters}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-3 font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <FilterAltOffOutlinedIcon />
-            Clear filters
-          </button>
-        </div>
-      </div>
-
-      {isLoading && (
-        <div className="mt-8 space-y-4">
-          {Array.from({
-            length: 4,
-          }).map((_, index) => (
-            <div
-              key={index}
-              className="h-52 animate-pulse rounded-2xl bg-gray-100"
-            />
-          ))}
-        </div>
-      )}
-
-      {!isLoading && notificationState.error && (
-        <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
-          <ErrorOutlineRoundedIcon
-            className="text-red-500"
-            sx={{
-              fontSize: 56,
-            }}
-          />
-
-          <h2 className="mt-4 text-2xl font-bold text-red-900">
-            Notifications could not be loaded
-          </h2>
-
-          <p className="mt-2 text-red-700">
-            {getApiErrorMessage(
-              notificationState.error,
-              "Unable to load notifications.",
-            )}
-          </p>
-
-          <button
-            type="button"
-            onClick={reloadNotifications}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-red-700 px-5 py-3 font-semibold text-white"
-          >
-            <RefreshRoundedIcon />
-            Try again
-          </button>
-        </div>
-      )}
-
-      {!isLoading &&
-        !notificationState.error &&
-        notificationState.notifications.length === 0 && (
-          <div className="mt-8 rounded-2xl border border-dashed border-gray-300 px-6 py-16 text-center">
-            <NotificationsNoneRoundedIcon
-              className="text-gray-400"
-              sx={{
-                fontSize: 64,
-              }}
-            />
-
-            <h2 className="mt-5 text-2xl font-bold text-gray-950">
-              No notifications found
-            </h2>
-
-            <p className="mx-auto mt-3 max-w-lg text-gray-600">
-              Order confirmations, delivery updates, and other account
-              notifications will appear here.
+            <p
+              className="
+                mt-5
+                text-[0.65rem]
+                font-bold
+                uppercase
+                tracking-[0.22em]
+                text-brand-bronze
+              "
+            >
+              Your Butterfly Dream
             </p>
 
-            <Link
-              to="/orders"
-              className="mt-7 inline-flex rounded-xl bg-gray-950 px-6 py-3 font-semibold text-white"
-            >
-              View my orders
-            </Link>
-          </div>
-        )}
+            <h1
+              className="
+                mt-3
+                font-display
+                text-[2.65rem]
+                font-medium
+                leading-[0.95]
+                tracking-[-0.045em]
+                text-brand-espresso
 
-      {!isLoading &&
-        !notificationState.error &&
-        notificationState.notifications.length > 0 && (
-          <div className="mt-8 space-y-4">
-            {notificationState.notifications.map((notification) => (
-              <CustomerNotificationCard
-                key={notification.id}
-                notification={notification}
-                mutationKey={mutationKey}
-                onMarkRead={(selectedNotification) =>
-                  void handleMarkRead(selectedNotification)
+                sm:text-5xl
+
+                lg:text-6xl
+              "
+            >
+              Notifications
+            </h1>
+
+            <div className="mt-4 flex items-center gap-3">
+              <span
+                className="
+                  inline-flex
+                  min-h-7
+                  items-center
+                  rounded-full
+                  bg-brand-pale-champagne
+                  px-3
+                  text-xs
+                  font-semibold
+                  text-brand-bronze
+                "
+              >
+                {unreadCount} unread
+              </span>
+
+              <p className="text-sm text-brand-muted">
+                Keep up with your orders and account updates.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void handleMarkAllRead()}
+              disabled={unreadCount === 0 || Boolean(mutationKey)}
+              className="
+                inline-flex
+                items-center
+                gap-2
+                rounded-full
+                border
+                border-brand-border
+                bg-brand-surface
+                px-4
+                py-2.5
+                text-xs
+                font-semibold
+                text-brand-espresso
+                transition
+                hover:border-brand-espresso
+                disabled:cursor-not-allowed
+                disabled:opacity-40
+              "
+            >
+              <DoneAllRoundedIcon fontSize="small" />
+
+              {mutationKey === "read-all" ? "Updating..." : "Mark all read"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setClearDialogOpen(true)}
+              disabled={Boolean(mutationKey)}
+              className="
+                rounded-full
+                border
+                border-brand-error/25
+                px-4
+                py-2.5
+                text-xs
+                font-semibold
+                text-brand-error
+                transition
+                hover:bg-brand-error/10
+                disabled:opacity-40
+              "
+            >
+              Clear read
+            </button>
+          </div>
+        </header>
+
+        {/* FILTERS */}
+        <section
+          className="
+            mt-8
+            overflow-hidden
+            rounded-[1.75rem]
+            border
+            border-brand-border
+            bg-brand-surface
+          "
+        >
+          <div
+            className="
+              flex
+              items-center
+              gap-3
+              border-b
+              border-brand-border
+              px-5
+              py-4
+
+              sm:px-6
+            "
+          >
+            <span
+              className="
+                inline-flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                rounded-full
+                bg-brand-pale-champagne
+                text-brand-bronze
+              "
+            >
+              <TuneRoundedIcon fontSize="small" />
+            </span>
+
+            <div>
+              <p
+                className="
+                  text-[0.6rem]
+                  font-bold
+                  uppercase
+                  tracking-[0.18em]
+                  text-brand-bronze
+                "
+              >
+                Refine
+              </p>
+
+              <h2
+                className="
+                  font-display
+                  text-xl
+                  font-medium
+                  tracking-[-0.025em]
+                  text-brand-espresso
+                "
+              >
+                Find an update
+              </h2>
+            </div>
+          </div>
+
+          <div
+            className="
+              grid
+              gap-4
+              p-5
+
+              sm:grid-cols-2
+              sm:p-6
+
+              lg:grid-cols-[1fr_1fr_auto]
+            "
+          >
+            <label>
+              <span
+                className="
+                  text-xs
+                  font-semibold
+                  text-brand-espresso
+                "
+              >
+                Read status
+              </span>
+
+              <select
+                value={status}
+                onChange={(event) =>
+                  updateFilters({
+                    status: event.target.value,
+
+                    page: 1,
+                  })
                 }
-                onDelete={(selectedNotification) =>
-                  void handleDelete(selectedNotification)
+                className="
+                  mt-2
+                  w-full
+                  rounded-[1rem]
+                  border
+                  border-brand-border
+                  bg-brand-cream
+                  px-4
+                  py-3
+                  text-sm
+                  text-brand-espresso
+                  outline-none
+                  transition
+                  focus:border-brand-bronze
+                  focus:ring-2
+                  focus:ring-brand-bronze/10
+                "
+              >
+                {NOTIFICATION_STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span
+                className="
+                  text-xs
+                  font-semibold
+                  text-brand-espresso
+                "
+              >
+                Notification type
+              </span>
+
+              <select
+                value={type}
+                onChange={(event) =>
+                  updateFilters({
+                    type: event.target.value,
+
+                    page: 1,
+                  })
                 }
-                onOpenOrder={(selectedNotification) =>
-                  void handleOpenOrder(selectedNotification)
-                }
+                className="
+                  mt-2
+                  w-full
+                  rounded-[1rem]
+                  border
+                  border-brand-border
+                  bg-brand-cream
+                  px-4
+                  py-3
+                  text-sm
+                  text-brand-espresso
+                  outline-none
+                  transition
+                  focus:border-brand-bronze
+                  focus:ring-2
+                  focus:ring-brand-bronze/10
+                "
+              >
+                {NOTIFICATION_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value || "all"} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => setSearchParams(new URLSearchParams())}
+                disabled={!hasFilters}
+                className="
+                  inline-flex
+                  w-full
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-full
+                  border
+                  border-brand-border
+                  px-4
+                  py-3
+                  text-sm
+                  font-semibold
+                  text-brand-muted
+                  transition
+                  hover:border-brand-espresso
+                  hover:text-brand-espresso
+                  disabled:cursor-not-allowed
+                  disabled:opacity-40
+
+                  lg:w-auto
+                "
+              >
+                <FilterAltOffOutlinedIcon fontSize="small" />
+                Clear filters
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* LOADING */}
+        {isLoading && (
+          <div className="mt-6 space-y-4">
+            {Array.from({
+              length: 4,
+            }).map((_, index) => (
+              <div
+                key={index}
+                className="
+                    h-44
+                    animate-pulse
+                    rounded-[1.5rem]
+                    border
+                    border-brand-border
+                    bg-brand-cream
+                  "
               />
             ))}
           </div>
         )}
 
-      {!isLoading &&
-        notificationState.pagination &&
-        notificationState.pagination.totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-4">
-            <button
-              type="button"
-              onClick={() =>
-                updateFilters({
-                  page: page - 1,
-                })
-              }
-              disabled={!notificationState.pagination.hasPreviousPage}
-              className="rounded-xl border border-gray-300 px-5 py-2.5 font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+        {/* ERROR */}
+        {!isLoading && notificationState.error && (
+          <div
+            className="
+                mt-6
+                rounded-[1.75rem]
+                border
+                border-brand-error/20
+                bg-brand-surface
+                px-6
+                py-12
+                text-center
+              "
+          >
+            <span
+              className="
+                  mx-auto
+                  inline-flex
+                  h-16
+                  w-16
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-brand-error/10
+                  text-brand-error
+                "
             >
-              Previous
-            </button>
-
-            <span className="text-sm font-semibold text-gray-600">
-              Page {page} of {notificationState.pagination.totalPages}
+              <ErrorOutlineRoundedIcon
+                sx={{
+                  fontSize: 32,
+                }}
+              />
             </span>
 
+            <h2
+              className="
+                  mt-5
+                  font-display
+                  text-3xl
+                  font-medium
+                  tracking-[-0.035em]
+                  text-brand-espresso
+                "
+            >
+              Notifications could not be loaded.
+            </h2>
+
+            <p
+              className="
+                  mx-auto
+                  mt-3
+                  max-w-lg
+                  text-sm
+                  leading-7
+                  text-brand-muted
+                "
+            >
+              {getApiErrorMessage(
+                notificationState.error,
+                "Unable to load notifications.",
+              )}
+            </p>
+
             <button
               type="button"
-              onClick={() =>
-                updateFilters({
-                  page: page + 1,
-                })
-              }
-              disabled={!notificationState.pagination.hasNextPage}
-              className="rounded-xl border border-gray-300 px-5 py-2.5 font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+              onClick={reloadNotifications}
+              className="
+                  mt-6
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-full
+                  bg-brand-espresso
+                  px-5
+                  py-3
+                  text-sm
+                  font-semibold
+                  text-white
+                  transition
+                  hover:bg-brand-emerald
+                "
             >
-              Next
+              <RefreshRoundedIcon fontSize="small" />
+              Try again
             </button>
           </div>
         )}
 
-      <ClearReadNotificationsDialog
-        open={clearDialogOpen}
-        isSubmitting={mutationKey === "clear-read"}
-        onClose={() => setClearDialogOpen(false)}
-        onConfirm={() => void handleClearRead()}
-      />
+        {/* EMPTY STATE */}
+        {!isLoading &&
+          !notificationState.error &&
+          notificationState.notifications.length === 0 && (
+            <div
+              className="
+                mt-6
+                overflow-hidden
+                rounded-[1.75rem]
+                border
+                border-dashed
+                border-brand-border
+                bg-brand-cream
+                px-6
+                py-14
+                text-center
+
+                sm:py-16
+              "
+            >
+              <span
+                className="
+                  mx-auto
+                  inline-flex
+                  h-16
+                  w-16
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-brand-surface
+                  text-brand-bronze
+                  shadow-sm
+                "
+              >
+                <NotificationsNoneRoundedIcon
+                  sx={{
+                    fontSize: 31,
+                  }}
+                />
+              </span>
+
+              <p
+                className="
+                  mt-6
+                  text-[0.62rem]
+                  font-bold
+                  uppercase
+                  tracking-[0.2em]
+                  text-brand-bronze
+                "
+              >
+                All caught up
+              </p>
+
+              <h2
+                className="
+                  mt-2
+                  font-display
+                  text-3xl
+                  font-medium
+                  tracking-[-0.035em]
+                  text-brand-espresso
+
+                  sm:text-4xl
+                "
+              >
+                No notifications found.
+              </h2>
+
+              <p
+                className="
+                  mx-auto
+                  mt-3
+                  max-w-lg
+                  text-sm
+                  leading-7
+                  text-brand-muted
+                "
+              >
+                Order confirmations, delivery updates, and important account
+                messages will appear here.
+              </p>
+
+              {hasFilters ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchParams(new URLSearchParams())}
+                  className="
+                    mt-7
+                    inline-flex
+                    items-center
+                    gap-2
+                    rounded-full
+                    border
+                    border-brand-espresso
+                    px-5
+                    py-2.5
+                    text-sm
+                    font-semibold
+                    text-brand-espresso
+                    transition
+                    hover:bg-brand-espresso
+                    hover:text-white
+                  "
+                >
+                  <FilterAltOffOutlinedIcon fontSize="small" />
+                  Clear filters
+                </button>
+              ) : (
+                <Link
+                  to="/orders"
+                  className="
+                    mt-7
+                    inline-flex
+                    rounded-full
+                    bg-brand-espresso
+                    px-6
+                    py-3
+                    text-sm
+                    font-semibold
+                    text-white
+                    transition
+                    hover:bg-brand-emerald
+                  "
+                >
+                  View my orders
+                </Link>
+              )}
+            </div>
+          )}
+
+        {/* NOTIFICATION LIST */}
+        {!isLoading &&
+          !notificationState.error &&
+          notificationState.notifications.length > 0 && (
+            <section className="mt-7">
+              <div
+                className="
+                  mb-4
+                  flex
+                  items-end
+                  justify-between
+                  gap-4
+                "
+              >
+                <div>
+                  <p
+                    className="
+                      text-[0.62rem]
+                      font-bold
+                      uppercase
+                      tracking-[0.18em]
+                      text-brand-bronze
+                    "
+                  >
+                    Recent activity
+                  </p>
+
+                  <h2
+                    className="
+                      mt-1
+                      font-display
+                      text-2xl
+                      font-medium
+                      tracking-[-0.03em]
+                      text-brand-espresso
+
+                      sm:text-3xl
+                    "
+                  >
+                    Your updates
+                  </h2>
+                </div>
+
+                {notificationState.pagination?.total !== undefined && (
+                  <span
+                    className="
+                      rounded-full
+                      bg-brand-pale-champagne
+                      px-3
+                      py-1.5
+                      text-[0.65rem]
+                      font-bold
+                      uppercase
+                      tracking-[0.12em]
+                      text-brand-bronze
+                    "
+                  >
+                    {notificationState.pagination.total} total
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {notificationState.notifications.map((notification) => (
+                  <CustomerNotificationCard
+                    key={notification.id}
+                    notification={notification}
+                    mutationKey={mutationKey}
+                    onMarkRead={(selectedNotification) =>
+                      void handleMarkRead(selectedNotification)
+                    }
+                    onDelete={(selectedNotification) =>
+                      void handleDelete(selectedNotification)
+                    }
+                    onOpenOrder={(selectedNotification) =>
+                      void handleOpenOrder(selectedNotification)
+                    }
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+        {/* PAGINATION */}
+        {!isLoading &&
+          notificationState.pagination &&
+          notificationState.pagination.totalPages > 1 && (
+            <div
+              className="
+                mt-8
+                flex
+                flex-wrap
+                items-center
+                justify-center
+                gap-3
+              "
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  updateFilters({
+                    page: page - 1,
+                  })
+                }
+                disabled={!notificationState.pagination.hasPreviousPage}
+                className="
+                  rounded-full
+                  border
+                  border-brand-border
+                  bg-brand-surface
+                  px-5
+                  py-2.5
+                  text-sm
+                  font-semibold
+                  text-brand-espresso
+                  transition
+                  hover:border-brand-espresso
+                  disabled:cursor-not-allowed
+                  disabled:opacity-40
+                "
+              >
+                Previous
+              </button>
+
+              <span
+                className="
+                  rounded-full
+                  bg-brand-pale-champagne
+                  px-4
+                  py-2.5
+                  text-xs
+                  font-semibold
+                  text-brand-bronze
+                "
+              >
+                Page {page} of {notificationState.pagination.totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateFilters({
+                    page: page + 1,
+                  })
+                }
+                disabled={!notificationState.pagination.hasNextPage}
+                className="
+                  rounded-full
+                  border
+                  border-brand-border
+                  bg-brand-surface
+                  px-5
+                  py-2.5
+                  text-sm
+                  font-semibold
+                  text-brand-espresso
+                  transition
+                  hover:border-brand-espresso
+                  disabled:cursor-not-allowed
+                  disabled:opacity-40
+                "
+              >
+                Next
+              </button>
+            </div>
+          )}
+
+        <ClearReadNotificationsDialog
+          open={clearDialogOpen}
+          isSubmitting={mutationKey === "clear-read"}
+          onClose={() => setClearDialogOpen(false)}
+          onConfirm={() => void handleClearRead()}
+        />
+      </div>
     </section>
   );
 }
