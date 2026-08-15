@@ -1,503 +1,528 @@
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 // MUI Icons
-import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import ImageNotSupportedOutlinedIcon from "@mui/icons-material/ImageNotSupportedOutlined";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 
 // Components
 import WishlistToggleButton from "../wishlist/WishlistToggleButton.jsx";
-import StockBadge from "./StockBadge.jsx";
 
-const MAX_VISIBLE_COLORS = 5;
-const MAX_VISIBLE_SIZES = 5;
+/* =========================================================
+   HELPERS
+========================================================= */
 
-function getProductPrice(product) {
-  const minimum = product.pricing?.minimum;
-  const maximum = product.pricing?.maximum;
-
-  if (minimum === null || minimum === undefined) {
-    return "Price unavailable";
-  }
-
-  if (
-    product.pricing?.hasPriceRange &&
-    maximum !== null &&
-    maximum !== undefined
-  ) {
-    return `$${minimum} – $${maximum}`;
-  }
-
-  return `$${minimum}`;
-}
-
-function getProductVariants(product) {
-  /*
-   * Support either full variants or a future
-   * lightweight variant preview from the API.
-   */
-  if (Array.isArray(product.variants)) {
-    return product.variants;
-  }
-
-  if (Array.isArray(product.variantPreview)) {
-    return product.variantPreview;
-  }
-
-  return [];
-}
-
-function getUniqueOptions(variants, nameKey, colorKey = null) {
-  const seen = new Set();
-
-  return variants.reduce((result, variant) => {
-    const options =
-      variant?.options && typeof variant.options === "object"
-        ? variant.options
-        : {};
-
-    const name = options[nameKey];
-
-    if (!name || seen.has(String(name).toLowerCase())) {
-      return result;
-    }
-
-    seen.add(String(name).toLowerCase());
-
-    result.push({
-      name: String(name),
-
-      color: colorKey ? (options[colorKey] ?? null) : null,
-    });
-
-    return result;
-  }, []);
-}
-
-function getUniqueSizes(variants) {
-  const sizes = [];
-  const seen = new Set();
-
-  for (const variant of variants) {
-    const options =
-      variant?.options && typeof variant.options === "object"
-        ? variant.options
-        : {};
-
-    const size = options.size;
-
-    if (size === undefined || size === null || String(size).trim() === "") {
-      continue;
-    }
-
-    const value = String(size).trim();
-
-    const key = value.toLowerCase();
-
-    if (seen.has(key)) {
-      continue;
-    }
-
-    seen.add(key);
-
-    sizes.push({
-      value,
-      type: options.sizeType ?? null,
-    });
-  }
-
-  return sizes;
-}
-
-function ColorSwatch({ name, color, type = "Metal" }) {
-  return (
-    <span
-      className="
-        relative
-        flex h-7 w-7
-        items-center
-        justify-center
-        rounded-full
-        border
-        border-[var(--color-warm-light-gray)]
-        bg-white
-      "
-      title={`${type}: ${name}`}
-      aria-label={`${type}: ${name}`}
-    >
-      <span
-        className="
-          h-[18px] w-[18px]
-          rounded-full
-          border border-black/10
-        "
-        style={{
-          backgroundColor: color || "#E6DFDA",
-        }}
-        aria-hidden="true"
-      />
-    </span>
+function getSortedImages(product) {
+  return [...(product.images ?? [])].sort(
+    (firstImage, secondImage) =>
+      Number(firstImage.position ?? 0) - Number(secondImage.position ?? 0),
   );
 }
 
-function OptionSwatches({ label, options, type }) {
-  if (options.length === 0) {
-    return null;
-  }
-
-  const visible = options.slice(0, MAX_VISIBLE_COLORS);
-
-  const hiddenCount = options.length - visible.length;
-
+function getDefaultVariant(product) {
   return (
-    <div>
-      <p
-        className="
-          text-[0.65rem]
-          font-semibold
-          uppercase
-          tracking-[0.14em]
-          text-[var(--color-warm-gray)]
-        "
-      >
-        {label}
-      </p>
-
-      <div
-        className="
-          mt-2
-          flex flex-wrap
-          items-center
-          gap-1.5
-        "
-      >
-        {visible.map((option) => (
-          <ColorSwatch
-            key={option.name}
-            name={option.name}
-            color={option.color}
-            type={type}
-          />
-        ))}
-
-        {hiddenCount > 0 && (
-          <span
-            className="
-              ml-1
-              text-xs
-              font-semibold
-              text-[var(--color-warm-gray)]
-            "
-          >
-            +{hiddenCount}
-          </span>
-        )}
-      </div>
-    </div>
+    product.variants?.find((variant) => variant.isDefault) ??
+    product.variants?.[0] ??
+    null
   );
 }
 
-function ProductSizes({ sizes }) {
-  if (sizes.length === 0) {
-    return null;
+function getDisplayPrice(product, defaultVariant) {
+  if (defaultVariant?.price !== undefined && defaultVariant?.price !== null) {
+    return `$${defaultVariant.price}`;
   }
 
-  const visible = sizes.slice(0, MAX_VISIBLE_SIZES);
+  if (product.pricing?.hasPriceRange) {
+    return `$${product.pricing.minimum} – $${product.pricing.maximum}`;
+  }
 
-  const hiddenCount = sizes.length - visible.length;
-
-  return (
-    <div>
-      <p
-        className="
-          text-[0.65rem]
-          font-semibold
-          uppercase
-          tracking-[0.14em]
-          text-[var(--color-warm-gray)]
-        "
-      >
-        Size
-      </p>
-
-      <div
-        className="
-          mt-2
-          flex flex-wrap
-          items-center
-          gap-1.5
-        "
-      >
-        {visible.map((size) => (
-          <span
-            key={size.value}
-            className="
-              inline-flex
-              min-h-8
-              min-w-8
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-[var(--color-warm-light-gray)]
-              bg-white
-              px-2.5
-              text-xs
-              font-semibold
-              text-[var(--color-deep-espresso)]
-            "
-          >
-            {size.value}
-          </span>
-        ))}
-
-        {hiddenCount > 0 && (
-          <span
-            className="
-              text-xs
-              font-semibold
-              text-[var(--color-warm-gray)]
-            "
-          >
-            +{hiddenCount}
-          </span>
-        )}
-      </div>
-    </div>
-  );
+  return `$${product.pricing?.minimum ?? 0}`;
 }
+
+function getShortDescription(product) {
+  if (!product.description?.trim()) {
+    return "A refined piece designed to become part of your story.";
+  }
+
+  return product.description.trim();
+}
+
+/* =========================================================
+   PRODUCT CARD
+========================================================= */
 
 function ProductCard({ product }) {
-  const image = product.image;
+  const images = useMemo(() => getSortedImages(product), [product]);
 
-  const variants = getProductVariants(product);
+  const defaultVariant = useMemo(() => getDefaultVariant(product), [product]);
 
-  const metalColors = getUniqueOptions(variants, "metalColor", "metalColorHex");
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  const stoneColors = getUniqueOptions(variants, "stoneColor", "stoneColorHex");
+  const activeImage = images[activeImageIndex] ?? images[0] ?? null;
 
-  const sizes = getUniqueSizes(variants);
+  const price = getDisplayPrice(product, defaultVariant);
 
-  const hasStructuredOptions =
-    metalColors.length > 0 || stoneColors.length > 0 || sizes.length > 0;
+  const description = getShortDescription(product);
+
+  const isFeatured = Boolean(product.isFeatured);
+
+  const productUrl = `/products/${product.slug}`;
 
   return (
     <article
-      className="
+      className={`
         group
         relative
-        flex h-full
-        flex-col
+
+        w-[350px]
+        max-w-full
+
         overflow-hidden
+
+        rounded-[1.75rem]
+
         border
-        border-[var(--color-warm-light-gray)]
-        bg-white
-        transition
+
+        p-4
+
+        transition-all
         duration-300
-        hover:border-[var(--color-antique-champagne)]
-      "
+
+        hover:-translate-y-1
+
+        ${
+          isFeatured
+            ? `
+                border-brand-accent-fill/35
+                bg-brand-accent-soft
+
+                shadow-[0_14px_35px_rgb(var(--theme-accent-fill)/0.16)]
+
+                hover:shadow-[0_20px_45px_rgb(var(--theme-accent-fill)/0.22)]
+              `
+            : `
+                border-brand-border
+                bg-brand-surface-soft
+
+                shadow-[0_10px_26px_rgba(0,0,0,0.05)]
+
+                hover:shadow-[0_16px_34px_rgba(0,0,0,0.08)]
+              `
+        }
+      `}
     >
-      {/* IMAGE */}
-
-      <div className="relative">
-        <WishlistToggleButton
-          productId={product.id}
-          className="
-            absolute
-            right-3 top-3
-            z-20
-          "
-        />
-
-        <Link
-          to={`/products/${product.slug}`}
-          className="
-            relative
-            block
-            aspect-[4/5]
-            overflow-hidden
-            bg-[var(--color-soft-ivory)]
-          "
-          aria-label={`View ${product.name}`}
-        >
-          {image?.imageUrl ? (
-            <img
-              src={image.imageUrl}
-              alt={image.altText || product.name}
-              loading="lazy"
-              className="
-                h-full w-full
-                object-cover
-                transition-transform
-                duration-700
-                group-hover:scale-[1.025]
-              "
-            />
-          ) : (
-            <div
-              className="
-                flex h-full
-                flex-col
-                items-center
-                justify-center
-                gap-3
-                text-[var(--color-warm-gray)]
-              "
-            >
-              <ImageNotSupportedOutlinedIcon
-                sx={{
-                  fontSize: 44,
-                }}
-              />
-
-              <span className="text-sm font-medium">Product image</span>
-            </div>
-          )}
-
-          {product.isFeatured && (
-            <span
-              className="
-                absolute
-                left-3 top-3
-                rounded-full
-                bg-[var(--color-deep-espresso)]
-                px-3 py-1.5
-                text-[0.65rem]
-                font-bold
-                uppercase
-                tracking-[0.14em]
-                text-white
-              "
-            >
-              Featured
-            </span>
-          )}
-        </Link>
-      </div>
-
-      {/* INFORMATION */}
+      {/* ==================================================
+          TOP AREA
+      ================================================== */}
 
       <div
         className="
-          flex flex-1
-          flex-col
-          px-4 pb-4 pt-4
-          sm:px-5 sm:pb-5
+          mb-3
+          flex
+          min-h-9
+          items-center
+          justify-between
+          gap-3
         "
       >
-        <div
-          className="
-            flex
-            items-start
-            justify-between
-            gap-3
-          "
-        >
-          <p
+        {/* FEATURED LABEL */}
+
+        {isFeatured ? (
+          <span
             className="
-              text-[0.68rem]
-              font-semibold
+              inline-flex
+              items-center
+              gap-1.5
+
+              rounded-full
+
+              bg-brand-accent-fill/15
+
+              px-3
+              py-1.5
+
+              text-[0.58rem]
+              font-bold
               uppercase
-              tracking-[0.16em]
-              text-[var(--color-burnished-bronze)]
+              tracking-[0.12em]
+
+              text-brand-accent-text
             "
           >
-            {product.category?.name || "Butterfly Dream"}
-          </p>
+            <AutoAwesomeRoundedIcon
+              sx={{
+                fontSize: 12,
+              }}
+            />
+            Featured product
+          </span>
+        ) : (
+          /*
+           * Empty element keeps the wishlist
+           * aligned to the right on normal cards.
+           */
+          <span aria-hidden="true" />
+        )}
 
-          <StockBadge status={product.inStock} compact />
-        </div>
+        {/* WISHLIST */}
 
-        {/* NAME */}
+        <WishlistToggleButton
+          productId={product.id}
+          variant={isFeatured ? "featured" : "default"}
+        />
+      </div>
 
-        <h2
+      {/* ==================================================
+          IMAGE FRAME
+      ================================================== */}
+
+      <div
+        className={`
+          rounded-[1.35rem]
+
+          p-2.5
+
+          ${
+            isFeatured
+              ? `
+                  bg-brand-accent-fill/10
+
+                  shadow-[0_8px_24px_rgb(var(--theme-accent-fill)/0.18)]
+                `
+              : `
+                  bg-brand-surface
+
+                  shadow-[inset_0_4px_12px_rgba(0,0,0,0.09)]
+                `
+          }
+        `}
+      >
+        <Link
+          to={productUrl}
+          aria-label={`View ${product.name}`}
           className="
-            mt-2
-            font-display
-            text-[1.35rem]
-            font-medium
-            leading-tight
-            tracking-[-0.025em]
-            text-[var(--color-deep-espresso)]
-            sm:text-[1.5rem]
+            block
+
+            overflow-hidden
+
+            rounded-[1rem]
+
+            bg-brand-surface
           "
         >
-          <Link to={`/products/${product.slug}`}>{product.name}</Link>
-        </h2>
+          <div
+            className="
+              aspect-square
+              overflow-hidden
+            "
+          >
+            {activeImage ? (
+              <img
+                src={activeImage.imageUrl}
+                alt={activeImage.altText || product.name}
+                loading="lazy"
+                className="
+                  h-full
+                  w-full
 
-        {/* PRICE */}
+                  object-contain
+
+                  transition-transform
+                  duration-500
+
+                  group-hover:scale-[1.035]
+                "
+              />
+            ) : (
+              <div
+                className="
+                  flex
+                  h-full
+                  w-full
+
+                  items-center
+                  justify-center
+
+                  px-4
+
+                  text-center
+                  text-sm
+
+                  text-brand-text-muted
+                "
+              >
+                No image available
+              </div>
+            )}
+          </div>
+        </Link>
+      </div>
+
+      {/* ==================================================
+          IMAGE SWITCHER
+      ================================================== */}
+
+      {images.length > 1 && (
+        <div
+          className="
+            mt-3
+
+            flex
+            min-h-6
+
+            items-center
+            justify-center
+
+            gap-1
+          "
+        >
+          {images.map((image, index) => {
+            const isActive = activeImageIndex === index;
+
+            return (
+              <button
+                key={image.id ?? `${product.id}-${index}`}
+                type="button"
+                aria-label={`Show ${product.name} image ${index + 1}`}
+                aria-pressed={isActive}
+                onClick={() => setActiveImageIndex(index)}
+                className="
+                    flex
+                    h-6
+                    min-w-6
+
+                    items-center
+                    justify-center
+
+                    rounded-full
+
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-brand-accent-fill/40
+                  "
+              >
+                <span
+                  className={`
+                      block
+
+                      h-1.5
+
+                      rounded-full
+
+                      transition-all
+                      duration-300
+
+                      ${
+                        isActive
+                          ? isFeatured
+                            ? `
+                                w-4
+                                bg-brand-accent-text
+                              `
+                            : `
+                                w-4
+                                bg-brand-primary
+                              `
+                          : isFeatured
+                            ? `
+                                w-1.5
+                                bg-brand-accent-fill/40
+                              `
+                            : `
+                                w-1.5
+                                bg-brand-text-muted/30
+                              `
+                      }
+                    `}
+                />
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ==================================================
+          PRODUCT INFORMATION
+      ================================================== */}
+
+      <div className={images.length > 1 ? "mt-2" : "mt-4"}>
+        {/* CATEGORY */}
+
+        <p
+          className={`
+            text-[0.58rem]
+
+            font-bold
+            uppercase
+
+            tracking-[0.16em]
+
+            ${isFeatured ? "text-brand-accent-text" : "text-brand-text-muted"}
+          `}
+        >
+          {product.category?.name ?? "Butterfly Dream"}
+        </p>
+
+        {/* PRODUCT NAME */}
+
+        <Link to={productUrl} className="block">
+          <h3
+            className="
+              mt-2
+
+              line-clamp-2
+
+              font-display
+
+              text-[1.45rem]
+              font-medium
+
+              leading-[1.05]
+
+              tracking-[-0.035em]
+
+              text-brand-text
+
+              transition-colors
+              duration-300
+
+              group-hover:text-brand-accent-text
+            "
+          >
+            {product.name}
+          </h3>
+        </Link>
+
+        {/* DESCRIPTION */}
 
         <p
           className="
             mt-2
-            text-sm
-            font-bold
-            text-[var(--color-deep-espresso)]
+
+            line-clamp-2
+
+            text-[0.8rem]
+
+            leading-5
+
+            text-brand-text-muted
           "
         >
-          {getProductPrice(product)}
+          {description}
         </p>
+      </div>
 
-        {/* STRUCTURED OPTIONS */}
+      {/* ==================================================
+          PRICE + ACTION
+      ================================================== */}
 
-        {hasStructuredOptions && (
-          <div
-            className="
-              mt-5
-              space-y-4
-              border-t
-              border-[var(--color-warm-light-gray)]
-              pt-4
-            "
-          >
-            <OptionSwatches label="Metal" options={metalColors} type="Metal" />
+      <div
+        className="
+          mt-6
 
-            <OptionSwatches label="Stone" options={stoneColors} type="Stone" />
+          flex
 
-            <ProductSizes sizes={sizes} />
-          </div>
-        )}
+          items-center
+          justify-between
 
-        {/* FALLBACK UNTIL CATALOG API RETURNS OPTIONS */}
+          gap-3
+        "
+      >
+        {/* PRICE */}
 
-        {!hasStructuredOptions && product.activeVariantCount > 1 && (
+        <div className="min-w-0">
           <p
             className="
-                mt-4
-                text-xs
-                font-medium
-                text-[var(--color-warm-gray)]
-              "
-          >
-            {product.activeVariantCount} options available
-          </p>
-        )}
+              text-[0.52rem]
 
-        {/* ACTION */}
-
-        <div className="mt-auto pt-5">
-          <Link
-            to={`/products/${product.slug}`}
-            className="
-              inline-flex
-              min-h-11
-              w-fit
-              items-center
-              justify-center
-              gap-2
-              rounded-full
-              bg-[var(--color-deep-espresso)]
-              px-5
-              text-sm
               font-semibold
-              text-white
-              transition-colors
-              hover:bg-[var(--color-dark-bronze)]
+              uppercase
+
+              tracking-[0.12em]
+
+              text-brand-text-muted
             "
           >
-            View options
-            <ArrowForwardRoundedIcon fontSize="small" />
-          </Link>
+            Price
+          </p>
+
+          <p
+            className="
+              mt-1
+
+              font-display
+
+              text-[1.65rem]
+              font-semibold
+
+              leading-none
+
+              tracking-[-0.04em]
+
+              text-brand-text
+            "
+          >
+            {price}
+          </p>
         </div>
+
+        {/* ADD TO CART */}
+
+        <Link
+          to={productUrl}
+          className={`
+            inline-flex
+
+            min-h-11
+            shrink-0
+
+            items-center
+            justify-center
+
+            gap-2
+
+            rounded-full
+
+            px-4
+            py-2.5
+
+            text-[0.72rem]
+            font-semibold
+
+            transition-all
+            duration-300
+
+            active:scale-[0.98]
+
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-brand-accent-fill/40
+            focus-visible:ring-offset-2
+
+            ${
+              isFeatured
+                ? `
+        bg-brand-accent-text
+        text-brand-surface
+
+        hover:bg-brand-accent-text-hover
+      `
+                : `
+        bg-brand-primary
+        text-brand-surface
+
+        hover:bg-brand-primary-hover
+      `
+            }
+          `}
+        >
+          <ShoppingBagOutlinedIcon
+            sx={{
+              fontSize: 16,
+            }}
+          />
+          Add to cart
+        </Link>
       </div>
     </article>
   );

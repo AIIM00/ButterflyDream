@@ -30,6 +30,7 @@ import adminInStoreSaleRouter from "../routes/adminInStoreSale.routes.js";
 import adminSiteRoutes from "../routes/adminSite.routes.js";
 import popupEventRoutes from "../routes/popupEvent.routes.js";
 import adminPopupEventRoutes from "../routes/adminPopupEvent.routes.js";
+import adminDeliveryGovernorateRoutes from "../routes/adminDeliveryGovernorate.routes.js";
 //site routes
 import siteRoutes from "../routes/site.routes.js";
 
@@ -82,6 +83,7 @@ app.use("/api/admin/products", adminProductRoutes);
 app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/api/admin/in-store-sales", adminInStoreSaleRouter);
 app.use("/api/admin/popups", adminPopupEventRoutes);
+app.use("/api/admin/delivery-governorates", adminDeliveryGovernorateRoutes);
 
 app.use("/api/admin/site", adminSiteRoutes);
 // 404 handler

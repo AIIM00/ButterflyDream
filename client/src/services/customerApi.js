@@ -1,5 +1,13 @@
 import apiClient from "./apiClient.js";
 
+export async function fetchCustomerDeliveryGovernorates({ signal } = {}) {
+  const response = await apiClient.get("/customer/delivery-governorates", {
+    signal,
+  });
+
+  return response.data;
+}
+
 export async function fetchCustomerAddresses({ signal } = {}) {
   const response = await apiClient.get("/customer/addresses", {
     signal,

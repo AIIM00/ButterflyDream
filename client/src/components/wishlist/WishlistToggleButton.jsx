@@ -2,12 +2,18 @@ import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+
 import useWishlist from "../../context/wishlist/useWishlist.js";
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
 
 function WishlistToggleButton({
   productId,
   showLabel = false,
+
+  // "default" = normal product
+  // "featured" = featured product
+  variant = "default",
+
   className = "",
 }) {
   const navigate = useNavigate();
@@ -69,6 +75,119 @@ function WishlistToggleButton({
     }
   }
 
+  const featured = variant === "featured";
+
+  /*
+   * ======================================================
+   * FULL / LABELED BUTTON
+   * Product details page etc.
+   * ======================================================
+   */
+
+  if (showLabel) {
+    return (
+      <button
+        type="button"
+        onClick={(event) => void handleToggle(event)}
+        disabled={isLoading || isMutating}
+        aria-label={
+          productIsSaved
+            ? "Remove product from wishlist"
+            : "Add product to wishlist"
+        }
+        aria-pressed={productIsSaved}
+        className={[
+          `
+            inline-flex
+            min-h-11
+            items-center
+            justify-center
+            gap-2.5
+
+            rounded-full
+
+            border
+            border-brand-border
+
+            bg-brand-surface
+
+            px-5
+            py-2.5
+
+            text-sm
+            font-semibold
+
+            text-brand-text
+
+            transition-all
+            duration-200
+
+            hover:bg-brand-surface-soft
+            hover:border-brand-text/30
+
+            active:scale-[0.98]
+
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-brand-accent-fill/40
+            focus-visible:ring-offset-2
+
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          `,
+          className,
+        ].join(" ")}
+      >
+        <span
+          className={`
+            inline-flex
+            items-center
+            justify-center
+
+            transition-transform
+            duration-200
+
+            ${
+              productIsSaved
+                ? "scale-110 text-brand-accent-text"
+                : "text-brand-text-muted"
+            }
+
+            ${isMutating ? "animate-pulse" : ""}
+          `}
+        >
+          {productIsSaved ? (
+            <FavoriteRoundedIcon
+              sx={{
+                fontSize: 20,
+              }}
+            />
+          ) : (
+            <FavoriteBorderRoundedIcon
+              sx={{
+                fontSize: 20,
+              }}
+            />
+          )}
+        </span>
+
+        <span>
+          {isMutating
+            ? "Updating..."
+            : productIsSaved
+              ? "Saved"
+              : "Save to wishlist"}
+        </span>
+      </button>
+    );
+  }
+
+  /*
+   * ======================================================
+   * PRODUCT CARD HEART
+   * ======================================================
+   */
+
   return (
     <button
       type="button"
@@ -80,27 +199,103 @@ function WishlistToggleButton({
           : "Add product to wishlist"
       }
       aria-pressed={productIsSaved}
+      title={productIsSaved ? "Remove from wishlist" : "Save to wishlist"}
       className={[
-        "inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:border-gray-950 hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50",
-        showLabel ? "min-h-11 px-5 py-2.5 font-semibold" : "h-11 w-11",
+        `
+          group/wishlist
+
+          relative
+
+          inline-flex
+          h-11
+          w-11
+          shrink-0
+
+          items-center
+          justify-center
+
+          rounded-full
+
+          border-0
+          bg-transparent
+
+          transition-all
+          duration-200
+
+          active:scale-90
+
+          focus-visible:outline-none
+          focus-visible:ring-2
+          focus-visible:ring-brand-accent-fill/40
+
+          disabled:cursor-not-allowed
+          disabled:opacity-50
+        `,
+
+        featured
+          ? productIsSaved
+            ? `
+                bg-brand-accent-fill/10
+                text-brand-accent-text
+
+                hover:bg-brand-accent-fill/20
+                hover:text-brand-accent-text-hover
+              `
+            : `
+                text-brand-accent-text
+
+                hover:bg-brand-accent-fill/10
+                hover:text-brand-accent-text-hover
+              `
+          : productIsSaved
+            ? `
+                bg-brand-primary/5
+                text-brand-primary
+
+                hover:bg-brand-primary/10
+              `
+            : `
+                text-brand-text-muted
+
+                hover:bg-brand-primary/5
+                hover:text-brand-text
+              `,
+
         className,
       ].join(" ")}
     >
-      {productIsSaved ? (
-        <FavoriteRoundedIcon className="text-red-600" />
-      ) : (
-        <FavoriteBorderRoundedIcon />
-      )}
+      <span
+        className={`
+          inline-flex
+          items-center
+          justify-center
 
-      {showLabel && (
-        <span>
-          {isMutating
-            ? "Updating..."
-            : productIsSaved
-              ? "Saved"
-              : "Save to wishlist"}
-        </span>
-      )}
+          transition-all
+          duration-200
+
+          ${
+            productIsSaved
+              ? "scale-110"
+              : "scale-100 group-hover/wishlist:scale-105"
+          }
+
+          ${isMutating ? "animate-pulse" : ""}
+        `}
+      >
+        {productIsSaved ? (
+          <FavoriteRoundedIcon
+            sx={{
+              fontSize: 22,
+            }}
+          />
+        ) : (
+          <FavoriteBorderRoundedIcon
+            sx={{
+              fontSize: 22,
+            }}
+          />
+        )}
+      </span>
     </button>
   );
 }

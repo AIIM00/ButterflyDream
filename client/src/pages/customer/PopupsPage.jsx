@@ -31,11 +31,29 @@ import {
   unlikePopupEvent,
 } from "../../services/popupEventApi.js";
 
-/*
- * ======================================================
- * PHOTO CAROUSEL
- * ======================================================
- */
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function getInitials(fullName, fallback = "BD") {
+  const normalizedName = fullName?.trim();
+
+  if (!normalizedName) {
+    return fallback;
+  }
+
+  const names = normalizedName.split(/\s+/).filter(Boolean);
+
+  if (names.length === 1) {
+    return names[0].slice(0, 2).toUpperCase();
+  }
+
+  return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+}
+
+/* =========================================================
+   PHOTO CAROUSEL
+========================================================= */
 
 function PopupCarousel({ images = [], title }) {
   const containerRef = useRef(null);
@@ -74,17 +92,28 @@ function PopupCarousel({ images = [], title }) {
     }
   }
 
+  /* =======================================================
+     EMPTY
+  ======================================================= */
+
   if (images.length === 0) {
     return (
       <div
         className="
           flex
           aspect-[4/5]
+
           items-center
           justify-center
-          bg-brand-cream
+
+          bg-brand-surface-soft
+
+          px-5
+
+          text-center
           text-sm
-          text-brand-muted
+
+          text-brand-text-muted
 
           sm:aspect-[4/3]
         "
@@ -95,15 +124,30 @@ function PopupCarousel({ images = [], title }) {
   }
 
   return (
-    <div className="relative overflow-hidden bg-brand-cream">
+    <div
+      className="
+        relative
+
+        overflow-hidden
+
+        bg-brand-surface-soft
+      "
+    >
+      {/* ==================================================
+          IMAGES
+      ================================================== */}
+
       <div
         ref={containerRef}
         onScroll={handleScroll}
         className="
           flex
+
           snap-x
           snap-mandatory
+
           overflow-x-auto
+
           scroll-smooth
 
           [scrollbar-width:none]
@@ -118,7 +162,9 @@ function PopupCarousel({ images = [], title }) {
                 aspect-[4/5]
                 w-full
                 shrink-0
+
                 snap-center
+
                 overflow-hidden
 
                 sm:aspect-[4/3]
@@ -134,7 +180,9 @@ function PopupCarousel({ images = [], title }) {
               className="
                   h-full
                   w-full
+
                   select-none
+
                   object-cover
                 "
             />
@@ -142,21 +190,30 @@ function PopupCarousel({ images = [], title }) {
         ))}
       </div>
 
-      {/* IMAGE COUNT */}
+      {/* ==================================================
+          IMAGE COUNT
+      ================================================== */}
+
       {images.length > 1 && (
         <span
           className="
             absolute
             right-3
             top-3
+
             rounded-full
-            bg-brand-espresso/80
+
+            bg-brand-dark-surface/85
+
             px-3
             py-1.5
-            text-[0.65rem]
+
+            text-[0.6rem]
             font-semibold
-            text-white
-            backdrop-blur-sm
+
+            text-brand-surface
+
+            backdrop-blur-md
           "
         >
           {activeIndex + 1}
@@ -165,7 +222,10 @@ function PopupCarousel({ images = [], title }) {
         </span>
       )}
 
-      {/* DESKTOP / TABLET ARROWS */}
+      {/* ==================================================
+          ARROWS
+      ================================================== */}
+
       {images.length > 1 && activeIndex > 0 && (
         <button
           type="button"
@@ -175,19 +235,32 @@ function PopupCarousel({ images = [], title }) {
               absolute
               left-3
               top-1/2
+
               hidden
-              h-10
-              w-10
+              h-11
+              w-11
+
               -translate-y-1/2
+
               items-center
               justify-center
+
               rounded-full
-              bg-white/90
-              text-brand-espresso
-              shadow-sm
-              backdrop-blur-sm
-              transition
-              hover:bg-white
+
+              bg-brand-surface/90
+
+              text-brand-text
+
+              shadow-[0_6px_20px_rgba(0,0,0,0.12)]
+
+              backdrop-blur-md
+
+              transition-all
+              duration-200
+
+              hover:bg-brand-surface
+
+              active:scale-90
 
               sm:inline-flex
             "
@@ -205,19 +278,32 @@ function PopupCarousel({ images = [], title }) {
               absolute
               right-3
               top-1/2
+
               hidden
-              h-10
-              w-10
+              h-11
+              w-11
+
               -translate-y-1/2
+
               items-center
               justify-center
+
               rounded-full
-              bg-white/90
-              text-brand-espresso
-              shadow-sm
-              backdrop-blur-sm
-              transition
-              hover:bg-white
+
+              bg-brand-surface/90
+
+              text-brand-text
+
+              shadow-[0_6px_20px_rgba(0,0,0,0.12)]
+
+              backdrop-blur-md
+
+              transition-all
+              duration-200
+
+              hover:bg-brand-surface
+
+              active:scale-90
 
               sm:inline-flex
             "
@@ -226,22 +312,33 @@ function PopupCarousel({ images = [], title }) {
         </button>
       )}
 
-      {/* DOTS */}
+      {/* ==================================================
+          DOTS
+      ================================================== */}
+
       {images.length > 1 && (
         <div
           className="
             absolute
             bottom-3
             left-1/2
+
             flex
+
             -translate-x-1/2
+
             items-center
+
             gap-1.5
+
             rounded-full
-            bg-brand-espresso/40
+
+            bg-brand-dark-surface/40
+
             px-2.5
             py-2
-            backdrop-blur-sm
+
+            backdrop-blur-md
           "
         >
           {images.map((image, index) => (
@@ -250,16 +347,26 @@ function PopupCarousel({ images = [], title }) {
               type="button"
               aria-label={`Go to photo ${index + 1}`}
               onClick={() => moveTo(index)}
-              className={[
-                `
-                    h-1.5
-                    rounded-full
-                    transition-all
-                    duration-300
-                  `,
+              className={`
+                  h-1.5
 
-                index === activeIndex ? "w-4 bg-white" : "w-1.5 bg-white/55",
-              ].join(" ")}
+                  rounded-full
+
+                  transition-all
+                  duration-300
+
+                  ${
+                    index === activeIndex
+                      ? `
+                          w-4
+                          bg-brand-surface
+                        `
+                      : `
+                          w-1.5
+                          bg-brand-surface/55
+                        `
+                  }
+                `}
             />
           ))}
         </div>
@@ -268,11 +375,9 @@ function PopupCarousel({ images = [], title }) {
   );
 }
 
-/*
- * ======================================================
- * COMMENT
- * ======================================================
- */
+/* =========================================================
+   COMMENT
+========================================================= */
 
 function PopupComment({
   comment,
@@ -285,73 +390,121 @@ function PopupComment({
 
   const userName = comment.user?.fullName || "Customer";
 
-  const initial = userName.charAt(0).toUpperCase();
+  const initials = getInitials(userName, "C");
 
   return (
     <div
       className="
-        group
+        group/comment
+
         flex
         items-start
+
         gap-3
       "
     >
+      {/* AVATAR */}
+
       <div
         className="
           flex
           h-8
           w-8
           shrink-0
+
           items-center
           justify-center
+
           rounded-full
-          bg-brand-pale-champagne
-          text-xs
+
+          bg-brand-accent-soft
+
+          text-[0.58rem]
           font-bold
           uppercase
-          text-brand-espresso
+
+          tracking-[0.04em]
+
+          text-brand-accent-text
         "
       >
-        {initial}
+        {initials}
       </div>
 
-      <div className="min-w-0 flex-1">
+      {/* COMMENT */}
+
+      <div
+        className="
+          min-w-0
+          flex-1
+        "
+      >
         <p
           className="
             text-sm
             leading-6
-            text-brand-espresso
+
+            text-brand-text
           "
         >
-          <span className="mr-2 font-semibold">{userName}</span>
+          <span
+            className="
+              mr-2
 
-          <span className="text-brand-muted">{comment.body}</span>
+              font-semibold
+            "
+          >
+            {userName}
+          </span>
+
+          <span
+            className="
+              text-brand-text-muted
+            "
+          >
+            {comment.body}
+          </span>
         </p>
       </div>
+
+      {/* DELETE */}
 
       {canDelete && (
         <button
           type="button"
           title="Delete comment"
+          aria-label="Delete comment"
           disabled={isDeleting}
           onClick={() => onDelete(comment.id)}
           className="
             inline-flex
-            h-8
-            w-8
+            h-9
+            w-9
             shrink-0
+
             items-center
             justify-center
+
             rounded-full
-            text-brand-muted
+
+            text-brand-text-muted
+
             opacity-70
-            transition
-            hover:bg-red-50
-            hover:text-red-600
+
+            transition-all
+            duration-200
+
+            hover:bg-brand-error/5
+            hover:text-brand-error
+
+            active:scale-90
+
+            disabled:cursor-not-allowed
             disabled:opacity-30
 
             sm:opacity-0
-            sm:group-hover:opacity-100
+
+            sm:group-hover/comment:opacity-100
           "
         >
           <DeleteOutlineRoundedIcon
@@ -365,17 +518,16 @@ function PopupComment({
   );
 }
 
-/*
- * ======================================================
- * POPUP POST
- * ======================================================
- */
+/* =========================================================
+   POPUP POST
+========================================================= */
 
 function PopupPost({
   popup,
   interaction,
   isCustomer,
   currentUserId,
+  currentUserName,
   mutationKey,
   onToggleLike,
   onToggleAttendance,
@@ -406,6 +558,12 @@ function PopupPost({
   const likeBusy = mutationKey === `${popup.id}:like`;
 
   const attendanceBusy = mutationKey === `${popup.id}:attendance`;
+
+  const customerInitials = getInitials(currentUserName, "C");
+
+  /* =======================================================
+     LOAD COMMENTS
+  ======================================================= */
 
   async function loadComments() {
     if (commentsLoading) {
@@ -438,6 +596,10 @@ function PopupPost({
     }
   }
 
+  /* =======================================================
+     TOGGLE COMMENTS
+  ======================================================= */
+
   async function toggleComments() {
     if (commentsExpanded) {
       setCommentsExpanded(false);
@@ -453,6 +615,10 @@ function PopupPost({
 
     await loadComments();
   }
+
+  /* =======================================================
+     LOAD MORE COMMENTS
+  ======================================================= */
 
   async function loadMoreComments() {
     if (commentsLoading || !commentsPagination?.hasNextPage) {
@@ -479,6 +645,7 @@ function PopupPost({
 
         return [
           ...current,
+
           ...nextComments.filter((comment) => !existingIds.has(comment.id)),
         ];
       });
@@ -494,6 +661,10 @@ function PopupPost({
       setCommentsLoading(false);
     }
   }
+
+  /* =======================================================
+     COMMENT SUBMIT
+  ======================================================= */
 
   async function handleCommentSubmit(event) {
     event.preventDefault();
@@ -535,6 +706,7 @@ function PopupPost({
 
       onCommentCountChange(
         popup.id,
+
         response.commentCount ?? (social.commentCount ?? 0) + 1,
       );
     } catch (error) {
@@ -547,6 +719,10 @@ function PopupPost({
       setCommentSubmitting(false);
     }
   }
+
+  /* =======================================================
+     DELETE COMMENT
+  ======================================================= */
 
   async function handleDeleteComment(commentId) {
     if (!isCustomer || deletingCommentId) {
@@ -564,6 +740,7 @@ function PopupPost({
 
       onCommentCountChange(
         popup.id,
+
         response.commentCount ?? Math.max(0, (social.commentCount ?? 1) - 1),
       );
     } catch (error) {
@@ -579,25 +756,38 @@ function PopupPost({
 
   const visibleComments = commentsExpanded ? comments : comments.slice(-3);
 
+  /* =========================================================
+     POST
+  ========================================================= */
+
   return (
     <article
       className="
         overflow-hidden
+
         border-y
         border-brand-border
+
         bg-brand-surface
 
         sm:rounded-[1.75rem]
         sm:border
+
+        sm:shadow-[0_14px_40px_rgba(0,0,0,0.035)]
       "
     >
-      {/* POST HEADER */}
+      {/* ==================================================
+          POST HEADER
+      ================================================== */}
+
       <header
         className="
           flex
           items-center
           justify-between
+
           gap-4
+
           px-4
           py-4
 
@@ -608,35 +798,50 @@ function PopupPost({
           className="
             flex
             min-w-0
+
             items-center
+
             gap-3
           "
         >
+          {/* BRAND AVATAR */}
+
           <div
             className="
               flex
-              h-10
-              w-10
+              h-11
+              w-11
               shrink-0
+
               items-center
               justify-center
+
               rounded-full
-              bg-brand-espresso
+
+              bg-brand-dark-surface
+
               font-display
-              text-lg
-              text-brand-champagne
+
+              text-sm
+              font-medium
+
+              tracking-[0.03em]
+
+              text-brand-accent-fill
             "
           >
-            B
+            BD
           </div>
 
           <div className="min-w-0">
             <h2
               className="
                 truncate
+
                 text-sm
                 font-semibold
-                text-brand-espresso
+
+                text-brand-text
               "
             >
               Butterfly Dream
@@ -646,17 +851,29 @@ function PopupPost({
               <div
                 className="
                   mt-0.5
+
                   flex
                   flex-wrap
+
                   items-center
+
                   gap-x-2
                   gap-y-1
-                  text-[0.68rem]
-                  text-brand-muted
+
+                  text-[0.65rem]
+
+                  text-brand-text-muted
                 "
               >
                 {popup.location && (
-                  <span className="inline-flex items-center gap-1">
+                  <span
+                    className="
+                      inline-flex
+                      items-center
+
+                      gap-1
+                    "
+                  >
                     <LocationOnOutlinedIcon
                       sx={{
                         fontSize: 13,
@@ -667,10 +884,19 @@ function PopupPost({
                   </span>
                 )}
 
-                {popup.location && popup.dateLabel && <span>·</span>}
+                {popup.location && popup.dateLabel && (
+                  <span aria-hidden="true">·</span>
+                )}
 
                 {popup.dateLabel && (
-                  <span className="inline-flex items-center gap-1">
+                  <span
+                    className="
+                      inline-flex
+                      items-center
+
+                      gap-1
+                    "
+                  >
                     <CalendarMonthOutlinedIcon
                       sx={{
                         fontSize: 13,
@@ -685,197 +911,341 @@ function PopupPost({
           </div>
         </div>
 
-        <p
+        <span
           className="
             shrink-0
-            text-[0.58rem]
-            font-semibold
+
+            rounded-full
+
+            bg-brand-accent-soft
+
+            px-2.5
+            py-1
+
+            text-[0.52rem]
+            font-bold
             uppercase
-            tracking-[0.18em]
-            text-brand-bronze
+
+            tracking-[0.16em]
+
+            text-brand-accent-text
           "
         >
           Pop-up
-        </p>
+        </span>
       </header>
 
-      {/* PHOTOS */}
+      {/* ==================================================
+          PHOTOS
+      ================================================== */}
+
       <PopupCarousel images={popup.images ?? []} title={popup.title} />
 
-      {/* SOCIAL ACTIONS */}
+      {/* ==================================================
+          CONTENT
+      ================================================== */}
+
       <div
         className="
           px-4
           pb-5
-          pt-4
+          pt-3
 
           sm:px-6
           sm:pb-6
+          sm:pt-4
         "
       >
+        {/* ==============================================
+            SOCIAL ACTIONS
+        ============================================== */}
+
         <div
           className="
             flex
             items-center
-            gap-4
+
+            gap-1
           "
         >
           {/* LIKE */}
+
           {isCustomer ? (
             <button
               type="button"
               aria-label={liked ? "Unlike popup" : "Like popup"}
               disabled={likeBusy}
               onClick={() => onToggleLike(popup.id, liked)}
-              className={[
-                `
-                  inline-flex
-                  h-10
-                  w-10
-                  items-center
-                  justify-center
-                  rounded-full
-                  transition
-                  disabled:opacity-50
-                `,
+              className={`
+                inline-flex
+                h-11
+                w-11
 
-                liked
-                  ? "text-red-500"
-                  : "text-brand-espresso hover:bg-brand-cream",
-              ].join(" ")}
+                items-center
+                justify-center
+
+                rounded-full
+
+                transition-all
+                duration-200
+
+                active:scale-90
+
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+
+                ${
+                  liked
+                    ? `
+                        bg-brand-accent-soft
+                        text-brand-accent-text
+                      `
+                    : `
+                        text-brand-text
+
+                        hover:bg-brand-primary/5
+                      `
+                }
+              `}
             >
-              {liked ? <FavoriteRoundedIcon /> : <FavoriteBorderRoundedIcon />}
+              {liked ? (
+                <FavoriteRoundedIcon
+                  sx={{
+                    fontSize: 24,
+                  }}
+                />
+              ) : (
+                <FavoriteBorderRoundedIcon
+                  sx={{
+                    fontSize: 24,
+                  }}
+                />
+              )}
             </button>
           ) : (
             <span
               className="
                 inline-flex
-                h-10
-                w-10
+                h-11
+                w-11
+
                 items-center
                 justify-center
-                text-brand-espresso
+
+                text-brand-text
               "
             >
-              <FavoriteBorderRoundedIcon />
+              <FavoriteBorderRoundedIcon
+                sx={{
+                  fontSize: 24,
+                }}
+              />
             </span>
           )}
 
           {/* COMMENTS */}
+
           <button
             type="button"
             aria-label="View comments"
             onClick={() => void toggleComments()}
             className="
               inline-flex
-              h-10
-              w-10
+              h-11
+              w-11
+
               items-center
               justify-center
+
               rounded-full
-              text-brand-espresso
-              transition
-              hover:bg-brand-cream
+
+              text-brand-text
+
+              transition-all
+              duration-200
+
+              hover:bg-brand-primary/5
+
+              active:scale-90
             "
           >
-            <ChatBubbleOutlineRoundedIcon />
+            <ChatBubbleOutlineRoundedIcon
+              sx={{
+                fontSize: 23,
+              }}
+            />
           </button>
         </div>
 
-        {/* LIKE COUNT */}
+        {/* ==============================================
+            LIKE COUNT
+        ============================================== */}
+
         <p
           className="
             mt-1
+
             text-sm
             font-semibold
-            text-brand-espresso
+
+            text-brand-text
           "
         >
           {social.likeCount ?? 0}{" "}
           {(social.likeCount ?? 0) === 1 ? "like" : "likes"}
         </p>
 
-        {/* I WAS THERE */}
-        {isCustomer ? (
-          <button
-            type="button"
-            disabled={attendanceBusy}
-            onClick={() => onToggleAttendance(popup.id, attended)}
-            className={[
-              `
-                mt-4
-                inline-flex
-                items-center
-                gap-2
-                rounded-full
-                border
-                px-4
-                py-2.5
-                text-xs
-                font-semibold
-                transition
-                disabled:opacity-50
-              `,
+        {/* ==============================================
+            ATTENDANCE
+        ============================================== */}
 
-              attended
-                ? "border-brand-espresso bg-brand-espresso text-white"
-                : "border-brand-border bg-brand-cream text-brand-espresso hover:border-brand-espresso",
-            ].join(" ")}
-          >
-            {attended ? (
-              <>
-                <CheckRoundedIcon
-                  sx={{
-                    fontSize: 17,
-                  }}
-                />
-                You were there
-              </>
-            ) : (
-              <>
-                <PeopleAltOutlinedIcon
-                  sx={{
-                    fontSize: 17,
-                  }}
-                />
-                I was there
-              </>
-            )}
-          </button>
-        ) : null}
-
-        <p
+        <div
           className="
-            mt-2
-            text-xs
-            text-brand-muted
+            mt-4
+
+            flex
+            flex-wrap
+
+            items-center
+
+            gap-x-3
+            gap-y-2
           "
         >
-          <span className="font-semibold text-brand-espresso">
-            {social.attendanceCount ?? 0}
-          </span>{" "}
-          {(social.attendanceCount ?? 0) === 1
-            ? "person was there"
-            : "people were there"}
-        </p>
+          {isCustomer && (
+            <button
+              type="button"
+              disabled={attendanceBusy}
+              onClick={() => onToggleAttendance(popup.id, attended)}
+              className={`
+                inline-flex
+                min-h-10
 
-        {/* FULL-WIDTH CAPTION */}
+                items-center
+                justify-center
+
+                gap-2
+
+                rounded-full
+
+                border
+
+                px-4
+
+                text-xs
+                font-semibold
+
+                transition-all
+                duration-200
+
+                active:scale-[0.97]
+
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+
+                ${
+                  attended
+                    ? `
+                        border-brand-primary
+                        bg-brand-primary
+                        text-brand-surface
+                      `
+                    : `
+                        border-brand-border
+                        bg-brand-surface-soft
+                        text-brand-text
+
+                        hover:border-brand-accent-fill/50
+                      `
+                }
+              `}
+            >
+              {attended ? (
+                <>
+                  <CheckRoundedIcon
+                    sx={{
+                      fontSize: 17,
+                    }}
+                  />
+                  You were there
+                </>
+              ) : (
+                <>
+                  <PeopleAltOutlinedIcon
+                    sx={{
+                      fontSize: 17,
+                    }}
+                  />
+                  I was there
+                </>
+              )}
+            </button>
+          )}
+
+          <p
+            className="
+              text-xs
+
+              text-brand-text-muted
+            "
+          >
+            <span
+              className="
+                font-semibold
+
+                text-brand-text
+              "
+            >
+              {social.attendanceCount ?? 0}
+            </span>{" "}
+            {(social.attendanceCount ?? 0) === 1
+              ? "person was there"
+              : "people were there"}
+          </p>
+        </div>
+
+        {/* ==============================================
+            CAPTION
+        ============================================== */}
+
         <div
           className="
             mt-5
+
             border-t
             border-brand-border
+
             pt-5
           "
         >
+          <p
+            className="
+              text-[0.56rem]
+              font-bold
+              uppercase
+
+              tracking-[0.17em]
+
+              text-brand-accent-text
+            "
+          >
+            The story
+          </p>
+
           <h3
             className="
+              mt-1
+
               font-display
+
               text-2xl
               font-medium
+
               leading-tight
+
               tracking-[-0.03em]
-              text-brand-espresso
+
+              text-brand-text
 
               sm:text-3xl
             "
@@ -886,28 +1256,46 @@ function PopupPost({
           <p
             className="
               mt-3
+
               whitespace-pre-line
+
               text-sm
               leading-7
-              text-brand-muted
+
+              text-brand-text-muted
             "
           >
             {popup.caption}
           </p>
         </div>
 
-        {/* COMMENTS */}
+        {/* ==============================================
+            COMMENTS
+        ============================================== */}
+
         <div className="mt-5">
           {(social.commentCount ?? 0) > 0 && (
             <button
               type="button"
               onClick={() => void toggleComments()}
               className="
+                inline-flex
+                min-h-9
+
+                items-center
+
+                rounded-full
+
+                px-1
+
                 text-xs
                 font-semibold
-                text-brand-muted
-                transition
-                hover:text-brand-espresso
+
+                text-brand-text-muted
+
+                transition-colors
+
+                hover:text-brand-text
               "
             >
               {commentsLoading
@@ -920,8 +1308,16 @@ function PopupPost({
             </button>
           )}
 
+          {/* COMMENTS LIST */}
+
           {visibleComments.length > 0 && (
-            <div className="mt-4 space-y-4">
+            <div
+              className="
+                mt-4
+
+                space-y-4
+              "
+            >
               {visibleComments.map((comment) => (
                 <PopupComment
                   key={comment.id}
@@ -935,6 +1331,8 @@ function PopupPost({
             </div>
           )}
 
+          {/* LOAD MORE COMMENTS */}
+
           {commentsExpanded && commentsPagination?.hasNextPage && (
             <button
               type="button"
@@ -942,9 +1340,26 @@ function PopupPost({
               onClick={() => void loadMoreComments()}
               className="
                   mt-4
+
+                  inline-flex
+                  min-h-9
+
+                  items-center
+
+                  rounded-full
+
+                  px-2
+
                   text-xs
                   font-semibold
-                  text-brand-bronze
+
+                  text-brand-accent-text
+
+                  transition-colors
+
+                  hover:text-brand-accent-text-hover
+
+                  disabled:cursor-not-allowed
                   disabled:opacity-50
                 "
             >
@@ -952,96 +1367,164 @@ function PopupPost({
             </button>
           )}
 
-          {/* COMMENT FORM */}
+          {/* ==============================================
+              COMMENT FORM
+          ============================================== */}
+
           {isCustomer && popup.commentsEnabled && (
             <form
               onSubmit={handleCommentSubmit}
               className="
                   mt-5
+
                   flex
                   items-center
+
                   gap-3
+
                   border-t
                   border-brand-border
+
                   pt-4
                 "
             >
+              {/* CUSTOMER AVATAR */}
+
               <div
                 className="
                     flex
-                    h-8
-                    w-8
-                    shrink-0
-                    items-center
-                    justify-center
-                    rounded-full
-                    bg-brand-pale-champagne
-                    text-xs
-                    font-bold
-                    uppercase
-                    text-brand-espresso
-                  "
-              >
-                {String(currentUserId ? "Y" : "C")}
-              </div>
-
-              <input
-                type="text"
-                value={commentInput}
-                maxLength={1000}
-                disabled={commentSubmitting}
-                onChange={(event) => setCommentInput(event.target.value)}
-                placeholder="Add a comment..."
-                className="
-                    min-w-0
-                    flex-1
-                    bg-transparent
-                    py-2
-                    text-sm
-                    text-brand-espresso
-                    outline-none
-                    placeholder:text-brand-muted/70
-                  "
-              />
-
-              <button
-                type="submit"
-                aria-label="Post comment"
-                disabled={commentSubmitting || !commentInput.trim()}
-                className="
-                    inline-flex
                     h-9
                     w-9
                     shrink-0
+
                     items-center
                     justify-center
+
                     rounded-full
-                    bg-brand-espresso
-                    text-white
-                    transition
-                    hover:bg-brand-emerald
-                    disabled:cursor-not-allowed
-                    disabled:opacity-30
+
+                    bg-brand-accent-soft
+
+                    text-[0.58rem]
+                    font-bold
+                    uppercase
+
+                    tracking-[0.04em]
+
+                    text-brand-accent-text
                   "
               >
-                <SendRoundedIcon
-                  sx={{
-                    fontSize: 17,
-                  }}
+                {customerInitials}
+              </div>
+
+              {/* INPUT */}
+
+              <div
+                className="
+                    flex
+                    min-w-0
+                    flex-1
+
+                    items-center
+
+                    rounded-full
+
+                    border
+                    border-brand-border
+
+                    bg-brand-surface-soft
+
+                    pl-4
+                    pr-1.5
+
+                    transition-all
+
+                    focus-within:border-brand-accent-fill
+                    focus-within:bg-brand-surface
+                    focus-within:ring-2
+                    focus-within:ring-brand-accent-fill/10
+                  "
+              >
+                <input
+                  type="text"
+                  value={commentInput}
+                  maxLength={1000}
+                  disabled={commentSubmitting}
+                  onChange={(event) => setCommentInput(event.target.value)}
+                  placeholder="Add a comment..."
+                  className="
+                      min-h-11
+                      min-w-0
+                      flex-1
+
+                      bg-transparent
+
+                      py-2
+
+                      text-sm
+
+                      text-brand-text
+
+                      outline-none
+
+                      placeholder:text-brand-text-muted/60
+                    "
                 />
-              </button>
+
+                <button
+                  type="submit"
+                  aria-label="Post comment"
+                  disabled={commentSubmitting || !commentInput.trim()}
+                  className="
+                      inline-flex
+                      h-9
+                      w-9
+                      shrink-0
+
+                      items-center
+                      justify-center
+
+                      rounded-full
+
+                      bg-brand-primary
+
+                      text-brand-surface
+
+                      transition-all
+                      duration-200
+
+                      hover:bg-brand-primary-hover
+
+                      active:scale-90
+
+                      disabled:cursor-not-allowed
+                      disabled:opacity-30
+                    "
+                >
+                  <SendRoundedIcon
+                    sx={{
+                      fontSize: 16,
+                    }}
+                  />
+                </button>
+              </div>
             </form>
           )}
+
+          {/* COMMENTS CLOSED */}
 
           {isCustomer && !popup.commentsEnabled && (
             <p
               className="
                   mt-5
+
                   border-t
                   border-brand-border
+
                   pt-4
+
                   text-xs
-                  text-brand-muted
+
+                  text-brand-text-muted
                 "
             >
               Comments are closed for this post.
@@ -1053,11 +1536,9 @@ function PopupPost({
   );
 }
 
-/*
- * ======================================================
- * PAGE
- * ======================================================
- */
+/* =========================================================
+   PAGE
+========================================================= */
 
 function PopupsPage() {
   const { user, isAuthenticated, authLoading } = useAppContext();
@@ -1079,9 +1560,10 @@ function PopupsPage() {
 
   const [mutationKey, setMutationKey] = useState(null);
 
-  /*
-   * Load public posts.
-   */
+  /* =======================================================
+     LOAD PUBLIC POSTS
+  ======================================================= */
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -1125,12 +1607,10 @@ function PopupsPage() {
     };
   }, []);
 
-  /*
-   * Load private CUSTOMER interaction state.
-   *
-   * Guests and ADMIN sessions intentionally
-   * do not call CUSTOMER-only endpoints.
-   */
+  /* =======================================================
+     CUSTOMER INTERACTIONS
+  ======================================================= */
+
   useEffect(() => {
     if (!isCustomer || popupEvents.length === 0) {
       return undefined;
@@ -1167,6 +1647,10 @@ function PopupsPage() {
     };
   }, [isCustomer, popupEvents]);
 
+  /* =======================================================
+     UPDATE SOCIAL
+  ======================================================= */
+
   function updateSocial(popupEventId, changes) {
     setPopupEvents((current) =>
       current.map((popup) =>
@@ -1183,6 +1667,10 @@ function PopupsPage() {
       ),
     );
   }
+
+  /* =======================================================
+     LIKE
+  ======================================================= */
 
   async function handleToggleLike(popupEventId, currentlyLiked) {
     if (!isCustomer || mutationKey) {
@@ -1220,6 +1708,10 @@ function PopupsPage() {
     }
   }
 
+  /* =======================================================
+     ATTENDANCE
+  ======================================================= */
+
   async function handleToggleAttendance(popupEventId, currentlyAttended) {
     if (!isCustomer || mutationKey) {
       return;
@@ -1256,11 +1748,19 @@ function PopupsPage() {
     }
   }
 
+  /* =======================================================
+     COMMENT COUNT
+  ======================================================= */
+
   function handleCommentCountChange(popupEventId, commentCount) {
     updateSocial(popupEventId, {
       commentCount,
     });
   }
+
+  /* =======================================================
+     LOAD MORE POSTS
+  ======================================================= */
 
   async function loadMorePosts() {
     if (isLoadingMore || !pagination?.hasNextPage) {
@@ -1285,6 +1785,7 @@ function PopupsPage() {
 
         return [
           ...current,
+
           ...nextEvents.filter((popup) => !existingIds.has(popup.id)),
         ];
       });
@@ -1301,39 +1802,51 @@ function PopupsPage() {
     }
   }
 
+  /* =========================================================
+     PAGE
+  ========================================================= */
+
   return (
     <main
       className="
         min-h-screen
-        bg-brand-ivory
-        text-brand-espresso
+
+        bg-brand-page
+
+        text-brand-text
       "
     >
-      {/* HERO */}
+      {/* ==================================================
+          HERO
+      ================================================== */}
+
       <section
         className="
           mx-auto
           max-w-7xl
+
           px-4
-          pb-10
+          pb-9
           pt-8
 
           sm:px-6
-          sm:pb-14
+          sm:pb-12
           sm:pt-12
 
           lg:px-8
-          lg:pb-16
+          lg:pb-14
           lg:pt-16
         "
       >
         <p
           className="
-            text-[0.65rem]
+            text-[0.62rem]
             font-bold
             uppercase
-            tracking-[0.22em]
-            text-brand-bronze
+
+            tracking-[0.2em]
+
+            text-brand-accent-text
           "
         >
           Butterfly Dream in the world
@@ -1342,7 +1855,9 @@ function PopupsPage() {
         <div
           className="
             mt-4
+
             grid
+
             gap-5
 
             lg:grid-cols-12
@@ -1353,12 +1868,17 @@ function PopupsPage() {
             <h1
               className="
                 max-w-3xl
+
                 font-display
-                text-[3.25rem]
+
+                text-[3.15rem]
                 font-medium
+
                 leading-[0.9]
+
                 tracking-[-0.055em]
-                text-brand-espresso
+
+                text-brand-text
 
                 sm:text-6xl
 
@@ -1366,31 +1886,39 @@ function PopupsPage() {
               "
             >
               Pop-ups
-              <span className="block italic">& Events.</span>
+              <span
+                className="
+                  block
+                  italic
+                "
+              >
+                &amp; Events.
+              </span>
             </h1>
           </div>
 
-          <div
-            className="
-              lg:col-span-4
-            "
-          >
+          <div className="lg:col-span-4">
             <p
               className="
                 max-w-md
+
                 text-sm
                 leading-7
-                text-brand-muted
+
+                text-brand-text-muted
               "
             >
-              Discover the places, people and moments that have become part of
+              Discover the places, people, and moments that have become part of
               the Butterfly Dream story.
             </p>
           </div>
         </div>
       </section>
 
-      {/* FEED */}
+      {/* ==================================================
+          FEED
+      ================================================== */}
+
       <section
         className="
           pb-20
@@ -1404,12 +1932,16 @@ function PopupsPage() {
           className="
             mx-auto
             max-w-4xl
-            space-y-8
 
-            sm:space-y-10
+            space-y-7
+
+            sm:space-y-9
           "
         >
-          {/* LOADING */}
+          {/* ==============================================
+              LOADING
+          ============================================== */}
+
           {isLoading && (
             <>
               {Array.from({
@@ -1418,66 +1950,127 @@ function PopupsPage() {
                 <div
                   key={index}
                   className="
-                      overflow-hidden
-                      border-y
-                      border-brand-border
-                      bg-brand-surface
+                    overflow-hidden
 
-                      sm:rounded-[1.75rem]
-                      sm:border
-                    "
+                    border-y
+                    border-brand-border
+
+                    bg-brand-surface
+
+                    sm:rounded-[1.75rem]
+                    sm:border
+                  "
                 >
                   <div
                     className="
-                        h-16
-                        animate-pulse
-                        bg-brand-cream
-                      "
+                      h-16
+
+                      animate-pulse
+
+                      bg-brand-surface-soft
+                    "
                   />
 
                   <div
                     className="
-                        aspect-[4/5]
-                        animate-pulse
-                        bg-brand-cream/70
+                      aspect-[4/5]
 
-                        sm:aspect-[4/3]
-                      "
+                      animate-pulse
+
+                      bg-brand-surface-soft/70
+
+                      sm:aspect-[4/3]
+                    "
                   />
 
                   <div
                     className="
-                        h-48
-                        animate-pulse
-                        bg-brand-surface
-                      "
+                      h-48
+
+                      animate-pulse
+
+                      bg-brand-surface
+                    "
                   />
                 </div>
               ))}
             </>
           )}
 
-          {/* ERROR */}
+          {/* ==============================================
+              ERROR
+          ============================================== */}
+
           {!isLoading && loadError && (
             <div
               className="
                   mx-4
-                  rounded-[1.5rem]
+
+                  rounded-[1.75rem]
+
                   border
-                  border-red-200
-                  bg-red-50
+                  border-brand-error/20
+
+                  bg-brand-surface
+
                   px-6
                   py-12
+
                   text-center
 
                   sm:mx-0
                 "
             >
-              <p className="font-semibold text-red-900">
-                We couldn’t load the popup stories.
-              </p>
+              <span
+                className="
+                    mx-auto
 
-              <p className="mt-2 text-sm text-red-700">
+                    inline-flex
+                    h-14
+                    w-14
+
+                    items-center
+                    justify-center
+
+                    rounded-full
+
+                    bg-brand-error/10
+
+                    text-brand-error
+                  "
+              >
+                !
+              </span>
+
+              <h2
+                className="
+                    mt-5
+
+                    font-display
+
+                    text-2xl
+                    font-medium
+
+                    tracking-[-0.03em]
+
+                    text-brand-text
+                  "
+              >
+                We couldn’t load the pop-up stories.
+              </h2>
+
+              <p
+                className="
+                    mx-auto
+                    mt-3
+                    max-w-md
+
+                    text-sm
+                    leading-6
+
+                    text-brand-text-muted
+                  "
+              >
                 {loadError?.response?.data?.message ||
                   loadError?.message ||
                   "Please try again."}
@@ -1487,14 +2080,30 @@ function PopupsPage() {
                 type="button"
                 onClick={() => window.location.reload()}
                 className="
-                    mt-5
+                    mt-6
+
+                    inline-flex
+                    min-h-11
+
+                    items-center
+                    justify-center
+
                     rounded-full
-                    bg-red-900
+
+                    bg-brand-primary
+
                     px-5
-                    py-2.5
+
                     text-sm
                     font-semibold
-                    text-white
+
+                    text-brand-surface
+
+                    transition-all
+
+                    hover:bg-brand-primary-hover
+
+                    active:scale-[0.98]
                   "
               >
                 Try again
@@ -1502,66 +2111,110 @@ function PopupsPage() {
             </div>
           )}
 
-          {/* EMPTY */}
+          {/* ==============================================
+              EMPTY
+          ============================================== */}
+
           {!isLoading && !loadError && popupEvents.length === 0 && (
             <div
               className="
+                  relative
+
                   mx-4
+
+                  overflow-hidden
+
                   rounded-[1.75rem]
+
                   border
                   border-brand-border
-                  bg-brand-surface
+
+                  bg-brand-surface-soft
+
                   px-6
                   py-16
+
                   text-center
 
                   sm:mx-0
                 "
             >
-              <p
+              <span
+                aria-hidden="true"
                 className="
-                    text-[0.62rem]
-                    font-bold
-                    uppercase
-                    tracking-[0.2em]
-                    text-brand-bronze
-                  "
-              >
-                Our story continues
-              </p>
+                    pointer-events-none
 
-              <h2
-                className="
-                    mx-auto
-                    mt-4
-                    max-w-md
-                    font-display
-                    text-3xl
-                    font-medium
-                    tracking-[-0.04em]
-                    text-brand-espresso
-                  "
-              >
-                Our pop-up memories are coming soon.
-              </h2>
+                    absolute
+                    -right-16
+                    -top-16
 
-              <p
-                className="
-                    mx-auto
-                    mt-4
-                    max-w-sm
-                    text-sm
-                    leading-6
-                    text-brand-muted
+                    h-44
+                    w-44
+
+                    rounded-full
+
+                    border
+                    border-brand-accent-fill/20
                   "
-              >
-                Moments, places and stories from Butterfly Dream events will
-                live here.
-              </p>
+              />
+
+              <div className="relative z-10">
+                <p
+                  className="
+                      text-[0.6rem]
+                      font-bold
+                      uppercase
+
+                      tracking-[0.2em]
+
+                      text-brand-accent-text
+                    "
+                >
+                  Our story continues
+                </p>
+
+                <h2
+                  className="
+                      mx-auto
+                      mt-4
+                      max-w-md
+
+                      font-display
+
+                      text-3xl
+                      font-medium
+
+                      tracking-[-0.04em]
+
+                      text-brand-text
+                    "
+                >
+                  Our pop-up memories are coming soon.
+                </h2>
+
+                <p
+                  className="
+                      mx-auto
+                      mt-4
+                      max-w-sm
+
+                      text-sm
+                      leading-6
+
+                      text-brand-text-muted
+                    "
+                >
+                  Moments, places, and stories from Butterfly Dream events will
+                  live here.
+                </p>
+              </div>
             </div>
           )}
 
-          {/* POSTS */}
+          {/* ==============================================
+              POSTS
+          ============================================== */}
+
           {!isLoading &&
             !loadError &&
             popupEvents.map((popup) => (
@@ -1571,12 +2224,12 @@ function PopupsPage() {
                 interaction={
                   interactions[popup.id] ?? {
                     liked: false,
-
                     attended: false,
                   }
                 }
                 isCustomer={isCustomer}
                 currentUserId={user?.id ?? null}
+                currentUserName={user?.fullName ?? null}
                 mutationKey={mutationKey}
                 onToggleLike={handleToggleLike}
                 onToggleAttendance={handleToggleAttendance}
@@ -1584,25 +2237,53 @@ function PopupsPage() {
               />
             ))}
 
-          {/* LOAD MORE */}
+          {/* ==============================================
+              LOAD MORE
+          ============================================== */}
+
           {!isLoading && !loadError && pagination?.hasNextPage && (
-            <div className="px-4 text-center sm:px-0">
+            <div
+              className="
+                  px-4
+
+                  text-center
+
+                  sm:px-0
+                "
+            >
               <button
                 type="button"
                 disabled={isLoadingMore}
                 onClick={() => void loadMorePosts()}
                 className="
+                    inline-flex
+                    min-h-12
+
+                    items-center
+                    justify-center
+
                     rounded-full
+
                     border
-                    border-brand-espresso
+                    border-brand-primary
+
+                    bg-transparent
+
                     px-6
-                    py-3
+
                     text-sm
                     font-semibold
-                    text-brand-espresso
-                    transition
-                    hover:bg-brand-espresso
-                    hover:text-white
+
+                    text-brand-primary
+
+                    transition-all
+
+                    hover:bg-brand-primary
+                    hover:text-brand-surface
+
+                    active:scale-[0.98]
+
+                    disabled:cursor-not-allowed
                     disabled:opacity-40
                   "
               >

@@ -1,4 +1,10 @@
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+
 import StockBadge from "./StockBadge.jsx";
+
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function getOptions(variant) {
   const rawOptions =
@@ -121,6 +127,10 @@ function hasVariant(variants, filters) {
   return Boolean(findVariant(variants, filters));
 }
 
+/* =========================================================
+   COLOR CHOICE
+========================================================= */
+
 function ColorChoice({ label, color, selected, disabled, onClick }) {
   return (
     <button
@@ -132,49 +142,145 @@ function ColorChoice({ label, color, selected, disabled, onClick }) {
       title={
         disabled ? `${label} is unavailable with your current selection` : label
       }
-      className={[
-        `
-          relative
-          flex h-11 w-11
-          items-center
-          justify-center
-          rounded-full
-          border-2
-          bg-brand-surface
-          transition
-        `,
-        selected
-          ? "border-brand-espresso"
-          : "border-transparent hover:border-brand-border",
-        disabled ? "cursor-not-allowed opacity-25" : "cursor-pointer",
-      ].join(" ")}
+      className={`
+        group/color
+
+        relative
+
+        inline-flex
+        h-12
+        w-12
+        shrink-0
+
+        items-center
+        justify-center
+
+        rounded-full
+
+        border
+
+        bg-brand-surface
+
+        transition-all
+        duration-200
+
+        focus-visible:outline-none
+        focus-visible:ring-2
+        focus-visible:ring-brand-accent-fill/40
+        focus-visible:ring-offset-2
+
+        ${
+          selected
+            ? `
+                border-brand-primary
+
+                shadow-[0_4px_12px_rgba(0,0,0,0.08)]
+              `
+            : `
+                border-brand-border
+
+                hover:border-brand-accent-fill
+                hover:bg-brand-surface-soft
+              `
+        }
+
+        ${
+          disabled
+            ? `
+                cursor-not-allowed
+                opacity-30
+              `
+            : `
+                cursor-pointer
+                active:scale-95
+              `
+        }
+      `}
     >
+      {/* ACTUAL VARIANT COLOR */}
+
       <span
+        aria-hidden="true"
         className="
-          h-7 w-7
+          relative
+
+          h-8
+          w-8
+
+          overflow-hidden
+
           rounded-full
-          border border-black/10
+
+          border
+          border-black/10
+
+          shadow-inner
         "
         style={{
+          /*
+           * This color is product data,
+           * not a website theme color,
+           * so using the variant HEX here
+           * is correct.
+           */
           backgroundColor: color || "#E6DFDA",
         }}
-        aria-hidden="true"
-      />
-
-      {selected && (
+      >
+        {/* subtle shine */}
         <span
           className="
             pointer-events-none
-            absolute -bottom-1
-            h-1.5 w-1.5
-            rounded-full
-            bg-brand-espresso
+            absolute
+            inset-0
+
+            bg-gradient-to-br
+            from-white/30
+            via-transparent
+            to-black/5
           "
         />
+      </span>
+
+      {/* SELECTED INDICATOR */}
+
+      {selected && (
+        <span
+          aria-hidden="true"
+          className="
+            absolute
+            -bottom-1
+
+            inline-flex
+            h-4
+            w-4
+
+            items-center
+            justify-center
+
+            rounded-full
+
+            bg-brand-primary
+
+            text-brand-surface
+
+            ring-2
+            ring-brand-surface
+          "
+        >
+          <CheckRoundedIcon
+            sx={{
+              fontSize: 10,
+            }}
+          />
+        </span>
       )}
     </button>
   );
 }
+
+/* =========================================================
+   SIZE CHOICE
+========================================================= */
 
 function SizeChoice({ value, selected, disabled, onClick }) {
   return (
@@ -183,65 +289,158 @@ function SizeChoice({ value, selected, disabled, onClick }) {
       disabled={disabled}
       onClick={onClick}
       aria-pressed={selected}
-      className={[
-        `
-          relative
-          inline-flex
-          min-h-10
-          min-w-11
-          items-center
-          justify-center
-          rounded-full
-          border
-          px-3
-          text-sm
-          font-semibold
-          transition
-        `,
-        selected
-          ? `
-            border-brand-espresso
-            bg-brand-espresso
-            text-white
-          `
-          : `
-            border-brand-border
-            bg-brand-surface
-            text-brand-espresso
-            hover:border-brand-champagne
-          `,
-        disabled
-          ? `
-            cursor-not-allowed
-            text-brand-muted
-            opacity-35
-            line-through
-          `
-          : "",
-      ].join(" ")}
+      className={`
+        relative
+
+        inline-flex
+        min-h-11
+        min-w-12
+
+        items-center
+        justify-center
+
+        rounded-full
+
+        border
+
+        px-4
+
+        text-sm
+        font-semibold
+
+        transition-all
+        duration-200
+
+        focus-visible:outline-none
+        focus-visible:ring-2
+        focus-visible:ring-brand-accent-fill/40
+        focus-visible:ring-offset-2
+
+        ${
+          selected
+            ? `
+                border-brand-primary
+                bg-brand-primary
+
+                text-brand-surface
+
+                shadow-[0_4px_12px_rgba(0,0,0,0.10)]
+              `
+            : `
+                border-brand-border
+                bg-brand-surface
+
+                text-brand-text
+
+                hover:border-brand-accent-fill
+                hover:bg-brand-surface-soft
+              `
+        }
+
+        ${
+          disabled
+            ? `
+                cursor-not-allowed
+
+                opacity-35
+
+                line-through
+
+                hover:border-brand-border
+                hover:bg-brand-surface
+              `
+            : `
+                active:scale-[0.96]
+              `
+        }
+      `}
     >
       {value}
     </button>
   );
 }
 
+/* =========================================================
+   OPTION SECTION HEADER
+========================================================= */
+
+function OptionHeader({ label, value }) {
+  return (
+    <div
+      className="
+        flex
+        items-end
+        justify-between
+
+        gap-3
+      "
+    >
+      <legend
+        className="
+          text-[0.65rem]
+          font-bold
+          uppercase
+
+          tracking-[0.15em]
+
+          text-brand-text
+        "
+      >
+        {label}
+      </legend>
+
+      {value && (
+        <span
+          className="
+            max-w-[55%]
+
+            truncate
+
+            text-right
+            text-xs
+            font-medium
+
+            text-brand-text-muted
+          "
+        >
+          {value}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   VARIANT SELECTOR
+========================================================= */
+
 function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
   if (!Array.isArray(variants) || variants.length === 0) {
     return (
-      <p
+      <div
         className="
-          rounded-xl
+          rounded-[1.2rem]
+
           border
-          border-brand-error/25
+          border-brand-error/20
+
           bg-brand-error/5
-          px-4 py-3
-          text-sm
-          font-semibold
-          text-brand-error
+
+          px-4
+          py-4
         "
       >
-        This product currently has no available options.
-      </p>
+        <p
+          className="
+            text-sm
+            font-semibold
+
+            text-brand-error
+          "
+        >
+          This product currently has no available options.
+        </p>
+      </div>
     );
   }
 
@@ -266,25 +465,16 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
 
   const sizes = getUniqueSizes(variants);
 
-  /*
-   * METAL
-   *
-   * Metal is the first-level selection.
-   * Any metal that has at least one valid
-   * variant remains selectable.
-   */
+  /* =======================================================
+     AVAILABILITY
+  ======================================================= */
+
   function isMetalAvailable(metalColor) {
     return hasVariant(variants, {
       metalColor,
     });
   }
 
-  /*
-   * STONE
-   *
-   * Stone availability depends on the
-   * currently selected metal.
-   */
   function isStoneAvailable(stoneColor) {
     return hasVariant(variants, {
       metalColor: selectedOptions.metalColor,
@@ -293,15 +483,6 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
     });
   }
 
-  /*
-   * SIZE
-   *
-   * Size availability depends on both
-   * the selected metal and stone.
-   *
-   * Gold + Green may have 7/8/9,
-   * while Gold + Clear may have 7/8/9/10.
-   */
   function isSizeAvailable(size) {
     return hasVariant(variants, {
       metalColor: selectedOptions.metalColor,
@@ -312,10 +493,14 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
     });
   }
 
+  /* =======================================================
+     SELECT METAL
+  ======================================================= */
+
   function selectMetal(metalColor) {
     /*
-     * Best case:
-     * preserve stone AND size.
+     * First attempt:
+     * preserve stone + size.
      */
     const exactMatch = findVariant(variants, {
       metalColor,
@@ -332,8 +517,8 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
     }
 
     /*
-     * Second choice:
-     * preserve the stone.
+     * Second:
+     * preserve stone.
      */
     const stoneMatch = findVariant(variants, {
       metalColor,
@@ -348,8 +533,8 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
     }
 
     /*
-     * Otherwise select the first valid
-     * variant of the newly chosen metal.
+     * Otherwise choose first
+     * available variant of metal.
      */
     const metalMatch = findVariant(variants, {
       metalColor,
@@ -360,10 +545,11 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
     }
   }
 
+  /* =======================================================
+     SELECT STONE
+  ======================================================= */
+
   function selectStone(stoneColor) {
-    /*
-     * Try to keep the current size.
-     */
     const exactMatch = findVariant(variants, {
       metalColor: selectedOptions.metalColor,
 
@@ -378,11 +564,6 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
       return;
     }
 
-    /*
-     * Otherwise move to the first
-     * available size for this
-     * metal + stone combination.
-     */
     const stoneMatch = findVariant(variants, {
       metalColor: selectedOptions.metalColor,
 
@@ -393,6 +574,10 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
       onVariantSelect(stoneMatch.id);
     }
   }
+
+  /* =======================================================
+     SELECT SIZE
+  ======================================================= */
 
   function selectSize(size) {
     const match = findVariant(variants, {
@@ -413,60 +598,91 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
       className="
         border-t
         border-brand-border
+
         pt-6
       "
     >
-      <p
-        className="
-          text-xs
-          font-semibold
-          uppercase
-          tracking-[0.16em]
-          text-brand-muted
-        "
-      >
-        Product options
-      </p>
+      {/* ==================================================
+          SECTION INTRO
+      ================================================== */}
 
-      {/* METAL */}
+      <div>
+        <p
+          className="
+            text-[0.6rem]
+            font-bold
+            uppercase
+
+            tracking-[0.18em]
+
+            text-brand-accent-text
+          "
+        >
+          Make it yours
+        </p>
+
+        <h2
+          className="
+            mt-1
+
+            font-display
+
+            text-[1.45rem]
+            font-medium
+
+            tracking-[-0.035em]
+
+            text-brand-text
+          "
+        >
+          Choose your piece
+        </h2>
+
+        <p
+          className="
+            mt-1.5
+
+            max-w-md
+
+            text-xs
+            leading-5
+
+            text-brand-text-muted
+          "
+        >
+          Select the details that make this piece yours.
+        </p>
+      </div>
+
+      {/* ==================================================
+          METAL
+      ================================================== */}
 
       {metalColors.length > 0 && (
-        <fieldset className="mt-5">
-          <div
-            className="
-              flex items-center
-              justify-between
-              gap-3
-            "
-          >
-            <legend
-              className="
-                text-sm
-                font-semibold
-                uppercase
-                tracking-[0.12em]
-                text-brand-espresso
-              "
-            >
-              Metal
-            </legend>
+        <fieldset
+          className="
+            mt-6
 
-            <span
-              className="
-                text-sm
-                font-medium
-                text-brand-muted
-              "
-            >
-              {selectedOptions.metalColor}
-            </span>
-          </div>
+            rounded-[1.25rem]
+
+            border
+            border-brand-border
+
+            bg-brand-surface-soft
+
+            p-4
+          "
+        >
+          <OptionHeader label="Metal" value={selectedOptions.metalColor} />
 
           <div
             className="
-              mt-3
-              flex flex-wrap
-              gap-2
+              mt-4
+
+              flex
+              flex-wrap
+
+              gap-2.5
             "
           >
             {metalColors.map((option) => {
@@ -490,45 +706,35 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
         </fieldset>
       )}
 
-      {/* STONE */}
+      {/* ==================================================
+          STONE
+      ================================================== */}
 
       {stoneColors.length > 0 && (
-        <fieldset className="mt-7">
-          <div
-            className="
-              flex items-center
-              justify-between
-              gap-3
-            "
-          >
-            <legend
-              className="
-                text-sm
-                font-semibold
-                uppercase
-                tracking-[0.12em]
-                text-brand-espresso
-              "
-            >
-              Stone
-            </legend>
+        <fieldset
+          className="
+            mt-3
 
-            <span
-              className="
-                text-sm
-                font-medium
-                text-brand-muted
-              "
-            >
-              {selectedOptions.stoneColor}
-            </span>
-          </div>
+            rounded-[1.25rem]
+
+            border
+            border-brand-border
+
+            bg-brand-surface-soft
+
+            p-4
+          "
+        >
+          <OptionHeader label="Stone" value={selectedOptions.stoneColor} />
 
           <div
             className="
-              mt-3
-              flex flex-wrap
-              gap-2
+              mt-4
+
+              flex
+              flex-wrap
+
+              gap-2.5
             "
           >
             {stoneColors.map((option) => {
@@ -552,46 +758,41 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
         </fieldset>
       )}
 
-      {/* SIZE */}
+      {/* ==================================================
+          SIZE
+      ================================================== */}
 
       {sizes.length > 0 && (
-        <fieldset className="mt-7">
-          <div
-            className="
-              flex items-center
-              justify-between
-              gap-3
-            "
-          >
-            <legend
-              className="
-                text-sm
-                font-semibold
-                uppercase
-                tracking-[0.12em]
-                text-brand-espresso
-              "
-            >
-              Size
-            </legend>
+        <fieldset
+          className="
+            mt-3
 
-            <span
-              className="
-                text-sm
-                font-medium
-                text-brand-muted
-              "
-            >
-              {selectedOptions.sizeType === "RING"
+            rounded-[1.25rem]
+
+            border
+            border-brand-border
+
+            bg-brand-surface-soft
+
+            p-4
+          "
+        >
+          <OptionHeader
+            label="Size"
+            value={
+              selectedOptions.sizeType === "RING"
                 ? `Ring ${selectedOptions.size}`
-                : selectedOptions.size}
-            </span>
-          </div>
+                : selectedOptions.size
+            }
+          />
 
           <div
             className="
-              mt-3
-              flex flex-wrap
+              mt-4
+
+              flex
+              flex-wrap
+
               gap-2
             "
           >
@@ -612,59 +813,114 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
         </fieldset>
       )}
 
-      {/* SELECTED RESULT */}
+      {/* ==================================================
+          SELECTED RESULT
+      ================================================== */}
 
       <div
         className="
-          mt-8
-          flex flex-col
-          gap-4
-          border-t
-          border-brand-border
-          pt-5
-          sm:flex-row
-          sm:items-end
-          sm:justify-between
+          mt-5
+
+          overflow-hidden
+
+          rounded-[1.4rem]
+
+          border
+          border-brand-accent-fill/25
+
+          bg-brand-accent-soft
         "
       >
-        <div>
-          <p
-            className="
-              text-[0.68rem]
-              font-semibold
-              uppercase
-              tracking-[0.14em]
-              text-brand-muted
-            "
-          >
-            Your selection
-          </p>
-
-          <p
-            className="
-              mt-1
-              text-sm
-              font-semibold
-              text-brand-espresso
-            "
-          >
-            {selectedVariant.displayName}
-          </p>
-
-          <div className="mt-2">
-            <StockBadge status={selectedVariant.stockStatus} compact />
-          </div>
-        </div>
-
-        <p
+        <div
           className="
-            text-2xl
-            font-bold
-            text-brand-espresso
+            flex
+            items-start
+            justify-between
+
+            gap-4
+
+            p-4
           "
         >
-          ${selectedVariant.price}
-        </p>
+          <div className="min-w-0">
+            <p
+              className="
+                text-[0.56rem]
+                font-bold
+                uppercase
+
+                tracking-[0.16em]
+
+                text-brand-accent-text
+              "
+            >
+              Your selection
+            </p>
+
+            <p
+              className="
+                mt-1.5
+
+                line-clamp-2
+
+                font-display
+
+                text-[1.1rem]
+                font-medium
+
+                leading-tight
+
+                text-brand-text
+              "
+            >
+              {selectedVariant.displayName}
+            </p>
+
+            <div className="mt-2.5">
+              <StockBadge status={selectedVariant.stockStatus} compact />
+            </div>
+          </div>
+
+          <div
+            className="
+              shrink-0
+              text-right
+            "
+          >
+            <p
+              className="
+                text-[0.52rem]
+                font-semibold
+                uppercase
+
+                tracking-[0.12em]
+
+                text-brand-text-muted
+              "
+            >
+              Price
+            </p>
+
+            <p
+              className="
+                mt-1
+
+                font-display
+
+                text-[1.65rem]
+                font-semibold
+
+                leading-none
+
+                tracking-[-0.04em]
+
+                text-brand-text
+              "
+            >
+              ${selectedVariant.price}
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
+import DeliveryGovernorateSettings from "../../components/admin/settings/DeliveryGovernorateSettings.jsx";
+
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
@@ -300,19 +303,43 @@ function AdminSettings() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        {/* ==================================================
+    GOVERNORATE DELIVERY FEES
+================================================== */}
+
+        <DeliveryGovernorateSettings currency={form.currency || "USD"} />
+
+        {/* ==================================================
+    TEMPORARY CHECKOUT FALLBACK
+================================================== */}
+
+        <section className="rounded-2xl border border-amber-200 bg-amber-50/50 p-6">
           <div className="flex items-start gap-4">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+            <span
+              className="
+        flex
+        h-11
+        w-11
+        shrink-0
+        items-center
+        justify-center
+        rounded-xl
+        bg-amber-100
+        text-amber-700
+      "
+            >
               <LocalShippingOutlinedIcon />
             </span>
 
             <div>
               <h2 className="text-xl font-bold text-gray-950">
-                Delivery settings
+                Current checkout fallback
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
-                The delivery fee is added to every new order during checkout.
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+                The customer checkout still uses this global delivery fee for
+                now. Governorate pricing will replace it in the next
+                implementation step.
               </p>
             </div>
           </div>
@@ -322,8 +349,32 @@ function AdminSettings() {
               Default delivery fee
             </span>
 
-            <div className="mt-2 flex overflow-hidden rounded-xl border border-gray-300 focus-within:border-gray-950">
-              <span className="flex items-center border-r border-gray-300 bg-gray-50 px-4 text-sm font-bold text-gray-600">
+            <div
+              className="
+        mt-2
+        flex
+        overflow-hidden
+        rounded-xl
+        border
+        border-gray-300
+        bg-white
+        transition
+        focus-within:border-gray-950
+      "
+            >
+              <span
+                className="
+          flex
+          items-center
+          border-r
+          border-gray-300
+          bg-gray-50
+          px-4
+          text-sm
+          font-bold
+          text-gray-600
+        "
+              >
                 {form.currency || "USD"}
               </span>
 
@@ -335,9 +386,23 @@ function AdminSettings() {
                   updateField("defaultDeliveryFee", event.target.value)
                 }
                 disabled={isSaving}
-                className="min-w-0 flex-1 px-4 py-3 outline-none disabled:bg-gray-100"
+                className="
+          min-w-0
+          flex-1
+          bg-white
+          px-4
+          py-3
+          outline-none
+
+          disabled:bg-gray-100
+        "
               />
             </div>
+
+            <p className="mt-2 text-xs leading-5 text-amber-800">
+              Temporary only. Do not remove this setting until checkout has been
+              switched to governorate-based pricing.
+            </p>
           </label>
         </section>
 

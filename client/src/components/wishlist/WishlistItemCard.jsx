@@ -1,10 +1,18 @@
 import ImageNotSupportedOutlinedIcon from "@mui/icons-material/ImageNotSupportedOutlined";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
+
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+
 import useCart from "../../context/cart/useCart.js";
 import useWishlist from "../../context/wishlist/useWishlist.js";
+
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
+
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function formatProductPrice(pricing) {
   if (!pricing?.minPrice) {
@@ -37,6 +45,10 @@ function getAvailabilityMessage(product) {
       return null;
   }
 }
+
+/* =========================================================
+   WISHLIST ITEM CARD
+========================================================= */
 
 function WishlistItemCard({ item }) {
   const product = item.product;
@@ -87,91 +99,476 @@ function WishlistItemCard({ item }) {
   }
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-      <Link
-        to={`/products/${product.slug}`}
-        className="block aspect-square overflow-hidden bg-gray-100"
+    <article
+      className="
+        group/card
+
+        w-full
+        max-w-[350px]
+
+        overflow-hidden
+
+        rounded-[1.65rem]
+
+        border
+        border-brand-border
+
+        bg-brand-surface-soft
+
+        p-2.5
+
+        transition-all
+        duration-300
+
+        shadow-[0_8px_24px_rgba(0,0,0,0.045)]
+
+        hover:-translate-y-0.5
+        hover:shadow-[0_14px_34px_rgba(0,0,0,0.07)]
+      "
+    >
+      {/* ==================================================
+          IMAGE AREA
+      ================================================== */}
+
+      <div
+        className="
+          relative
+
+          overflow-hidden
+
+          rounded-[1.3rem]
+
+          bg-brand-surface
+
+          shadow-[inset_0_4px_12px_rgba(0,0,0,0.08)]
+        "
       >
-        {product.image?.imageUrl ? (
-          <img
-            src={product.image.imageUrl}
-            alt={product.image.altText || product.name}
-            className="h-full w-full object-cover transition duration-300 hover:scale-105"
-          />
-        ) : (
-          <span className="flex h-full items-center justify-center text-gray-400">
-            <ImageNotSupportedOutlinedIcon
-              sx={{
-                fontSize: 52,
-              }}
-            />
-          </span>
-        )}
-      </Link>
-
-      <div className="p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-          {product.category?.name}
-        </p>
-
         <Link
           to={`/products/${product.slug}`}
-          className="mt-2 block text-lg font-bold text-gray-950 hover:underline"
+          aria-label={`View ${product.name}`}
+          className="
+            block
+            aspect-square
+            w-full
+          "
         >
-          {product.name}
+          {product.image?.imageUrl ? (
+            <img
+              src={product.image.imageUrl}
+              alt={product.image.altText || product.name}
+              loading="lazy"
+              className="
+                h-full
+                w-full
+
+                object-contain
+
+                p-3
+
+                transition-transform
+                duration-500
+
+                group-hover/card:scale-[1.025]
+              "
+            />
+          ) : (
+            <span
+              className="
+                flex
+                h-full
+                w-full
+
+                flex-col
+
+                items-center
+                justify-center
+
+                gap-2
+
+                text-brand-text-muted
+              "
+            >
+              <span
+                className="
+                  inline-flex
+                  h-14
+                  w-14
+
+                  items-center
+                  justify-center
+
+                  rounded-full
+
+                  bg-brand-accent-soft
+
+                  text-brand-accent-text
+                "
+              >
+                <ImageNotSupportedOutlinedIcon
+                  sx={{
+                    fontSize: 27,
+                  }}
+                />
+              </span>
+
+              <span
+                className="
+                  text-xs
+                  font-medium
+                "
+              >
+                Product image
+              </span>
+            </span>
+          )}
         </Link>
 
-        <p className="mt-3 text-lg font-bold text-gray-950">
-          {formatProductPrice(product.pricing)}
-        </p>
+        {/* ==================================================
+            WISHLIST INDICATOR
+        ================================================== */}
 
-        {availabilityMessage && (
+        <button
+          type="button"
+          onClick={() => void handleRemove()}
+          disabled={isRemoving || isAdding}
+          aria-label={`Remove ${product.name} from wishlist`}
+          title="Remove from wishlist"
+          className="
+            absolute
+            right-3
+            top-3
+
+            inline-flex
+            h-11
+            w-11
+
+            items-center
+            justify-center
+
+            rounded-full
+
+            bg-brand-surface/90
+
+            text-brand-accent-text
+
+            shadow-sm
+            backdrop-blur-md
+
+            transition-all
+            duration-200
+
+            hover:bg-brand-accent-soft
+
+            active:scale-90
+
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-brand-accent-fill/40
+
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          "
+        >
+          <FavoriteRoundedIcon
+            sx={{
+              fontSize: 21,
+            }}
+          />
+        </button>
+      </div>
+
+      {/* ==================================================
+          CONTENT
+      ================================================== */}
+
+      <div
+        className="
+          px-2.5
+          pb-2
+          pt-4
+        "
+      >
+        {/* CATEGORY */}
+
+        {product.category?.name && (
           <p
-            className={[
-              "mt-3 rounded-xl px-3 py-2 text-sm font-semibold",
-              product.availability?.available
-                ? "bg-amber-50 text-amber-800"
-                : "bg-red-50 text-red-700",
-            ].join(" ")}
+            className="
+              text-[0.58rem]
+              font-bold
+              uppercase
+
+              tracking-[0.16em]
+
+              text-brand-accent-text
+            "
           >
-            {availabilityMessage}
+            {product.category.name}
           </p>
         )}
 
-        <div className="mt-5 grid gap-2">
+        {/* NAME */}
+
+        <Link
+          to={`/products/${product.slug}`}
+          className="
+            mt-1.5
+            block
+          "
+        >
+          <h3
+            className="
+              line-clamp-2
+
+              font-display
+
+              text-[1.18rem]
+              font-medium
+
+              leading-[1.12]
+
+              tracking-[-0.03em]
+
+              text-brand-text
+
+              transition-colors
+
+              hover:text-brand-accent-text
+            "
+          >
+            {product.name}
+          </h3>
+        </Link>
+
+        {/* PRICE */}
+
+        <p
+          className="
+            mt-3
+
+            font-display
+
+            text-[1.35rem]
+            font-semibold
+
+            tracking-[-0.035em]
+
+            text-brand-text
+          "
+        >
+          {formatProductPrice(product.pricing)}
+        </p>
+
+        {/* ==================================================
+            AVAILABILITY
+        ================================================== */}
+
+        {availabilityMessage && (
+          <div
+            className={`
+              mt-3
+
+              rounded-[0.9rem]
+
+              border
+
+              px-3
+              py-2.5
+
+              text-xs
+              font-semibold
+              leading-5
+
+              ${
+                product.availability?.available
+                  ? `
+                      border-amber-500/20
+                      bg-amber-50
+                      text-amber-800
+                    `
+                  : `
+                      border-brand-error/20
+                      bg-brand-error/5
+                      text-brand-error
+                    `
+              }
+            `}
+          >
+            {availabilityMessage}
+          </div>
+        )}
+
+        {/* ==================================================
+            ACTIONS
+        ================================================== */}
+
+        <div
+          className="
+            mt-5
+            space-y-2
+          "
+        >
+          {/* ADD DIRECTLY */}
+
           {canAddDirectly ? (
             <button
               type="button"
               onClick={() => void handleAddToCart()}
               disabled={isAdding || isRemoving}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 font-semibold text-white transition hover:bg-gray-800 disabled:opacity-50"
+              className="
+                inline-flex
+                min-h-12
+                w-full
+
+                items-center
+                justify-center
+
+                gap-2
+
+                rounded-full
+
+                bg-brand-primary
+
+                px-5
+
+                text-sm
+                font-semibold
+
+                text-brand-surface
+
+                transition-all
+                duration-200
+
+                hover:bg-brand-primary-hover
+
+                active:scale-[0.985]
+
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-brand-accent-fill/40
+
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
             >
-              <ShoppingBagOutlinedIcon fontSize="small" />
+              <ShoppingBagOutlinedIcon
+                sx={{
+                  fontSize: 19,
+                }}
+              />
 
               {isAdding ? "Adding..." : "Add to cart"}
             </button>
           ) : product.availability?.available && product.inStock ? (
+            /* CHOOSE VARIANT */
+
             <Link
               to={`/products/${product.slug}`}
-              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gray-950 px-4 py-2.5 text-center font-semibold text-white transition hover:bg-gray-800"
+              className="
+                inline-flex
+                min-h-12
+                w-full
+
+                items-center
+                justify-center
+
+                rounded-full
+
+                bg-brand-primary
+
+                px-5
+
+                text-center
+                text-sm
+                font-semibold
+
+                text-brand-surface
+
+                transition-all
+                duration-200
+
+                hover:bg-brand-primary-hover
+
+                active:scale-[0.985]
+
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-brand-accent-fill/40
+              "
             >
               Choose options
             </Link>
           ) : (
+            /* UNAVAILABLE */
+
             <button
               type="button"
               disabled
-              className="min-h-11 cursor-not-allowed rounded-xl bg-gray-200 px-4 py-2.5 font-semibold text-gray-500"
+              className="
+                inline-flex
+                min-h-12
+                w-full
+
+                cursor-not-allowed
+
+                items-center
+                justify-center
+
+                rounded-full
+
+                bg-brand-surface
+
+                px-5
+
+                text-sm
+                font-semibold
+
+                text-brand-text-muted
+
+                opacity-70
+              "
             >
               Unavailable
             </button>
           )}
 
+          {/* REMOVE */}
+
           <button
             type="button"
             onClick={() => void handleRemove()}
             disabled={isRemoving || isAdding}
-            className="min-h-11 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold text-gray-700 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+            className="
+              inline-flex
+              min-h-10
+              w-full
+
+              items-center
+              justify-center
+
+              rounded-full
+
+              bg-transparent
+
+              px-4
+
+              text-xs
+              font-semibold
+
+              text-brand-text-muted
+
+              transition-colors
+              duration-200
+
+              hover:bg-brand-error/5
+              hover:text-brand-error
+
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-brand-error/25
+
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
           >
             {isRemoving ? "Removing..." : "Remove from wishlist"}
           </button>

@@ -33,53 +33,254 @@ function CatalogPagination({
   return (
     <nav
       aria-label="Product pagination"
-      className="mt-12 flex flex-wrap items-center justify-center gap-2"
+      className="
+        flex
+        w-full
+        items-center
+        justify-center
+      "
     >
-      <button
-        type="button"
-        onClick={() => onPageChange(page - 1)}
-        disabled={!hasPreviousPage}
-        aria-label="Previous page"
-        className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-300 text-gray-700 hover:border-gray-950 disabled:cursor-not-allowed disabled:opacity-40"
+      <div
+        className="
+          inline-flex
+          max-w-full
+          items-center
+          justify-center
+
+          gap-1
+
+          rounded-full
+
+          border
+          border-brand-border
+
+          bg-brand-surface
+
+          p-1.5
+
+          shadow-[0_8px_24px_rgba(0,0,0,0.04)]
+
+          sm:gap-1.5
+          sm:p-2
+        "
       >
-        <ChevronLeftRoundedIcon />
-      </button>
+        {/* ================================================
+            PREVIOUS
+        ================================================ */}
 
-      {visiblePages.map((visiblePage, index) => {
-        const previousPage = visiblePages[index - 1];
+        <button
+          type="button"
+          onClick={() => onPageChange(page - 1)}
+          disabled={!hasPreviousPage}
+          aria-label="Previous page"
+          className="
+            inline-flex
 
-        const showGap = previousPage && visiblePage - previousPage > 1;
+            h-10
+            w-10
+            shrink-0
 
-        return (
-          <span key={visiblePage} className="contents">
-            {showGap && <span className="px-2 text-gray-400">…</span>}
+            items-center
+            justify-center
 
-            <button
-              type="button"
-              onClick={() => onPageChange(visiblePage)}
-              aria-current={visiblePage === page ? "page" : undefined}
-              className={[
-                "h-11 min-w-11 rounded-xl border px-3 text-sm font-bold transition",
-                visiblePage === page
-                  ? "border-gray-950 bg-gray-950 text-white"
-                  : "border-gray-300 bg-white text-gray-700 hover:border-gray-950",
-              ].join(" ")}
-            >
-              {visiblePage}
-            </button>
-          </span>
-        );
-      })}
+            rounded-full
 
-      <button
-        type="button"
-        onClick={() => onPageChange(page + 1)}
-        disabled={!hasNextPage}
-        aria-label="Next page"
-        className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-300 text-gray-700 hover:border-gray-950 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <ChevronRightRoundedIcon />
-      </button>
+            text-brand-text
+
+            transition-all
+            duration-200
+
+            hover:bg-brand-surface-soft
+
+            active:scale-95
+
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-brand-accent-fill/40
+
+            disabled:cursor-not-allowed
+            disabled:text-brand-text-muted/35
+            disabled:hover:bg-transparent
+
+            sm:h-11
+            sm:w-11
+          "
+        >
+          <ChevronLeftRoundedIcon
+            sx={{
+              fontSize: 22,
+            }}
+          />
+        </button>
+
+        {/* ================================================
+            PAGE NUMBERS
+        ================================================ */}
+
+        <div
+          className="
+            flex
+            min-w-0
+            items-center
+            justify-center
+
+            gap-0.5
+
+            sm:gap-1
+          "
+        >
+          {visiblePages.map((visiblePage, index) => {
+            const previousPage = visiblePages[index - 1];
+
+            const showGap = previousPage && visiblePage - previousPage > 1;
+
+            const isCurrent = visiblePage === page;
+
+            return (
+              <div
+                key={visiblePage}
+                className="
+                  flex
+                  items-center
+                "
+              >
+                {showGap && (
+                  <span
+                    aria-hidden="true"
+                    className="
+                      flex
+                      h-10
+                      min-w-5
+                      items-center
+                      justify-center
+
+                      px-0.5
+
+                      text-xs
+                      font-semibold
+
+                      text-brand-text-muted/55
+
+                      sm:min-w-7
+                      sm:px-1
+                    "
+                  >
+                    …
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => onPageChange(visiblePage)}
+                  aria-current={isCurrent ? "page" : undefined}
+                  aria-label={
+                    isCurrent
+                      ? `Current page, page ${visiblePage}`
+                      : `Go to page ${visiblePage}`
+                  }
+                  className={`
+                    inline-flex
+
+                    h-10
+                    min-w-10
+
+                    items-center
+                    justify-center
+
+                    rounded-full
+
+                    px-2.5
+
+                    text-xs
+                    font-semibold
+
+                    transition-all
+                    duration-200
+
+                    active:scale-95
+
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-brand-accent-fill/40
+
+                    sm:h-11
+                    sm:min-w-11
+                    sm:px-3
+                    sm:text-sm
+
+                    ${
+                      isCurrent
+                        ? `
+                            bg-brand-primary
+                            text-brand-surface
+
+                            shadow-[0_5px_14px_rgba(0,0,0,0.12)]
+                          `
+                        : `
+                            text-brand-text-muted
+
+                            hover:bg-brand-surface-soft
+                            hover:text-brand-text
+                          `
+                    }
+                  `}
+                >
+                  {visiblePage}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ================================================
+            NEXT
+        ================================================ */}
+
+        <button
+          type="button"
+          onClick={() => onPageChange(page + 1)}
+          disabled={!hasNextPage}
+          aria-label="Next page"
+          className="
+            inline-flex
+
+            h-10
+            w-10
+            shrink-0
+
+            items-center
+            justify-center
+
+            rounded-full
+
+            text-brand-text
+
+            transition-all
+            duration-200
+
+            hover:bg-brand-surface-soft
+
+            active:scale-95
+
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-brand-accent-fill/40
+
+            disabled:cursor-not-allowed
+            disabled:text-brand-text-muted/35
+            disabled:hover:bg-transparent
+
+            sm:h-11
+            sm:w-11
+          "
+        >
+          <ChevronRightRoundedIcon
+            sx={{
+              fontSize: 22,
+            }}
+          />
+        </button>
+      </div>
     </nav>
   );
 }

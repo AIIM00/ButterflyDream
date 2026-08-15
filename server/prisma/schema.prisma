@@ -180,7 +180,6 @@ model Address {
   updatedAt     DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@index([userId])
   @@index([userId, isDefault])
 }
@@ -768,4 +767,15 @@ model PopupEventComment {
 
   @@index([popupEventId, createdAt])
   @@index([userId])
+}
+
+model DeliveryGovernorate {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique @db.VarChar(100)
+  deliveryFee Decimal  @db.Decimal(10, 2)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
 }

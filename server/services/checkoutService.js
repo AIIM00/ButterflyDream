@@ -243,12 +243,31 @@ function getStoreSettings(database) {
       id: true,
       storeName: true,
       currency: true,
-      defaultDeliveryFee: true,
       ordersEnabled: true,
     },
   });
 }
+async function findDeliveryGovernorate(database, governorateName) {
+  if (!governorateName) {
+    return null;
+  }
 
+  return database.deliveryGovernorate.findFirst({
+    where: {
+      name: {
+        equals: governorateName.trim(),
+        mode: "insensitive",
+      },
+    },
+
+    select: {
+      id: true,
+      name: true,
+      deliveryFee: true,
+      isActive: true,
+    },
+  });
+}
 function getCartImage(variant) {
   return variant.images[0] ?? variant.product.images[0] ?? null;
 }
@@ -335,7 +354,13 @@ function serializeCheckoutItem(item) {
   };
 }
 
-function buildCheckoutSummary(cart, storeSetting, addresses) {
+function buildCheckoutSummary(
+  cart,
+  storeSetting,
+  addresses,
+  selectedAddress,
+  deliveryGovernorate,
+) {
   const items = cart?.items.map(serializeCheckoutItem) ?? [];
 
   let subtotal = new Prisma.Decimal(0);
@@ -344,7 +369,14 @@ function buildCheckoutSummary(cart, storeSetting, addresses) {
     subtotal = subtotal.add(item.lineTotal);
   }
 
-  const deliveryFee = new Prisma.Decimal(storeSetting?.defaultDeliveryFee ?? 0);
+  const deliveryAvailable =
+    Boolean(selectedAddress) &&
+    Boolean(deliveryGovernorate) &&
+    deliveryGovernorate.isActive;
+
+  const deliveryFee = deliveryAvailable
+    ? new Prisma.Decimal(deliveryGovernorate.deliveryFee)
+    : new Prisma.Decimal(0);
 
   const totalAmount = subtotal.add(deliveryFee);
 
@@ -367,6 +399,8 @@ function buildCheckoutSummary(cart, storeSetting, addresses) {
     ordersEnabled &&
     items.length > 0 &&
     addresses.length > 0 &&
+    Boolean(selectedAddress) &&
+    deliveryAvailable &&
     !hasPriceChanges &&
     !hasUnavailableItems &&
     !hasInsufficientStock;
@@ -380,6 +414,18 @@ function buildCheckoutSummary(cart, storeSetting, addresses) {
 
     defaultAddressId: defaultAddress?.id ?? null,
 
+    selectedAddressId: selectedAddress?.id ?? null,
+
+    delivery: {
+      governorate: selectedAddress?.governorate ?? null,
+
+      configuredGovernorate: deliveryGovernorate?.name ?? null,
+
+      available: deliveryAvailable,
+
+      fee: deliveryAvailable ? formatMoney(deliveryFee) : null,
+    },
+
     cart: {
       id: cart?.id ?? null,
 
@@ -392,11 +438,13 @@ function buildCheckoutSummary(cart, storeSetting, addresses) {
 
         subtotal: formatMoney(subtotal),
 
-        deliveryFee: formatMoney(deliveryFee),
+        deliveryFee: deliveryAvailable ? formatMoney(deliveryFee) : null,
 
         discountAmount: "0.00",
 
         totalAmount: formatMoney(totalAmount),
+
+        deliveryAvailable,
 
         hasPriceChanges,
         hasUnavailableItems,
@@ -576,6 +624,20 @@ async function createOrderTransaction(userId, input) {
           "The selected delivery address was not found.",
         );
       }
+      const deliveryGovernorate = await findDeliveryGovernorate(
+        transaction,
+        address.governorate,
+      );
+
+      if (!deliveryGovernorate || !deliveryGovernorate.isActive) {
+        throw new CheckoutServiceError(
+          "DELIVERY_GOVERNORATE_UNAVAILABLE",
+          "Delivery is not currently available for the selected governorate.",
+          {
+            governorate: address.governorate,
+          },
+        );
+      }
 
       validateCheckoutCart(cart);
 
@@ -655,9 +717,7 @@ async function createOrderTransaction(userId, input) {
         }
       }
 
-      const deliveryFee = new Prisma.Decimal(
-        storeSetting?.defaultDeliveryFee ?? 0,
-      );
+      const deliveryFee = new Prisma.Decimal(deliveryGovernorate.deliveryFee);
 
       const discountAmount = new Prisma.Decimal(0);
 
@@ -779,7 +839,7 @@ async function createOrderTransaction(userId, input) {
   );
 }
 
-export async function getCustomerCheckout(userId) {
+export async function getCustomerCheckout(userId, input = {}) {
   const [addresses, cart, storeSetting] = await Promise.all([
     prisma.address.findMany({
       where: {
@@ -809,7 +869,34 @@ export async function getCustomerCheckout(userId) {
     getStoreSettings(prisma),
   ]);
 
-  return buildCheckoutSummary(cart, storeSetting, addresses);
+  const defaultAddress =
+    addresses.find((address) => address.isDefault) ?? addresses[0] ?? null;
+
+  let selectedAddress = defaultAddress;
+
+  if (input.addressId) {
+    selectedAddress =
+      addresses.find((address) => address.id === input.addressId) ?? null;
+
+    if (!selectedAddress) {
+      throw new CheckoutServiceError(
+        "ADDRESS_NOT_FOUND",
+        "The selected delivery address was not found.",
+      );
+    }
+  }
+
+  const deliveryGovernorate = selectedAddress
+    ? await findDeliveryGovernorate(prisma, selectedAddress.governorate)
+    : null;
+
+  return buildCheckoutSummary(
+    cart,
+    storeSetting,
+    addresses,
+    selectedAddress,
+    deliveryGovernorate,
+  );
 }
 
 export async function placeCustomerOrder(userId, input) {

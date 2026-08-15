@@ -49,7 +49,25 @@ function parseOptionalText(value, { fieldName, maximum }) {
 
   return normalizedValue;
 }
+function parseOptionalId(value, fieldName) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
 
+  const normalizedValue = typeof value === "string" ? value.trim() : "";
+
+  if (!normalizedValue || normalizedValue.length > ID_MAX_LENGTH) {
+    throw new CheckoutValidationError(`${fieldName} is invalid.`);
+  }
+
+  return normalizedValue;
+}
+
+export function parseCheckoutQuery(query) {
+  return {
+    addressId: parseOptionalId(query?.addressId, "Delivery address"),
+  };
+}
 export function parsePlaceOrderInput(body) {
   validatePlainObject(body);
 

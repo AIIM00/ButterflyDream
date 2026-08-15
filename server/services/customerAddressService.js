@@ -18,7 +18,29 @@ const addressSelect = {
   createdAt: true,
   updatedAt: true,
 };
+async function findActiveDeliveryGovernorate(database, governorateName) {
+  if (typeof governorateName !== "string" || !governorateName.trim()) {
+    return null;
+  }
 
+  return database.deliveryGovernorate.findFirst({
+    where: {
+      isActive: true,
+
+      name: {
+        equals: governorateName.trim(),
+        mode: "insensitive",
+      },
+    },
+
+    select: {
+      id: true,
+      name: true,
+      deliveryFee: true,
+      isActive: true,
+    },
+  });
+}
 async function findCustomerAddresses(database, userId) {
   return database.address.findMany({
     where: {
@@ -56,7 +78,18 @@ export async function createCustomerAddress(userId, input) {
         maximumAddresses: MAX_CUSTOMER_ADDRESSES,
       };
     }
+    const deliveryGovernorate = await findActiveDeliveryGovernorate(
+      transaction,
+      input.governorate,
+    );
 
+    if (!deliveryGovernorate) {
+      return {
+        status: "DELIVERY_GOVERNORATE_UNAVAILABLE",
+
+        governorate: input.governorate,
+      };
+    }
     const shouldBeDefault = addressCount === 0 || input.isDefault;
 
     if (shouldBeDefault) {
@@ -78,7 +111,7 @@ export async function createCustomerAddress(userId, input) {
         label: input.label,
         recipientName: input.recipientName,
         phone: input.phone,
-        governorate: input.governorate,
+        governorate: deliveryGovernorate.name,
         city: input.city,
         street: input.street,
         building: input.building,
@@ -120,12 +153,37 @@ export async function updateCustomerAddress(userId, addressId, input) {
       };
     }
 
+    let updateData = {
+      ...input,
+    };
+
+    if (input.governorate !== undefined) {
+      const deliveryGovernorate = await findActiveDeliveryGovernorate(
+        transaction,
+        input.governorate,
+      );
+
+      if (!deliveryGovernorate) {
+        return {
+          status: "DELIVERY_GOVERNORATE_UNAVAILABLE",
+
+          governorate: input.governorate,
+        };
+      }
+
+      updateData = {
+        ...updateData,
+
+        governorate: deliveryGovernorate.name,
+      };
+    }
+
     const address = await transaction.address.update({
       where: {
         id: addressId,
       },
 
-      data: input,
+      data: updateData,
 
       select: addressSelect,
     });
@@ -262,4 +320,45 @@ export async function deleteCustomerAddress(userId, addressId) {
       addresses,
     };
   });
+}
+export async function getCustomerDeliveryGovernorates() {
+  const [governorates, storeSetting] = await Promise.all([
+    prisma.deliveryGovernorate.findMany({
+      where: {
+        isActive: true,
+      },
+
+      orderBy: {
+        name: "asc",
+      },
+
+      select: {
+        id: true,
+        name: true,
+        deliveryFee: true,
+        isActive: true,
+      },
+    }),
+
+    prisma.storeSetting.findFirst({
+      orderBy: {
+        createdAt: "asc",
+      },
+
+      select: {
+        currency: true,
+      },
+    }),
+  ]);
+
+  return {
+    currency: storeSetting?.currency ?? "USD",
+
+    governorates: governorates.map((governorate) => ({
+      id: governorate.id,
+      name: governorate.name,
+
+      deliveryFee: governorate.deliveryFee.toFixed(2),
+    })),
+  };
 }

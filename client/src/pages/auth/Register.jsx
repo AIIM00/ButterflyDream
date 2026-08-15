@@ -1,9 +1,20 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+
 import { toast } from "react-toastify";
+
+// MUI Icons
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
+
 import PasswordField from "./PasswordField.jsx";
+
 import useAppContext from "../../context/app/useAppContext.js";
+
 import { registerCustomer } from "../../services/authApi.js";
+
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
 import validatePassword from "../../utils/validatePassword.js";
 
@@ -24,16 +35,75 @@ function Register() {
 
   const navigate = useNavigate();
 
+  /* =========================================================
+     SESSION LOADING
+  ========================================================= */
+
   if (authLoading) {
     return (
       <div
         role="status"
-        className="rounded-xl border border-gray-200 bg-white p-6 text-center text-gray-600 shadow-sm"
+        className="
+          flex
+          min-h-[240px]
+
+          items-center
+          justify-center
+
+          rounded-[1.5rem]
+
+          border
+          border-brand-border
+
+          bg-brand-surface
+        "
       >
-        Checking your session...
+        <div className="text-center">
+          <span
+            className="
+              mx-auto
+
+              inline-flex
+              h-12
+              w-12
+
+              items-center
+              justify-center
+
+              rounded-full
+
+              bg-brand-accent-soft
+
+              text-brand-accent-text
+            "
+          >
+            <PersonOutlineRoundedIcon
+              sx={{
+                fontSize: 22,
+              }}
+            />
+          </span>
+
+          <p
+            className="
+              mt-4
+
+              text-sm
+              font-medium
+
+              text-brand-text-muted
+            "
+          >
+            Checking your session...
+          </p>
+        </div>
       </div>
     );
   }
+
+  /* =========================================================
+     AUTHENTICATED REDIRECT
+  ========================================================= */
 
   if (isAuthenticated) {
     const destination =
@@ -46,14 +116,23 @@ function Register() {
     return <Navigate to={destination} replace />;
   }
 
+  /* =========================================================
+     INPUT CHANGE
+  ========================================================= */
+
   function handleChange(event) {
     const { name, value } = event.target;
 
     setFormData((currentFormData) => ({
       ...currentFormData,
+
       [name]: value,
     }));
   }
+
+  /* =========================================================
+     VALIDATION
+  ========================================================= */
 
   function validateForm() {
     const fullName = formData.fullName.trim();
@@ -81,6 +160,10 @@ function Register() {
     return null;
   }
 
+  /* =========================================================
+     SUBMIT
+  ========================================================= */
+
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -93,6 +176,7 @@ function Register() {
     }
 
     setValidationMessage("");
+
     setIsSubmitting(true);
 
     try {
@@ -135,117 +219,602 @@ function Register() {
   }
 
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-      <p className="text-sm font-semibold uppercase tracking-widest text-gray-500">
-        Customer account
-      </p>
+    <section
+      className="
+        relative
 
-      <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-900">
-        Create your account
-      </h1>
+        overflow-hidden
 
-      <p className="mt-3 leading-7 text-gray-600">
-        Save products, manage your cart, and track your orders.
-      </p>
+        rounded-[1.75rem]
 
-      <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
-        {validationMessage && (
-          <div
-            role="alert"
-            className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-          >
-            {validationMessage}
+        border
+        border-brand-border
+
+        bg-brand-surface
+
+        px-5
+        py-7
+
+        shadow-[0_18px_50px_rgba(0,0,0,0.05)]
+
+        sm:px-8
+        sm:py-9
+      "
+    >
+      {/* ==================================================
+          DECORATIVE DETAILS
+      ================================================== */}
+
+      <span
+        aria-hidden="true"
+        className="
+          pointer-events-none
+
+          absolute
+          -right-16
+          -top-16
+
+          h-40
+          w-40
+
+          rounded-full
+
+          border
+          border-brand-accent-fill/20
+        "
+      />
+
+      <span
+        aria-hidden="true"
+        className="
+          pointer-events-none
+
+          absolute
+          -bottom-20
+          -left-20
+
+          h-44
+          w-44
+
+          rounded-full
+
+          border
+          border-brand-border/70
+        "
+      />
+
+      <div className="relative z-10">
+        {/* ==================================================
+            INTRO
+        ================================================== */}
+
+        <span
+          className="
+            inline-flex
+            h-12
+            w-12
+
+            items-center
+            justify-center
+
+            rounded-full
+
+            bg-brand-accent-soft
+
+            text-brand-accent-text
+          "
+        >
+          <AutoAwesomeOutlinedIcon
+            sx={{
+              fontSize: 23,
+            }}
+          />
+        </span>
+
+        <p
+          className="
+            mt-5
+
+            text-[0.6rem]
+            font-bold
+            uppercase
+
+            tracking-[0.2em]
+
+            text-brand-accent-text
+          "
+        >
+          Join Butterfly Dream
+        </p>
+
+        <h1
+          className="
+            mt-2
+
+            font-display
+
+            text-[2.15rem]
+            font-medium
+
+            leading-[1]
+
+            tracking-[-0.045em]
+
+            text-brand-text
+
+            sm:text-[2.5rem]
+          "
+        >
+          Create your account
+        </h1>
+
+        <p
+          className="
+            mt-3
+
+            max-w-md
+
+            text-sm
+            leading-6
+
+            text-brand-text-muted
+          "
+        >
+          Save the pieces you love, manage your cart, and follow your orders
+          from one place.
+        </p>
+
+        {/* ==================================================
+            FORM
+        ================================================== */}
+
+        <form
+          className="
+            mt-7
+            space-y-5
+          "
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          {/* VALIDATION */}
+
+          {validationMessage && (
+            <div
+              role="alert"
+              className="
+                rounded-[1rem]
+
+                border
+                border-brand-error/20
+
+                bg-brand-error/5
+
+                px-4
+                py-3
+
+                text-sm
+                font-medium
+                leading-5
+
+                text-brand-error
+              "
+            >
+              {validationMessage}
+            </div>
+          )}
+
+          {/* ==================================================
+              FULL NAME
+          ================================================== */}
+
+          <div>
+            <label
+              htmlFor="register-full-name"
+              className="
+                mb-2
+
+                block
+
+                text-[0.68rem]
+                font-semibold
+                uppercase
+
+                tracking-[0.12em]
+
+                text-brand-text
+              "
+            >
+              Full name
+            </label>
+
+            <div className="relative">
+              <span
+                aria-hidden="true"
+                className="
+                  pointer-events-none
+
+                  absolute
+                  left-4
+                  top-1/2
+
+                  inline-flex
+
+                  -translate-y-1/2
+
+                  text-brand-text-muted
+                "
+              >
+                <PersonOutlineRoundedIcon
+                  sx={{
+                    fontSize: 19,
+                  }}
+                />
+              </span>
+
+              <input
+                id="register-full-name"
+                name="fullName"
+                type="text"
+                value={formData.fullName}
+                onChange={handleChange}
+                autoComplete="name"
+                autoFocus
+                disabled={isSubmitting}
+                placeholder="Enter your full name"
+                className="
+                  min-h-12
+                  w-full
+
+                  rounded-[1rem]
+
+                  border
+                  border-brand-border
+
+                  bg-brand-surface
+
+                  py-3
+                  pl-11
+                  pr-4
+
+                  font-body
+                  text-sm
+
+                  text-brand-text
+
+                  outline-none
+
+                  transition-all
+                  duration-200
+
+                  placeholder:text-brand-text-muted/50
+
+                  hover:border-brand-text/20
+
+                  focus:border-brand-accent-fill
+                  focus:ring-2
+                  focus:ring-brand-accent-fill/15
+
+                  disabled:cursor-not-allowed
+                  disabled:bg-brand-surface-soft
+                  disabled:opacity-60
+                "
+              />
+            </div>
           </div>
-        )}
 
-        <div>
-          <label
-            htmlFor="register-full-name"
-            className="mb-2 block text-sm font-semibold text-gray-800"
-          >
-            Full name
-          </label>
+          {/* ==================================================
+              EMAIL
+          ================================================== */}
 
-          <input
-            id="register-full-name"
-            name="fullName"
-            type="text"
-            value={formData.fullName}
+          <div>
+            <label
+              htmlFor="register-email"
+              className="
+                mb-2
+
+                block
+
+                text-[0.68rem]
+                font-semibold
+                uppercase
+
+                tracking-[0.12em]
+
+                text-brand-text
+              "
+            >
+              Email address
+            </label>
+
+            <input
+              id="register-email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              autoComplete="email"
+              disabled={isSubmitting}
+              placeholder="name@example.com"
+              className="
+                min-h-12
+                w-full
+
+                rounded-[1rem]
+
+                border
+                border-brand-border
+
+                bg-brand-surface
+
+                px-4
+
+                font-body
+                text-sm
+
+                text-brand-text
+
+                outline-none
+
+                transition-all
+                duration-200
+
+                placeholder:text-brand-text-muted/50
+
+                hover:border-brand-text/20
+
+                focus:border-brand-accent-fill
+                focus:ring-2
+                focus:ring-brand-accent-fill/15
+
+                disabled:cursor-not-allowed
+                disabled:bg-brand-surface-soft
+                disabled:opacity-60
+              "
+            />
+          </div>
+
+          {/* ==================================================
+              PASSWORD
+          ================================================== */}
+
+          <PasswordField
+            id="register-password"
+            name="password"
+            label="Password"
+            value={formData.password}
             onChange={handleChange}
-            autoComplete="name"
-            autoFocus
+            autoComplete="new-password"
+            placeholder="Create a strong password"
             disabled={isSubmitting}
-            placeholder="Enter your full name"
-            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 disabled:cursor-not-allowed disabled:bg-gray-100"
           />
-        </div>
 
-        <div>
-          <label
-            htmlFor="register-email"
-            className="mb-2 block text-sm font-semibold text-gray-800"
-          >
-            Email address
-          </label>
-
-          <input
-            id="register-email"
-            name="email"
-            type="email"
-            value={formData.email}
+          <PasswordField
+            id="register-confirm-password"
+            name="confirmPassword"
+            label="Confirm password"
+            value={formData.confirmPassword}
             onChange={handleChange}
-            autoComplete="email"
+            autoComplete="new-password"
+            placeholder="Enter the password again"
             disabled={isSubmitting}
-            placeholder="name@example.com"
-            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 disabled:cursor-not-allowed disabled:bg-gray-100"
           />
+
+          {/* ==================================================
+              PASSWORD GUIDANCE
+          ================================================== */}
+
+          <div
+            className="
+              flex
+              items-start
+
+              gap-3
+
+              rounded-[1rem]
+
+              bg-brand-surface-soft
+
+              px-4
+              py-3.5
+            "
+          >
+            <span
+              className="
+                mt-0.5
+
+                inline-flex
+                h-7
+                w-7
+                shrink-0
+
+                items-center
+                justify-center
+
+                rounded-full
+
+                bg-brand-accent-soft
+
+                text-brand-accent-text
+              "
+            >
+              <LockOutlinedIcon
+                sx={{
+                  fontSize: 14,
+                }}
+              />
+            </span>
+
+            <p
+              className="
+                text-xs
+                leading-5
+
+                text-brand-text-muted
+              "
+            >
+              Use at least{" "}
+              <strong className="font-semibold text-brand-text">
+                12 characters
+              </strong>{" "}
+              with uppercase, lowercase, a number, and a special character.
+            </p>
+          </div>
+
+          {/* ==================================================
+              SUBMIT
+          ================================================== */}
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="
+              inline-flex
+              min-h-12
+              w-full
+
+              items-center
+              justify-center
+
+              rounded-full
+
+              bg-brand-primary
+
+              px-6
+
+              text-sm
+              font-semibold
+
+              text-brand-surface
+
+              transition-all
+              duration-200
+
+              hover:bg-brand-primary-hover
+
+              active:scale-[0.985]
+
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-brand-accent-fill/40
+              focus-visible:ring-offset-2
+              focus-visible:ring-offset-brand-surface
+
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
+          >
+            {isSubmitting ? "Creating account..." : "Create account"}
+          </button>
+        </form>
+
+        {/* ==================================================
+            EXISTING ACCOUNT
+        ================================================== */}
+
+        <div
+          className="
+            mt-6
+
+            border-t
+            border-brand-border
+
+            pt-5
+          "
+        >
+          <div
+            className="
+              rounded-[1.15rem]
+
+              bg-brand-surface-soft
+
+              px-4
+              py-4
+
+              text-center
+            "
+          >
+            <p
+              className="
+                text-xs
+                leading-5
+
+                text-brand-text-muted
+              "
+            >
+              Already part of Butterfly Dream?
+            </p>
+
+            <Link
+              to="/login"
+              className="
+                group
+
+                mt-1
+
+                inline-flex
+                min-h-9
+
+                items-center
+                justify-center
+
+                gap-1.5
+
+                rounded-full
+
+                px-3
+
+                text-sm
+                font-semibold
+
+                text-brand-accent-text
+
+                transition-colors
+
+                hover:text-brand-accent-text-hover
+
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-brand-accent-fill/35
+              "
+            >
+              Sign in
+              <ArrowForwardRoundedIcon
+                className="
+                  transition-transform
+                  duration-200
+
+                  group-hover:translate-x-0.5
+                "
+                sx={{
+                  fontSize: 17,
+                }}
+              />
+            </Link>
+          </div>
         </div>
 
-        <PasswordField
-          id="register-password"
-          name="password"
-          label="Password"
-          value={formData.password}
-          onChange={handleChange}
-          autoComplete="new-password"
-          placeholder="Create a strong password"
-          disabled={isSubmitting}
-        />
+        {/* ==================================================
+            BRAND NOTE
+        ================================================== */}
 
-        <PasswordField
-          id="register-confirm-password"
-          name="confirmPassword"
-          label="Confirm password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          autoComplete="new-password"
-          placeholder="Enter the password again"
-          disabled={isSubmitting}
-        />
+        <p
+          className="
+            mt-6
 
-        <div className="rounded-xl bg-gray-50 px-4 py-3 text-sm leading-6 text-gray-600">
-          Use at least 12 characters with uppercase, lowercase, number, and
-          special-character combinations.
-        </div>
+            text-center
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex w-full items-center justify-center rounded-xl bg-gray-900 px-5 py-3 font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+            text-[0.54rem]
+            font-semibold
+            uppercase
+
+            tracking-[0.17em]
+
+            text-brand-text-muted/70
+          "
         >
-          {isSubmitting ? "Creating account..." : "Create account"}
-        </button>
-      </form>
-
-      <p className="mt-6 text-center text-sm text-gray-600">
-        Already have an account?{" "}
-        <Link
-          to="/login"
-          className="font-semibold text-gray-900 underline underline-offset-4"
-        >
-          Sign in
-        </Link>
-      </p>
+          Jewelry made part of your story
+        </p>
+      </div>
     </section>
   );
 }

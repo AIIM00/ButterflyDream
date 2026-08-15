@@ -1,16 +1,123 @@
-const statusClasses = {
-  PENDING: "bg-amber-100 text-amber-800",
-  CONFIRMED: "bg-blue-100 text-blue-800",
-  PROCESSING: "bg-indigo-100 text-indigo-800",
-  READY_FOR_DELIVERY: "bg-purple-100 text-purple-800",
-  OUT_FOR_DELIVERY: "bg-cyan-100 text-cyan-800",
-  DELIVERED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-800",
-  RETURNED: "bg-gray-200 text-gray-800",
+const statusConfig = {
+  PENDING: {
+    label: "Pending",
+
+    badgeClassName: `
+      border-amber-500/20
+      bg-amber-50
+      text-amber-800
+    `,
+
+    dotClassName: `
+      bg-amber-500
+    `,
+  },
+
+  CONFIRMED: {
+    label: "Confirmed",
+
+    badgeClassName: `
+      border-brand-accent-fill/25
+      bg-brand-accent-soft
+      text-brand-accent-text
+    `,
+
+    dotClassName: `
+      bg-brand-accent-fill
+    `,
+  },
+
+  PROCESSING: {
+    label: "Processing",
+
+    badgeClassName: `
+      border-brand-primary/15
+      bg-brand-primary/5
+      text-brand-primary
+    `,
+
+    dotClassName: `
+      bg-brand-primary
+    `,
+  },
+
+  READY_FOR_DELIVERY: {
+    label: "Ready for delivery",
+
+    badgeClassName: `
+      border-brand-accent-fill/30
+      bg-brand-accent-fill/10
+      text-brand-accent-text
+    `,
+
+    dotClassName: `
+      bg-brand-accent-fill
+    `,
+  },
+
+  OUT_FOR_DELIVERY: {
+    label: "Out for delivery",
+
+    badgeClassName: `
+      border-brand-primary/20
+      bg-brand-primary/5
+      text-brand-primary
+    `,
+
+    dotClassName: `
+      bg-brand-primary
+    `,
+  },
+
+  DELIVERED: {
+    label: "Delivered",
+
+    badgeClassName: `
+      border-brand-success/20
+      bg-brand-success/10
+      text-brand-success
+    `,
+
+    dotClassName: `
+      bg-brand-success
+    `,
+  },
+
+  CANCELLED: {
+    label: "Cancelled",
+
+    badgeClassName: `
+      border-brand-error/20
+      bg-brand-error/5
+      text-brand-error
+    `,
+
+    dotClassName: `
+      bg-brand-error
+    `,
+  },
+
+  RETURNED: {
+    label: "Returned",
+
+    badgeClassName: `
+      border-brand-border
+      bg-brand-surface-soft
+      text-brand-text-muted
+    `,
+
+    dotClassName: `
+      bg-brand-text-muted
+    `,
+  },
 };
 
 function formatStatus(status) {
-  return status
+  if (!status) {
+    return "Unknown";
+  }
+
+  return String(status)
     .toLowerCase()
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -18,14 +125,60 @@ function formatStatus(status) {
 }
 
 function OrderStatusBadge({ status }) {
+  const config = statusConfig[status];
+
+  const label = config?.label ?? formatStatus(status);
+
+  const badgeClassName =
+    config?.badgeClassName ??
+    `
+      border-brand-border
+      bg-brand-surface-soft
+      text-brand-text-muted
+    `;
+
+  const dotClassName = config?.dotClassName ?? "bg-brand-text-muted";
+
   return (
     <span
-      className={[
-        "inline-flex rounded-full px-3 py-1 text-xs font-bold",
-        statusClasses[status] ?? "bg-gray-100 text-gray-700",
-      ].join(" ")}
+      className={`
+        inline-flex
+        w-fit
+
+        items-center
+        justify-center
+
+        gap-1.5
+
+        rounded-full
+
+        border
+
+        px-2.5
+        py-1.5
+
+        text-[0.65rem]
+        font-semibold
+
+        leading-none
+
+        ${badgeClassName}
+      `}
     >
-      {formatStatus(status)}
+      <span
+        aria-hidden="true"
+        className={`
+          h-1.5
+          w-1.5
+          shrink-0
+
+          rounded-full
+
+          ${dotClassName}
+        `}
+      />
+
+      {label}
     </span>
   );
 }

@@ -646,13 +646,11 @@ function Products() {
                 <div
                   className="
                       grid
-                      grid-cols-2
-                      gap-x-3
-                      gap-y-8
-
+                      grid-cols-1
+                      gap-y-3
+                      justify-items-center
                       sm:gap-x-5
                       sm:gap-y-10
-
                       xl:grid-cols-3
                       xl:gap-x-6
                     "

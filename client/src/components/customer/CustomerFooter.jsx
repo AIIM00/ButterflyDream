@@ -1,18 +1,25 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+/* =========================================================
+   FOOTER DATA
+========================================================= */
+
 const footerSections = [
   {
     title: "SHOP",
+
     links: [
       {
         label: "All products",
         path: "/products",
       },
+
       {
         label: "New arrivals",
         path: "/products?sort=newest",
       },
+
       {
         label: "Featured pieces",
         path: "/products?featured=true",
@@ -22,15 +29,18 @@ const footerSections = [
 
   {
     title: "CUSTOMER SERVICE",
+
     links: [
       {
         label: "My account",
         path: "/account",
       },
+
       {
         label: "My orders",
         path: "/orders",
       },
+
       {
         label: "Wishlist",
         path: "/wishlist",
@@ -40,65 +50,34 @@ const footerSections = [
 
   {
     title: "ABOUT BUTTERFLY DREAM",
-    customContent: (
-      <div className="max-w-sm space-y-4">
-        <p className="text-[0.78rem] leading-6 text-brand-espresso/65">
-          Thoughtful jewelry and accessories created to celebrate beauty,
-          confidence, individuality and transformation.
-        </p>
 
-        <Link
-          to="/popups"
-          className="
-          group
-          inline-flex
-          items-center
-          gap-2
-          text-[0.72rem]
-          font-medium
-          uppercase
-          tracking-[0.12em]
-          text-brand-espresso
-        "
-        >
-          Pop-ups & Events
-          <span
-            className="
-            transition-transform
-            duration-300
-            group-hover:translate-x-1
-          "
-            aria-hidden="true"
-          >
-            →
-          </span>
-        </Link>
-      </div>
-    ),
+    about: true,
   },
 ];
 
 const socials = [
   {
-    name: "Facebook",
-    symbol: "f",
-  },
-  {
     name: "Instagram",
     symbol: "instagram",
+    href: "https://www.instagram.com/butterfly.dream2",
   },
   {
     name: "TikTok",
     symbol: "♪",
+    href: "https://www.tiktok.com/@butterfly.dream22",
   },
 ];
+
+/* =========================================================
+   SOCIAL ICONS
+========================================================= */
 
 function InstagramIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
-      className="h-[22px] w-[22px]"
+      className="h-[20px] w-[20px]"
       aria-hidden="true"
     >
       <rect
@@ -118,41 +97,34 @@ function InstagramIcon() {
   );
 }
 
-function YouTubeIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className="h-[23px] w-[23px]"
-      aria-hidden="true"
-    >
-      <rect x="2.5" y="5.5" width="19" height="13" rx="4" fill="currentColor" />
-
-      <path d="M10 9L16 12L10 15V9Z" fill="white" />
-    </svg>
-  );
-}
-
 function SocialSymbol({ social }) {
   if (social.symbol === "instagram") {
     return <InstagramIcon />;
-  }
-
-  if (social.symbol === "youtube") {
-    return <YouTubeIcon />;
   }
 
   return (
     <span
       className={`
         leading-none
+
         ${
-          social.name === "Facebook" || social.name === "Pinterest"
-            ? "font-serif text-[1.6rem] font-bold"
+          social.name === "Facebook"
+            ? `
+                font-serif
+                text-[1.45rem]
+                font-bold
+              `
             : ""
         }
-        ${social.name === "TikTok" ? "text-[1.45rem] font-bold" : ""}
-        ${social.name === "X" ? "text-[1.35rem]" : ""}
+
+        ${
+          social.name === "TikTok"
+            ? `
+                text-[1.3rem]
+                font-bold
+              `
+            : ""
+        }
       `}
     >
       {social.symbol}
@@ -160,64 +132,193 @@ function SocialSymbol({ social }) {
   );
 }
 
+/* =========================================================
+   SECTION CONTENT
+========================================================= */
+
+function FooterSectionContent({ section }) {
+  if (section.about) {
+    return (
+      <div className="max-w-sm">
+        <p
+          className="
+            text-[0.78rem]
+            leading-6
+
+            text-brand-surface/65
+          "
+        >
+          Thoughtful jewelry and accessories created to celebrate beauty,
+          confidence, individuality and transformation.
+        </p>
+
+        <Link
+          to="/popups"
+          className="
+            group
+
+            mt-5
+
+            inline-flex
+            items-center
+            gap-2
+
+            border-b
+            border-brand-accent-fill/35
+
+            pb-1
+
+            text-[0.68rem]
+            font-semibold
+            uppercase
+
+            tracking-[0.12em]
+
+            text-brand-accent-fill
+
+            transition-colors
+            duration-200
+
+            hover:border-brand-accent-fill-hover
+            hover:text-brand-accent-fill-hover
+          "
+        >
+          Pop-ups & Events
+          <span
+            aria-hidden="true"
+            className="
+              transition-transform
+              duration-300
+
+              group-hover:translate-x-1
+            "
+          >
+            →
+          </span>
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="space-y-3">
+      {section.links?.map(({ label, path }) => (
+        <li key={label}>
+          <Link
+            to={path}
+            className="
+              inline-block
+
+              text-[0.78rem]
+              leading-6
+
+              text-brand-surface/65
+
+              transition-colors
+              duration-200
+
+              hover:text-brand-surface
+            "
+          >
+            {label}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/* =========================================================
+   MOBILE ACCORDION
+========================================================= */
+
 function FooterAccordion({ section, isOpen, onToggle }) {
   return (
-    <div className="border-b border-brand-espresso/15">
+    <div
+      className="
+        border-b
+        border-brand-surface/10
+      "
+    >
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
         className="
           flex
-          min-h-[74px]
+          min-h-[68px]
           w-full
+
           items-center
           justify-between
-          py-5
+
+          gap-4
+
+          py-4
+
           text-left
         "
       >
         <span
           className="
-            text-[0.86rem]
-            font-medium
+            text-[0.7rem]
+            font-bold
             uppercase
-            tracking-[0.12em]
-            text-brand-espresso
+
+            tracking-[0.16em]
+
+            text-brand-surface
           "
         >
           {section.title}
         </span>
 
+        {/* PLUS / MINUS */}
+
         <span
+          aria-hidden="true"
           className="
             relative
+
             flex
             h-8
             w-8
             shrink-0
+
             items-center
             justify-center
+
+            rounded-full
+
+            border
+            border-brand-surface/15
+
+            text-brand-surface
           "
-          aria-hidden="true"
         >
           <span
             className="
               absolute
+
               h-px
-              w-[17px]
-              bg-brand-espresso
+              w-3.5
+
+              bg-current
             "
           />
 
           <span
             className={`
               absolute
-              h-[17px]
+
+              h-3.5
               w-px
-              bg-brand-espresso
+
+              bg-current
+
               transition-transform
               duration-300
+
               ${isOpen ? "rotate-90 scale-y-0" : "rotate-0 scale-y-100"}
             `}
           />
@@ -227,40 +328,27 @@ function FooterAccordion({ section, isOpen, onToggle }) {
       <div
         className={`
           grid
+
           transition-[grid-template-rows,opacity]
           duration-300
           ease-out
+
           ${
-            isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+            isOpen
+              ? `
+                  grid-rows-[1fr]
+                  opacity-100
+                `
+              : `
+                  grid-rows-[0fr]
+                  opacity-0
+                `
           }
         `}
       >
         <div className="overflow-hidden">
           <div className="pb-7">
-            {section.links && (
-              <ul className="space-y-3">
-                {section.links.map(({ label, path }) => (
-                  <li key={label}>
-                    <Link
-                      to={path}
-                      className="
-                        inline-block
-                        text-[0.8rem]
-                        leading-6
-                        text-brand-espresso/65
-                        transition-colors
-                        duration-200
-                        hover:text-brand-espresso
-                      "
-                    >
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {section.customContent}
+            <FooterSectionContent section={section} />
           </div>
         </div>
       </div>
@@ -268,39 +356,73 @@ function FooterAccordion({ section, isOpen, onToggle }) {
   );
 }
 
+/* =========================================================
+   CUSTOMER FOOTER
+========================================================= */
+
 function CustomerFooter() {
   const currentYear = new Date().getFullYear();
+
   const [openSection, setOpenSection] = useState(null);
 
-  const toggleSection = (index) => {
+  function toggleSection(index) {
     setOpenSection((current) => (current === index ? null : index));
-  };
+  }
 
   return (
     <footer
       className="
-    relative
-    z-10
-    overflow-hidden
-    bg-brand-cream
-    font-body
-    text-brand-espresso
-  "
+        relative
+        z-10
+
+        overflow-hidden
+
+        bg-brand-dark-surface
+
+        font-body
+
+        text-brand-surface
+      "
     >
+      {/* ==================================================
+          TOP ACCENT
+      ================================================== */}
+
+      <div
+        aria-hidden="true"
+        className="
+          h-px
+          w-full
+
+          bg-brand-accent-fill/35
+        "
+      />
+
       <div
         className="
           mx-auto
           w-full
           max-w-7xl
+
           px-5
+
           sm:px-8
+
           lg:px-12
         "
       >
-        {/* =========================
-            ACCORDION NAVIGATION
-        ========================== */}
-        <div className="border-t border-brand-espresso/15">
+        {/* ==================================================
+            MOBILE NAVIGATION
+        ================================================== */}
+
+        <div
+          className="
+            border-t
+            border-brand-surface/10
+
+            md:hidden
+          "
+        >
           {footerSections.map((section, index) => (
             <FooterAccordion
               key={section.title}
@@ -311,129 +433,315 @@ function CustomerFooter() {
           ))}
         </div>
 
-        {/* =========================
-            SOCIALS
-        ========================== */}
+        {/* ==================================================
+            DESKTOP NAVIGATION
+        ================================================== */}
+
         <div
           className="
-            flex
-            flex-wrap
-            items-center
-            gap-2.5
-            pb-12
-            pt-16
-            sm:gap-3
+            hidden
+
+            grid-cols-3
+
+            gap-12
+
+            border-b
+            border-brand-surface/10
+
+            py-14
+
+            md:grid
+
+            lg:gap-20
+            lg:py-16
           "
         >
-          {socials.map((social) => (
-            <button
-              key={social.name}
-              type="button"
-              aria-label={social.name}
-              title={social.name}
-              className="
-                flex
-                h-[42px]
-                w-[42px]
-                items-center
-                justify-center
-                rounded-full
-                border
-                border-brand-espresso/15
-                text-brand-espresso
-                transition-all
-                duration-300
-                hover:border-brand-espresso
-                hover:bg-brand-espresso
-                hover:text-white
-                sm:h-[46px]
-                sm:w-[46px]
-              "
-            >
-              <SocialSymbol social={social} />
-            </button>
+          {footerSections.map((section) => (
+            <section key={section.title} className="min-w-0">
+              <p
+                className="
+                  text-[0.64rem]
+                  font-bold
+                  uppercase
+
+                  tracking-[0.18em]
+
+                  text-brand-accent-fill
+                "
+              >
+                {section.title}
+              </p>
+
+              <div className="mt-5">
+                <FooterSectionContent section={section} />
+              </div>
+            </section>
           ))}
         </div>
 
-        {/* =========================
-            COUNTRY + LANGUAGE
-        ========================== */}
+        {/* ==================================================
+            SOCIAL + LOCATION
+        ================================================== */}
+
         <div
           className="
             flex
-            flex-wrap
-            items-center
-            gap-x-4
-            gap-y-2
-            pb-6
+            flex-col
+
+            gap-8
+
+            py-9
+
+            sm:flex-row
+            sm:items-end
+            sm:justify-between
+
+            md:py-10
           "
         >
-          <button
-            type="button"
+          {/* SOCIALS */}
+
+          <div>
+            <p
+              className="
+                text-[0.58rem]
+                font-bold
+                uppercase
+
+                tracking-[0.18em]
+
+                text-brand-surface/50
+              "
+            >
+              Follow the dream
+            </p>
+
+            <div
+              className="
+                mt-3
+
+                flex
+                items-center
+
+                gap-2.5
+              "
+            >
+              {socials.map((social) => (
+                <a
+                  key={social.name}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Follow Butterfly Dream on ${social.name}`}
+                  title={social.name}
+                  className="
+      inline-flex
+      h-11
+      w-11
+
+      items-center
+      justify-center
+
+      rounded-full
+
+      border
+      border-brand-surface/15
+
+      text-brand-surface
+
+      transition-all
+      duration-200
+
+      hover:border-brand-accent-fill
+      hover:bg-brand-accent-fill
+      hover:text-brand-text
+
+      active:scale-90
+
+      focus-visible:outline-none
+      focus-visible:ring-2
+      focus-visible:ring-brand-accent-fill/50
+    "
+                >
+                  <SocialSymbol social={social} />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* COUNTRY + LANGUAGE */}
+
+          <div
             className="
-              border-b
-              border-brand-espresso/25
-              pb-1
-              text-[0.8rem]
-              font-medium
-              uppercase
-              tracking-[0.12em]
-              transition-colors
-              hover:border-brand-espresso
+              flex
+              items-center
+
+              gap-3
+
+              text-xs
             "
           >
-            Lebanon
-          </button>
+            <button
+              type="button"
+              className="
+                border-b
+                border-brand-surface/25
 
-          <span className="text-[0.9rem] text-brand-espresso">English</span>
+                pb-1
+
+                font-semibold
+                uppercase
+
+                tracking-[0.12em]
+
+                text-brand-surface/80
+
+                transition-colors
+
+                hover:border-brand-accent-fill
+                hover:text-brand-surface
+              "
+            >
+              Lebanon
+            </button>
+
+            <span
+              aria-hidden="true"
+              className="
+                h-1
+                w-1
+
+                rounded-full
+
+                bg-brand-accent-fill/60
+              "
+            />
+
+            <span
+              className="
+                text-brand-surface/60
+              "
+            >
+              English
+            </span>
+          </div>
         </div>
 
-        {/* =========================
+        {/* ==================================================
+            DIVIDER
+        ================================================== */}
+
+        <div
+          className="
+            h-px
+            w-full
+
+            bg-brand-surface/10
+          "
+        />
+
+        {/* ==================================================
             COPYRIGHT
-        ========================== */}
-        <div className="pb-12">
+        ================================================== */}
+
+        <div
+          className="
+            flex
+            flex-col
+
+            gap-3
+
+            py-7
+
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+          "
+        >
           <p
             className="
-              text-[0.78rem]
+              text-[0.65rem]
               font-medium
-              uppercase
-              tracking-[0.06em]
-              text-brand-espresso
+
+              tracking-[0.04em]
+
+              text-brand-surface/50
             "
           >
-            © All rights reserved. {currentYear} Butterfly Dream
+            © {currentYear} Butterfly Dream. All rights reserved.
+          </p>
+
+          <p
+            className="
+              text-[0.58rem]
+              font-semibold
+              uppercase
+
+              tracking-[0.16em]
+
+              text-brand-accent-fill/80
+            "
+          >
+            Jewelry made part of your story
           </p>
         </div>
 
-        {/* =========================
+        {/* ==================================================
             LARGE BRAND WORDMARK
-        ========================== */}
+        ================================================== */}
+
         <div
           className="
-          flex
-          items-center
-          justify-center
             overflow-hidden
-            pb-8
-            pt-1
-            sm:pb-10
+
+            border-t
+            border-brand-surface/10
+
+            pb-7
+            pt-6
+
+            sm:pb-9
+            sm:pt-8
           "
         >
           <Link
             to="/"
             aria-label="Butterfly Dream home"
             className="
-  block
-  whitespace-nowrap
-  font-display
-  text-[3.5rem]
-  font-semibold
-  leading-[0.85]
-  tracking-[-0.065em]
-  text-brand-espresso
-"
+              block
+
+              text-center
+
+              whitespace-nowrap
+
+              font-display
+
+              text-[clamp(2.9rem,13vw,8rem)]
+              font-semibold
+
+              leading-[0.82]
+
+              tracking-[-0.065em]
+
+              text-brand-surface
+
+              transition-colors
+              duration-300
+
+              hover:text-brand-accent-soft
+            "
           >
-            Butterfly <span className="italic font-normal">Dream</span>
+            Butterfly{" "}
+            <span
+              className="
+                font-normal
+                italic
+
+                text-brand-accent-fill
+              "
+            >
+              Dream
+            </span>
           </Link>
         </div>
       </div>

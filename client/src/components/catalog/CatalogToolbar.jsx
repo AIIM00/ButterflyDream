@@ -1,5 +1,9 @@
 import { useState } from "react";
+
+// MUI Icons
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import SortRoundedIcon from "@mui/icons-material/SortRounded";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 
 function CatalogToolbar({
   initialSearch,
@@ -17,46 +21,288 @@ function CatalogToolbar({
   }
 
   return (
-    <div className="flex flex-col gap-4 border-b border-gray-200 pb-6 lg:flex-row lg:items-center lg:justify-between">
+    <div
+      className="
+        w-full
+        space-y-4
+
+        sm:space-y-5
+
+        lg:flex
+        lg:items-center
+        lg:justify-between
+        lg:gap-6
+        lg:space-y-0
+      "
+    >
+      {/* ==================================================
+          SEARCH
+      ================================================== */}
+
       <form
         onSubmit={handleSubmit}
-        className="relative w-full max-w-xl"
         role="search"
+        className="
+          relative
+          w-full
+
+          lg:max-w-xl
+        "
       >
         <label htmlFor="catalog-search" className="sr-only">
           Search products
         </label>
 
-        <SearchRoundedIcon className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+        <div
+          className="
+            relative
 
-        <input
-          id="catalog-search"
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search products, categories, or variants"
-          className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-12 pr-28 text-gray-950 outline-none transition focus:border-gray-950 focus:ring-2 focus:ring-gray-950/10"
-        />
+            flex
+            min-h-[3.25rem]
+            items-center
 
-        <button
-          type="submit"
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg bg-gray-950 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
+            rounded-full
+
+            border
+            border-brand-border
+
+            bg-brand-surface-soft
+
+            transition-all
+            duration-200
+
+            focus-within:border-brand-accent-fill
+            focus-within:bg-brand-surface
+            focus-within:ring-2
+            focus-within:ring-brand-accent-fill/15
+          "
         >
-          Search
-        </button>
+          {/* SEARCH ICON */}
+
+          <span
+            className="
+              pointer-events-none
+
+              absolute
+              left-4
+
+              inline-flex
+              items-center
+              justify-center
+
+              text-brand-text-muted
+            "
+          >
+            <SearchRoundedIcon
+              sx={{
+                fontSize: 20,
+              }}
+            />
+          </span>
+
+          {/* SEARCH FIELD */}
+
+          <input
+            id="catalog-search"
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search the collection"
+            className="
+              min-w-0
+              flex-1
+
+              bg-transparent
+
+              py-3
+              pl-11
+              pr-[5.8rem]
+
+              text-sm
+              font-medium
+
+              text-brand-text
+
+              outline-none
+
+              placeholder:text-brand-text-muted/55
+
+              [&::-webkit-search-cancel-button]:cursor-pointer
+            "
+          />
+
+          {/* SEARCH BUTTON */}
+
+          <button
+            type="submit"
+            className="
+              absolute
+              right-1.5
+              top-1/2
+
+              min-h-10
+
+              -translate-y-1/2
+
+              rounded-full
+
+              bg-brand-primary
+
+              px-4
+
+              text-[0.7rem]
+              font-semibold
+
+              text-brand-surface
+
+              transition-all
+              duration-200
+
+              hover:bg-brand-primary-hover
+
+              active:scale-[0.97]
+
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-brand-accent-fill/40
+            "
+          >
+            Search
+          </button>
+        </div>
       </form>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <p className="text-sm text-gray-500">
-          {totalItems} {totalItems === 1 ? "product" : "products"}
-        </p>
+      {/* ==================================================
+          RESULT COUNT + SORT
+      ================================================== */}
 
-        <label className="flex items-center gap-3 text-sm font-semibold text-gray-700">
-          Sort by
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+
+          gap-3
+
+          lg:shrink-0
+          lg:justify-end
+        "
+      >
+        {/* RESULT COUNT */}
+
+        <div
+          className="
+            min-w-0
+          "
+        >
+          <p
+            className="
+              text-[0.56rem]
+              font-bold
+              uppercase
+
+              tracking-[0.14em]
+
+              text-brand-accent-text
+            "
+          >
+            Collection
+          </p>
+
+          <p
+            className="
+              mt-0.5
+
+              whitespace-nowrap
+
+              text-xs
+              text-brand-text-muted
+            "
+          >
+            <span
+              className="
+                font-semibold
+                text-brand-text
+              "
+            >
+              {totalItems}
+            </span>{" "}
+            {totalItems === 1 ? "piece" : "pieces"}
+          </p>
+        </div>
+
+        {/* SORT */}
+
+        <div
+          className="
+            relative
+            shrink-0
+          "
+        >
+          <label htmlFor="catalog-sort" className="sr-only">
+            Sort products
+          </label>
+
+          <span
+            className="
+              pointer-events-none
+
+              absolute
+              left-3.5
+              top-1/2
+
+              z-10
+
+              -translate-y-1/2
+
+              text-brand-text-muted
+            "
+          >
+            <SortRoundedIcon
+              sx={{
+                fontSize: 17,
+              }}
+            />
+          </span>
+
           <select
+            id="catalog-sort"
             value={sort}
             onChange={(event) => onSortChange(event.target.value)}
-            className="rounded-xl border border-gray-300 bg-white px-4 py-3 font-medium text-gray-800 outline-none focus:border-gray-950"
+            className="
+              min-h-11
+
+              appearance-none
+
+              rounded-full
+
+              border
+              border-brand-border
+
+              bg-brand-surface
+
+              py-2.5
+              pl-9
+              pr-9
+
+              text-[0.7rem]
+              font-semibold
+
+              text-brand-text
+
+              outline-none
+
+              transition-all
+              duration-200
+
+              hover:bg-brand-surface-soft
+
+              focus:border-brand-accent-fill
+              focus:ring-2
+              focus:ring-brand-accent-fill/15
+
+              sm:text-xs
+            "
           >
             <option value="newest">Newest</option>
 
@@ -70,7 +316,27 @@ function CatalogToolbar({
 
             <option value="price_desc">Price: High to low</option>
           </select>
-        </label>
+
+          <span
+            className="
+              pointer-events-none
+
+              absolute
+              right-3
+              top-1/2
+
+              -translate-y-1/2
+
+              text-brand-text-muted
+            "
+          >
+            <ExpandMoreRoundedIcon
+              sx={{
+                fontSize: 18,
+              }}
+            />
+          </span>
+        </div>
       </div>
     </div>
   );

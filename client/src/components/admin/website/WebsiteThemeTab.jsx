@@ -52,97 +52,119 @@ const BODY_FONT_OPTIONS = ["Manrope", "Inter", "Montserrat", "Poppins"];
 
 const COLOR_GROUPS = [
   {
-    title: "Core surfaces",
+    title: "Website foundations",
 
     description:
-      "Backgrounds and primary text used throughout the customer storefront.",
+      "Main backgrounds, text colors, and borders used across the customer website.",
 
     colors: [
       {
-        key: "surface",
-        label: "Surface",
-        description: "Main page and card background.",
+        key: "ivory",
+        label: "Page background",
+        description:
+          "Main background behind customer pages such as the homepage, shop, wishlist, cart, and account pages.",
       },
 
       {
-        key: "ivory",
-        label: "Ivory",
-        description: "Primary warm website background.",
+        key: "surface",
+        label: "Cards & panels",
+        description:
+          "Main surface used for cards, panels, dialogs, forms, and other content placed above the page background.",
       },
 
       {
         key: "cream",
-        label: "Cream",
-        description: "Secondary soft background.",
+        label: "Soft background",
+        description:
+          "Secondary background used to gently separate sections and create softer cards or content areas.",
       },
 
       {
         key: "espresso",
-        label: "Espresso",
-        description: "Primary dark text and strong contrast.",
+        label: "Main text & primary action",
+        description:
+          "Main headings, important text, and the default color of primary action buttons.",
       },
 
       {
         key: "muted",
-        label: "Muted",
-        description: "Secondary body text.",
+        label: "Secondary text",
+        description:
+          "Descriptions, helper text, metadata, captions, and other lower-emphasis text.",
       },
 
       {
         key: "border",
-        label: "Border",
-        description: "Subtle borders and separators.",
+        label: "Borders & dividers",
+        description:
+          "Subtle outlines around cards, inputs, sections, and separators throughout the storefront.",
       },
     ],
   },
 
   {
-    title: "Brand accents",
+    title: "Actions & dark sections",
 
     description:
-      "Butterfly Dream accents used for CTAs, decorative details, and luxury highlights.",
+      "Colors used for strong actions, dark editorial sections, and their interactive states.",
 
     colors: [
       {
-        key: "champagne",
-        label: "Champagne",
-        description: "Primary luxury accent.",
-      },
-
-      {
-        key: "champagneHover",
-        label: "Champagne Hover",
-        description: "Hover state for champagne accents.",
-      },
-
-      {
-        key: "paleChampagne",
-        label: "Pale Champagne",
-        description: "Soft champagne backgrounds.",
-      },
-
-      {
-        key: "bronze",
-        label: "Bronze",
-        description: "Warm editorial accent.",
-      },
-
-      {
-        key: "bronzeHover",
-        label: "Bronze Hover",
-        description: "Dark bronze hover and announcement background.",
-      },
-
-      {
         key: "forest",
-        label: "Forest",
-        description: "Deep green brand accent.",
+        label: "Dark section background",
+        description:
+          "Background used for dark editorial sections, storytelling areas, and strong visual sections.",
       },
 
       {
         key: "emerald",
-        label: "Emerald",
-        description: "Darkest green accent.",
+        label: "Primary action hover",
+        description:
+          "Hover and emphasis color used for primary buttons and dark interactive elements.",
+      },
+    ],
+  },
+
+  {
+    title: "Featured & accent colors",
+
+    description:
+      "Premium accent colors used for featured products, highlights, labels, decorative details, and secondary actions.",
+
+    colors: [
+      {
+        key: "champagne",
+        label: "Accent fill",
+        description:
+          "Main premium accent used for featured buttons, decorative elements, highlights, and colored emphasis.",
+      },
+
+      {
+        key: "champagneHover",
+        label: "Accent fill hover",
+        description:
+          "Interactive hover state for buttons and elements that use the Accent Fill color.",
+      },
+
+      {
+        key: "paleChampagne",
+        label: "Soft accent background",
+        description:
+          "Light accent surface used for featured product cards, premium labels, highlights, and subtle decorative areas.",
+      },
+
+      {
+        key: "bronze",
+        label: "Accent text & icons",
+        description:
+          "Readable accent used for labels, eyebrow text, icons, links, and premium details.",
+      },
+
+      {
+        key: "bronzeHover",
+        label: "Accent text hover",
+        description:
+          "Stronger accent used when accent text, links, or highlighted controls are hovered.",
       },
     ],
   },
@@ -150,19 +172,22 @@ const COLOR_GROUPS = [
   {
     title: "Status colors",
 
-    description: "Colors used for successful actions and errors.",
+    description:
+      "Functional colors used to communicate successful actions, errors, and important system states.",
 
     colors: [
       {
         key: "success",
         label: "Success",
-        description: "Success and confirmation states.",
+        description:
+          "Used for successful payments, confirmations, availability, and completed actions.",
       },
 
       {
         key: "error",
-        label: "Error",
-        description: "Errors and destructive actions.",
+        label: "Error & destructive action",
+        description:
+          "Used for errors, failed actions, warnings that require attention, and destructive actions.",
       },
     ],
   },
@@ -523,13 +548,14 @@ function WebsiteThemeTab() {
           </div>
 
           <h3 className="mt-2 text-xl font-bold text-gray-950">
-            Butterfly Dream theme
+            Website theme
           </h3>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-            Manage the customer website colors and typography. Saved changes
-            become part of the website draft and go live only when the website
-            is published.
+            Customize the colors and typography of the customer website. Each
+            color is named after where it is used, so you can change the
+            storefront without needing to understand the underlying design
+            system.
           </p>
         </div>
 

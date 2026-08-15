@@ -11,10 +11,13 @@ function NotFound() {
         min-h-screen
         items-center
         justify-center
-        bg-brand-ivory
+
+        bg-brand-page
+
         px-4
         py-16
-        text-brand-espresso
+
+        text-brand-text
 
         sm:px-6
       "
@@ -22,34 +25,50 @@ function NotFound() {
       <section
         className="
           relative
+
           w-full
           max-w-2xl
+
           overflow-hidden
+
           rounded-[2rem]
+
           border
           border-brand-border
+
           bg-brand-surface
+
           px-6
           py-14
+
           text-center
+
+          shadow-[0_18px_50px_rgba(0,0,0,0.05)]
 
           sm:px-10
           sm:py-20
         "
       >
-        {/* DECORATIVE DETAILS */}
+        {/* ==================================================
+            DECORATIVE DETAILS
+        ================================================== */}
+
         <div
           aria-hidden="true"
           className="
             pointer-events-none
+
             absolute
             -right-20
             -top-20
+
             h-52
             w-52
+
             rounded-full
+
             border
-            border-brand-champagne/30
+            border-brand-accent-fill/25
           "
         />
 
@@ -57,29 +76,69 @@ function NotFound() {
           aria-hidden="true"
           className="
             pointer-events-none
+
             absolute
             -bottom-24
             -left-20
+
             h-56
             w-56
+
             rounded-full
+
             border
-            border-brand-border
+            border-brand-border/70
           "
         />
 
+        {/* soft central glow */}
+
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none
+
+            absolute
+            left-1/2
+            top-1/3
+
+            h-56
+            w-56
+
+            -translate-x-1/2
+            -translate-y-1/2
+
+            rounded-full
+
+            bg-brand-accent-soft/40
+
+            blur-3xl
+          "
+        />
+
+        {/* ==================================================
+            CONTENT
+        ================================================== */}
+
         <div className="relative z-10">
+          {/* ICON */}
+
           <span
             className="
               mx-auto
+
               inline-flex
               h-14
               w-14
+
               items-center
               justify-center
+
               rounded-full
-              bg-brand-pale-champagne
-              text-brand-bronze
+
+              bg-brand-accent-soft
+
+              text-brand-accent-text
             "
           >
             <AutoAwesomeOutlinedIcon
@@ -89,46 +148,73 @@ function NotFound() {
             />
           </span>
 
+          {/* ERROR LABEL */}
+
           <p
             className="
               mt-6
-              text-[0.65rem]
+
+              text-[0.62rem]
               font-bold
               uppercase
+
               tracking-[0.24em]
-              text-brand-bronze
+
+              text-brand-accent-text
             "
           >
             Error 404
           </p>
+
+          {/* HEADING */}
 
           <h1
             className="
               mx-auto
               mt-3
               max-w-xl
+
               font-display
+
               text-[3rem]
               font-medium
+
               leading-[0.92]
+
               tracking-[-0.05em]
-              text-brand-espresso
+
+              text-brand-text
 
               sm:text-6xl
             "
           >
             This page has
-            <span className="block italic text-brand-bronze">flown away.</span>
+            <span
+              className="
+                block
+
+                font-normal
+                italic
+
+                text-brand-accent-text
+              "
+            >
+              flown away.
+            </span>
           </h1>
+
+          {/* DESCRIPTION */}
 
           <p
             className="
               mx-auto
               mt-5
               max-w-md
+
               text-sm
               leading-7
-              text-brand-muted
+
+              text-brand-text-muted
 
               sm:text-[0.95rem]
             "
@@ -138,67 +224,135 @@ function NotFound() {
             speaks to you.
           </p>
 
+          {/* ==================================================
+              ACTIONS
+          ================================================== */}
+
           <div
             className="
               mt-8
+
               flex
               flex-wrap
+
               justify-center
+
               gap-3
             "
           >
+            {/* PRIMARY */}
+
             <Link
               to="/"
               className="
+                group
+
                 inline-flex
+                min-h-12
+
                 items-center
+                justify-center
+
                 gap-2
+
                 rounded-full
-                bg-brand-espresso
+
+                bg-brand-primary
+
                 px-6
-                py-3
+
                 text-sm
                 font-semibold
-                text-white
-                transition
-                hover:bg-brand-emerald
+
+                text-brand-surface
+
+                transition-all
+                duration-200
+
+                hover:bg-brand-primary-hover
+
+                active:scale-[0.98]
+
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-brand-accent-fill/40
+                focus-visible:ring-offset-2
+                focus-visible:ring-offset-brand-surface
               "
             >
               Return home
-              <ArrowForwardRoundedIcon fontSize="small" />
+              <ArrowForwardRoundedIcon
+                className="
+                  transition-transform
+                  duration-200
+
+                  group-hover:translate-x-0.5
+                "
+                sx={{
+                  fontSize: 19,
+                }}
+              />
             </Link>
+
+            {/* SECONDARY */}
 
             <Link
               to="/products"
               className="
                 inline-flex
+                min-h-12
+
                 items-center
                 justify-center
+
                 rounded-full
+
                 border
-                border-brand-espresso
+                border-brand-primary
+
+                bg-transparent
+
                 px-6
-                py-3
+
                 text-sm
                 font-semibold
-                text-brand-espresso
-                transition
-                hover:bg-brand-espresso
-                hover:text-white
+
+                text-brand-primary
+
+                transition-all
+                duration-200
+
+                hover:bg-brand-primary
+                hover:text-brand-surface
+
+                active:scale-[0.98]
+
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-brand-accent-fill/40
+                focus-visible:ring-offset-2
+                focus-visible:ring-offset-brand-surface
               "
             >
               Explore collection
             </Link>
           </div>
 
+          {/* ==================================================
+              BRAND NOTE
+          ================================================== */}
+
           <p
             className="
               mt-10
-              text-[0.58rem]
+
+              text-[0.56rem]
               font-semibold
               uppercase
+
               tracking-[0.2em]
-              text-brand-muted
+
+              text-brand-text-muted
             "
           >
             Butterfly Dream · Jewelry made part of your story

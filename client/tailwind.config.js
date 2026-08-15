@@ -6,36 +6,63 @@ export default {
     extend: {
       colors: {
         brand: {
-          ivory: "rgb(var(--brand-ivory) / <alpha-value>)",
-          surface: "rgb(var(--brand-surface) / <alpha-value>)",
-          cream: "rgb(var(--brand-cream) / <alpha-value>)",
+          /*
+           * Backgrounds
+           */
+          page: "rgb(var(--theme-page) / <alpha-value>)",
 
-          espresso: "rgb(var(--brand-espresso) / <alpha-value>)",
-          muted: "rgb(var(--brand-muted) / <alpha-value>)",
+          surface: "rgb(var(--theme-surface) / <alpha-value>)",
 
-          forest: "rgb(var(--brand-forest) / <alpha-value>)",
-          emerald: "rgb(var(--brand-emerald) / <alpha-value>)",
+          "surface-soft": "rgb(var(--theme-surface-soft) / <alpha-value>)",
 
-          champagne: "rgb(var(--brand-champagne) / <alpha-value>)",
+          "dark-surface": "rgb(var(--theme-dark-surface) / <alpha-value>)",
 
-          "champagne-hover":
-            "rgb(var(--brand-champagne-hover) / <alpha-value>)",
+          /*
+           * Text
+           */
+          text: "rgb(var(--theme-text) / <alpha-value>)",
 
-          "pale-champagne": "rgb(var(--brand-pale-champagne) / <alpha-value>)",
+          "text-muted": "rgb(var(--theme-text-muted) / <alpha-value>)",
 
-          bronze: "rgb(var(--brand-bronze) / <alpha-value>)",
+          /*
+           * Primary actions
+           */
+          primary: "rgb(var(--theme-primary) / <alpha-value>)",
 
-          "bronze-hover": "rgb(var(--brand-bronze-hover) / <alpha-value>)",
+          "primary-hover": "rgb(var(--theme-primary-hover) / <alpha-value>)",
 
-          border: "rgb(var(--brand-border) / <alpha-value>)",
+          /*
+           * Accents
+           */
+          "accent-fill": "rgb(var(--theme-accent-fill) / <alpha-value>)",
 
-          success: "rgb(var(--brand-success) / <alpha-value>)",
-          error: "rgb(var(--brand-error) / <alpha-value>)",
+          "accent-fill-hover":
+            "rgb(var(--theme-accent-fill-hover) / <alpha-value>)",
+
+          "accent-soft": "rgb(var(--theme-accent-soft) / <alpha-value>)",
+
+          "accent-text": "rgb(var(--theme-accent-text) / <alpha-value>)",
+
+          "accent-text-hover":
+            "rgb(var(--theme-accent-text-hover) / <alpha-value>)",
+
+          /*
+           * UI
+           */
+          border: "rgb(var(--theme-border) / <alpha-value>)",
+
+          /*
+           * Status
+           */
+          success: "rgb(var(--theme-success) / <alpha-value>)",
+
+          error: "rgb(var(--theme-error) / <alpha-value>)",
         },
       },
 
       fontFamily: {
         display: ["var(--font-display)"],
+
         body: ["var(--font-body)"],
       },
     },

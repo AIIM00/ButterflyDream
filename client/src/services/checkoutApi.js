@@ -1,7 +1,15 @@
 import apiClient from "./apiClient.js";
 
-export async function fetchCustomerCheckout({ signal } = {}) {
+export async function fetchCustomerCheckout({ addressId, signal } = {}) {
   const response = await apiClient.get("/checkout", {
+    params: {
+      ...(addressId
+        ? {
+            addressId,
+          }
+        : {}),
+    },
+
     signal,
   });
 

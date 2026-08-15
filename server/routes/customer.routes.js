@@ -5,6 +5,7 @@ import {
   makeDefaultAddress,
   removeAddress,
   updateAddress,
+  listCustomerDeliveryGovernorates,
 } from "../controllers/customerAddress.controller.js";
 import {
   getCustomerOrder,
@@ -65,6 +66,7 @@ router.patch("/addresses/:addressId", updateAddress);
 router.patch("/addresses/:addressId/default", makeDefaultAddress);
 
 router.delete("/addresses/:addressId", removeAddress);
+router.get("/delivery-governorates", listCustomerDeliveryGovernorates);
 
 // Customer wishlist
 

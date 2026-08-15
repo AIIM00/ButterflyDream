@@ -4,6 +4,7 @@ import {
   getCustomerAddresses,
   setDefaultCustomerAddress,
   updateCustomerAddress,
+  getCustomerDeliveryGovernorates,
 } from "../services/customerAddressService.js";
 import {
   CustomerAddressValidationError,
@@ -42,7 +43,30 @@ function handleAddressError(error, response, next) {
 
   return next(error);
 }
+export async function listCustomerDeliveryGovernorates(
+  request,
+  response,
+  next,
+) {
+  try {
+    const userId = requireCustomerId(request, response);
 
+    if (!userId) {
+      return undefined;
+    }
+
+    const result = await getCustomerDeliveryGovernorates();
+
+    return successResponse(
+      response,
+      200,
+      "Delivery governorates retrieved successfully.",
+      result,
+    );
+  } catch (error) {
+    return handleAddressError(error, response, next);
+  }
+}
 export async function listCustomerAddresses(request, response, next) {
   try {
     const userId = requireCustomerId(request, response);
@@ -83,6 +107,16 @@ export async function createAddress(request, response, next) {
         },
       );
     }
+    if (result.status === "DELIVERY_GOVERNORATE_UNAVAILABLE") {
+      return errorResponse(
+        response,
+        409,
+        "Delivery is not currently available for the selected governorate.",
+        {
+          governorate: result.governorate,
+        },
+      );
+    }
 
     return successResponse(response, 201, "Address created successfully.", {
       address: result.address,
@@ -109,6 +143,16 @@ export async function updateAddress(request, response, next) {
 
     if (result.status === "NOT_FOUND") {
       return errorResponse(response, 404, "Address not found.");
+    }
+    if (result.status === "DELIVERY_GOVERNORATE_UNAVAILABLE") {
+      return errorResponse(
+        response,
+        409,
+        "Delivery is not currently available for the selected governorate.",
+        {
+          governorate: result.governorate,
+        },
+      );
     }
 
     return successResponse(response, 200, "Address updated successfully.", {

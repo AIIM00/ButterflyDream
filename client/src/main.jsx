@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import App from "./App.jsx";
 import AppProvider from "./context/app/AppProvider.jsx";
+import ScrollToTop from "./components/common/ScrollToTop.jsx";
 import "./index.css";
 
 const rootElement = document.getElementById("root");
@@ -15,6 +16,7 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <BrowserRouter>
+      <ScrollToTop />
       <AppProvider>
         <App />
 

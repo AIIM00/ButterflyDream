@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 // MUI Icons
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -32,6 +33,10 @@ import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
 
 const CUSTOMER_NOTE_MAX_LENGTH = 1000;
 
+/* =========================================================
+   HELPERS
+========================================================= */
+
 function isCancelledRequest(error, signal) {
   return signal?.aborted || error?.code === "ERR_CANCELED";
 }
@@ -56,17 +61,25 @@ function getCheckoutIssueMessage(summary) {
   if (summary.hasInsufficientStock) {
     return "Some quantities exceed the available stock. Return to your cart and reduce them.";
   }
+  if (summary.deliveryAvailable === false) {
+    return "Delivery is not currently available for the selected governorate.";
+  }
 
   return null;
 }
 
+/* =========================================================
+   LOADING
+========================================================= */
+
 function CheckoutLoading() {
   return (
-    <section className="min-h-screen bg-brand-ivory">
+    <section className="min-h-screen bg-brand-page">
       <div
         className="
           mx-auto
           max-w-7xl
+
           px-4
           py-8
 
@@ -78,28 +91,117 @@ function CheckoutLoading() {
         "
       >
         <div className="mb-8 max-w-xl">
-          <div className="h-3 w-28 animate-pulse rounded-full bg-brand-pale-champagne" />
+          <div
+            className="
+              h-3
+              w-28
 
-          <div className="mt-4 h-11 w-72 animate-pulse rounded-xl bg-brand-cream" />
+              animate-pulse
 
-          <div className="mt-3 h-5 w-80 max-w-full animate-pulse rounded-lg bg-brand-cream" />
+              rounded-full
+
+              bg-brand-accent-soft
+            "
+          />
+
+          <div
+            className="
+              mt-4
+
+              h-11
+              w-72
+
+              animate-pulse
+
+              rounded-xl
+
+              bg-brand-surface-soft
+            "
+          />
+
+          <div
+            className="
+              mt-3
+
+              h-5
+              w-80
+              max-w-full
+
+              animate-pulse
+
+              rounded-lg
+
+              bg-brand-surface-soft
+            "
+          />
         </div>
 
-        <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_23rem]">
+        <div
+          className="
+            grid
+            gap-7
+
+            lg:grid-cols-[minmax(0,1fr)_23rem]
+          "
+        >
           <div className="space-y-5">
-            <div className="h-72 animate-pulse rounded-[1.75rem] bg-brand-cream" />
+            <div
+              className="
+                h-72
 
-            <div className="h-80 animate-pulse rounded-[1.75rem] bg-brand-cream" />
+                animate-pulse
 
-            <div className="h-52 animate-pulse rounded-[1.75rem] bg-brand-cream" />
+                rounded-[1.75rem]
+
+                bg-brand-surface-soft
+              "
+            />
+
+            <div
+              className="
+                h-80
+
+                animate-pulse
+
+                rounded-[1.75rem]
+
+                bg-brand-surface-soft
+              "
+            />
+
+            <div
+              className="
+                h-52
+
+                animate-pulse
+
+                rounded-[1.75rem]
+
+                bg-brand-surface-soft
+              "
+            />
           </div>
 
-          <div className="h-[30rem] animate-pulse rounded-[1.75rem] bg-brand-cream" />
+          <div
+            className="
+              h-[30rem]
+
+              animate-pulse
+
+              rounded-[1.75rem]
+
+              bg-brand-surface-soft
+            "
+          />
         </div>
       </div>
     </section>
   );
 }
+
+/* =========================================================
+   CHECKOUT
+========================================================= */
 
 function Checkout() {
   const navigate = useNavigate();
@@ -119,6 +221,11 @@ function Checkout() {
   const [customerNote, setCustomerNote] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUpdatingDelivery, setIsUpdatingDelivery] = useState(false);
+
+  /* =======================================================
+     LOAD CHECKOUT
+  ======================================================= */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -174,6 +281,10 @@ function Checkout() {
     };
   }, [location.pathname, location.search, navigate]);
 
+  /* =======================================================
+     RETRY
+  ======================================================= */
+
   async function handleRetry() {
     setCheckoutState({
       status: "loading",
@@ -212,6 +323,10 @@ function Checkout() {
     }
   }
 
+  /* =======================================================
+     REFRESH AFTER FAILED ORDER
+  ======================================================= */
+
   async function refreshCheckoutAfterFailure() {
     try {
       const response = await fetchCustomerCheckout();
@@ -234,6 +349,59 @@ function Checkout() {
     }
   }
 
+  /* =======================================================
+     PLACE ORDER
+  ======================================================= */
+  async function handleAddressSelect(addressId) {
+    if (
+      !addressId ||
+      addressId === selectedAddressId ||
+      isSubmitting ||
+      isUpdatingDelivery
+    ) {
+      return;
+    }
+
+    const previousAddressId = selectedAddressId;
+
+    setSelectedAddressId(addressId);
+
+    setIsUpdatingDelivery(true);
+
+    try {
+      const response = await fetchCustomerCheckout({
+        addressId,
+      });
+
+      setCheckoutState({
+        status: "ready",
+        checkout: response.checkout,
+        error: null,
+      });
+
+      setSelectedAddressId(response.checkout.selectedAddressId ?? addressId);
+    } catch (error) {
+      setSelectedAddressId(previousAddressId);
+
+      if (isAuthenticationError(error)) {
+        navigate("/login", {
+          replace: true,
+
+          state: {
+            from: `${location.pathname}${location.search}`,
+          },
+        });
+
+        return;
+      }
+
+      toast.error(
+        getApiErrorMessage(error, "Unable to update the delivery fee."),
+      );
+    } finally {
+      setIsUpdatingDelivery(false);
+    }
+  }
   async function handlePlaceOrder() {
     if (!selectedAddressId) {
       toast.error("Select a delivery address.");
@@ -272,9 +440,17 @@ function Checkout() {
     }
   }
 
+  /* =========================================================
+     LOADING STATE
+  ========================================================= */
+
   if (checkoutState.status === "loading") {
     return <CheckoutLoading />;
   }
+
+  /* =========================================================
+     ERROR STATE
+  ========================================================= */
 
   if (checkoutState.status === "error") {
     return (
@@ -282,8 +458,11 @@ function Checkout() {
         className="
           flex
           min-h-[70vh]
+
           items-center
-          bg-brand-ivory
+
+          bg-brand-page
+
           px-4
           py-12
 
@@ -295,12 +474,17 @@ function Checkout() {
             mx-auto
             w-full
             max-w-2xl
+
             rounded-[2rem]
+
             border
             border-brand-error/20
+
             bg-brand-surface
+
             px-6
             py-12
+
             text-center
 
             sm:px-10
@@ -309,13 +493,18 @@ function Checkout() {
           <span
             className="
               mx-auto
+
               inline-flex
               h-16
               w-16
+
               items-center
               justify-center
+
               rounded-full
+
               bg-brand-error/10
+
               text-brand-error
             "
           >
@@ -329,11 +518,14 @@ function Checkout() {
           <p
             className="
               mt-6
-              text-[0.65rem]
+
+              text-[0.62rem]
               font-bold
               uppercase
+
               tracking-[0.2em]
-              text-brand-bronze
+
+              text-brand-accent-text
             "
           >
             Checkout
@@ -342,11 +534,15 @@ function Checkout() {
           <h1
             className="
               mt-2
+
               font-display
+
               text-4xl
               font-medium
+
               tracking-[-0.04em]
-              text-brand-espresso
+
+              text-brand-text
             "
           >
             Checkout could not be loaded.
@@ -357,9 +553,11 @@ function Checkout() {
               mx-auto
               mt-4
               max-w-lg
+
               text-sm
               leading-7
-              text-brand-muted
+
+              text-brand-text-muted
             "
           >
             {getApiErrorMessage(
@@ -373,21 +571,38 @@ function Checkout() {
             onClick={() => void handleRetry()}
             className="
               mt-7
+
               inline-flex
+              min-h-11
+
               items-center
+              justify-center
+
               gap-2
+
               rounded-full
-              bg-brand-espresso
+
+              bg-brand-primary
+
               px-6
-              py-3
+
               text-sm
               font-semibold
-              text-white
-              transition
-              hover:bg-brand-emerald
+
+              text-brand-surface
+
+              transition-all
+
+              hover:bg-brand-primary-hover
+
+              active:scale-[0.98]
             "
           >
-            <RefreshRoundedIcon fontSize="small" />
+            <RefreshRoundedIcon
+              sx={{
+                fontSize: 18,
+              }}
+            />
             Try again
           </button>
         </div>
@@ -408,7 +623,12 @@ function Checkout() {
   const canSubmit =
     Boolean(selectedAddressId) &&
     Boolean(summary?.canPlaceOrder) &&
-    !isSubmitting;
+    !isSubmitting &&
+    !isUpdatingDelivery;
+
+  /* =========================================================
+     EMPTY CART
+  ========================================================= */
 
   if (items.length === 0) {
     return (
@@ -416,8 +636,11 @@ function Checkout() {
         className="
           flex
           min-h-[70vh]
+
           items-center
-          bg-brand-ivory
+
+          bg-brand-page
+
           px-4
           py-12
 
@@ -426,15 +649,24 @@ function Checkout() {
       >
         <div
           className="
+            relative
+
             mx-auto
             w-full
             max-w-2xl
+
+            overflow-hidden
+
             rounded-[2rem]
+
             border
             border-brand-border
-            bg-brand-cream
+
+            bg-brand-surface-soft
+
             px-6
             py-12
+
             text-center
 
             sm:px-10
@@ -442,97 +674,165 @@ function Checkout() {
           "
         >
           <span
+            aria-hidden="true"
             className="
-              mx-auto
-              inline-flex
-              h-16
-              w-16
-              items-center
-              justify-center
+              pointer-events-none
+
+              absolute
+              -right-16
+              -top-16
+
+              h-44
+              w-44
+
               rounded-full
-              bg-brand-surface
-              text-brand-bronze
-              shadow-sm
-            "
-          >
-            <ShoppingBagOutlinedIcon
-              sx={{
-                fontSize: 31,
-              }}
-            />
-          </span>
 
-          <p
-            className="
-              mt-6
-              text-[0.65rem]
-              font-bold
-              uppercase
-              tracking-[0.2em]
-              text-brand-bronze
+              border
+              border-brand-accent-fill/20
             "
-          >
-            Checkout
-          </p>
+          />
 
-          <h1
-            className="
-              mt-2
-              font-display
-              text-4xl
-              font-medium
-              tracking-[-0.04em]
-              text-brand-espresso
+          <div className="relative z-10">
+            <span
+              className="
+                mx-auto
 
-              sm:text-5xl
-            "
-          >
-            Your cart is empty.
-          </h1>
+                inline-flex
+                h-16
+                w-16
 
-          <p
-            className="
-              mx-auto
-              mt-4
-              max-w-lg
-              text-sm
-              leading-7
-              text-brand-muted
-            "
-          >
-            Choose the pieces you love before continuing to checkout.
-          </p>
+                items-center
+                justify-center
 
-          <Link
-            to="/products"
-            className="
-              mt-8
-              inline-flex
-              items-center
-              rounded-full
-              bg-brand-espresso
-              px-6
-              py-3
-              text-sm
-              font-semibold
-              text-white
-              transition
-              hover:bg-brand-emerald
-            "
-          >
-            Browse products
-          </Link>
+                rounded-full
+
+                bg-brand-surface
+
+                text-brand-accent-text
+
+                shadow-sm
+              "
+            >
+              <ShoppingBagOutlinedIcon
+                sx={{
+                  fontSize: 31,
+                }}
+              />
+            </span>
+
+            <p
+              className="
+                mt-6
+
+                text-[0.62rem]
+                font-bold
+                uppercase
+
+                tracking-[0.2em]
+
+                text-brand-accent-text
+              "
+            >
+              Checkout
+            </p>
+
+            <h1
+              className="
+                mt-2
+
+                font-display
+
+                text-4xl
+                font-medium
+
+                tracking-[-0.04em]
+
+                text-brand-text
+
+                sm:text-5xl
+              "
+            >
+              Your cart is empty.
+            </h1>
+
+            <p
+              className="
+                mx-auto
+                mt-4
+                max-w-lg
+
+                text-sm
+                leading-7
+
+                text-brand-text-muted
+              "
+            >
+              Choose the pieces you love before continuing to checkout.
+            </p>
+
+            <Link
+              to="/products"
+              className="
+                mt-8
+
+                inline-flex
+                min-h-12
+
+                items-center
+                justify-center
+
+                gap-2
+
+                rounded-full
+
+                bg-brand-primary
+
+                px-6
+
+                text-sm
+                font-semibold
+
+                text-brand-surface
+
+                transition-all
+
+                hover:bg-brand-primary-hover
+
+                active:scale-[0.98]
+              "
+            >
+              Browse products
+              <ArrowForwardRoundedIcon
+                sx={{
+                  fontSize: 18,
+                }}
+              />
+            </Link>
+          </div>
         </div>
       </section>
     );
   }
 
+  /* =========================================================
+     CHECKOUT PAGE
+  ========================================================= */
+
   return (
-    <section className="min-h-screen bg-brand-ivory">
+    <section
+      className="
+        min-h-screen
+
+        bg-brand-page
+
+        text-brand-text
+      "
+    >
       <div
         className="
           mx-auto
           max-w-7xl
+
           px-4
           pb-16
           pt-7
@@ -545,19 +845,34 @@ function Checkout() {
           lg:pt-14
         "
       >
-        {/* HEADER */}
+        {/* ==================================================
+            HEADER
+        ================================================== */}
+
         <header className="max-w-3xl">
           <Link
             to="/cart"
             className="
               inline-flex
+              min-h-9
+
               items-center
+              justify-center
+
               gap-1
+
+              rounded-full
+
+              px-2
+
               text-xs
               font-semibold
-              text-brand-muted
-              transition
-              hover:text-brand-espresso
+
+              text-brand-text-muted
+
+              transition-colors
+
+              hover:text-brand-text
             "
           >
             <ArrowBackRoundedIcon
@@ -571,11 +886,14 @@ function Checkout() {
           <p
             className="
               mt-5
-              text-[0.65rem]
+
+              text-[0.62rem]
               font-bold
               uppercase
-              tracking-[0.22em]
-              text-brand-bronze
+
+              tracking-[0.2em]
+
+              text-brand-accent-text
             "
           >
             Secure checkout
@@ -584,28 +902,36 @@ function Checkout() {
           <h1
             className="
               mt-3
+
               font-display
+
               text-[2.65rem]
               font-medium
+
               leading-[0.95]
+
               tracking-[-0.045em]
-              text-brand-espresso
+
+              text-brand-text
 
               sm:text-5xl
 
               lg:text-6xl
             "
           >
-            Complete your order.
+            Complete
+            <span className="block italic">your order.</span>
           </h1>
 
           <p
             className="
               mt-4
               max-w-2xl
+
               text-sm
               leading-7
-              text-brand-muted
+
+              text-brand-text-muted
 
               sm:text-base
             "
@@ -615,62 +941,167 @@ function Checkout() {
           </p>
         </header>
 
-        {/* ORDERS DISABLED */}
+        {/* ==================================================
+            ORDERS DISABLED
+        ================================================== */}
+
         {!checkout.ordersEnabled && (
           <div
             className="
               mt-7
+
               flex
+              items-start
+
               gap-3
-              rounded-[1.5rem]
+
+              rounded-[1.4rem]
+
               border
               border-brand-error/20
+
               bg-brand-error/5
-              p-5
+
+              p-4
+
+              sm:p-5
             "
           >
-            <WarningAmberRoundedIcon className="shrink-0 text-brand-error" />
+            <span
+              className="
+                inline-flex
+                h-9
+                w-9
+                shrink-0
+
+                items-center
+                justify-center
+
+                rounded-full
+
+                bg-brand-error/10
+
+                text-brand-error
+              "
+            >
+              <WarningAmberRoundedIcon
+                sx={{
+                  fontSize: 19,
+                }}
+              />
+            </span>
 
             <div>
-              <h2 className="font-semibold text-brand-error">
+              <h2
+                className="
+                  text-sm
+                  font-semibold
+
+                  text-brand-error
+                "
+              >
                 Orders are temporarily unavailable
               </h2>
 
-              <p className="mt-1 text-sm leading-6 text-brand-muted">
+              <p
+                className="
+                  mt-1
+
+                  text-sm
+                  leading-6
+
+                  text-brand-text-muted
+                "
+              >
                 The store is not currently accepting new orders.
               </p>
             </div>
           </div>
         )}
 
-        {/* CHECKOUT ISSUE */}
+        {/* ==================================================
+            CHECKOUT ISSUE
+        ================================================== */}
+
         {issueMessage && (
           <div
             className="
               mt-5
+
               flex
               flex-col
+
               gap-4
-              rounded-[1.5rem]
+
+              rounded-[1.4rem]
+
               border
-              border-amber-200
+              border-amber-500/20
+
               bg-amber-50
-              p-5
+
+              p-4
 
               sm:flex-row
               sm:items-center
               sm:justify-between
+              sm:p-5
             "
           >
-            <div className="flex gap-3">
-              <WarningAmberRoundedIcon className="shrink-0 text-amber-700" />
+            <div
+              className="
+                flex
+                items-start
+
+                gap-3
+              "
+            >
+              <span
+                className="
+                  inline-flex
+                  h-9
+                  w-9
+                  shrink-0
+
+                  items-center
+                  justify-center
+
+                  rounded-full
+
+                  bg-amber-500/10
+
+                  text-amber-700
+                "
+              >
+                <WarningAmberRoundedIcon
+                  sx={{
+                    fontSize: 19,
+                  }}
+                />
+              </span>
 
               <div>
-                <h2 className="font-semibold text-amber-950">
+                <h2
+                  className="
+                    text-sm
+                    font-semibold
+
+                    text-amber-950
+                  "
+                >
                   Your cart needs attention
                 </h2>
 
-                <p className="mt-1 text-sm leading-6 text-amber-800">
+                <p
+                  className="
+                    mt-1
+
+                    text-sm
+                    leading-6
+
+                    text-amber-800
+                  "
+                >
                   {issueMessage}
                 </p>
               </div>
@@ -679,16 +1110,28 @@ function Checkout() {
             <Link
               to="/cart"
               className="
+                inline-flex
+                min-h-10
                 w-fit
                 shrink-0
+
+                items-center
+                justify-center
+
                 rounded-full
+
                 bg-amber-900
+
                 px-5
-                py-2.5
-                text-center
+
                 text-sm
                 font-semibold
+
                 text-white
+
+                transition-all
+
+                hover:bg-amber-800
               "
             >
               Review cart
@@ -696,10 +1139,16 @@ function Checkout() {
           </div>
         )}
 
+        {/* ==================================================
+            LAYOUT
+        ================================================== */}
+
         <div
           className="
             mt-9
+
             grid
+
             gap-7
 
             lg:grid-cols-[minmax(0,1fr)_23rem]
@@ -707,45 +1156,71 @@ function Checkout() {
             xl:gap-10
           "
         >
-          {/* MAIN */}
+          {/* ==================================================
+              MAIN
+          ================================================== */}
+
           <div className="space-y-6">
-            {/* ADDRESS */}
+            {/* ==============================================
+                STEP 1 — ADDRESS
+            ============================================== */}
+
             <section
               className="
                 rounded-[1.75rem]
+
                 border
                 border-brand-border
+
                 bg-brand-surface
+
                 p-5
 
                 sm:p-6
               "
             >
-              <div className="flex items-start gap-4">
+              <div
+                className="
+                  flex
+                  items-start
+
+                  gap-4
+                "
+              >
                 <span
                   className="
                     inline-flex
                     h-11
                     w-11
                     shrink-0
+
                     items-center
                     justify-center
+
                     rounded-full
-                    bg-brand-pale-champagne
-                    text-brand-bronze
+
+                    bg-brand-accent-soft
+
+                    text-brand-accent-text
                   "
                 >
-                  <LocalShippingOutlinedIcon fontSize="small" />
+                  <LocalShippingOutlinedIcon
+                    sx={{
+                      fontSize: 20,
+                    }}
+                  />
                 </span>
 
                 <div>
                   <p
                     className="
-                      text-[0.6rem]
+                      text-[0.58rem]
                       font-bold
                       uppercase
+
                       tracking-[0.18em]
-                      text-brand-bronze
+
+                      text-brand-accent-text
                     "
                   >
                     Step 1
@@ -754,11 +1229,15 @@ function Checkout() {
                   <h2
                     className="
                       mt-1
+
                       font-display
+
                       text-2xl
                       font-medium
+
                       tracking-[-0.03em]
-                      text-brand-espresso
+
+                      text-brand-text
 
                       sm:text-3xl
                     "
@@ -766,7 +1245,16 @@ function Checkout() {
                     Delivery address
                   </h2>
 
-                  <p className="mt-1 text-sm leading-6 text-brand-muted">
+                  <p
+                    className="
+                      mt-1
+
+                      text-sm
+                      leading-6
+
+                      text-brand-text-muted
+                    "
+                  >
                     Select where your Butterfly Dream order should be delivered.
                   </p>
                 </div>
@@ -776,7 +1264,9 @@ function Checkout() {
                 <div
                   className="
                     mt-6
+
                     grid
+
                     gap-4
 
                     md:grid-cols-2
@@ -787,8 +1277,8 @@ function Checkout() {
                       key={address.id}
                       address={address}
                       selected={selectedAddressId === address.id}
-                      disabled={isSubmitting}
-                      onSelect={setSelectedAddressId}
+                      disabled={isSubmitting || isUpdatingDelivery}
+                      onSelect={handleAddressSelect}
                     />
                   ))}
                 </div>
@@ -796,18 +1286,37 @@ function Checkout() {
                 <div
                   className="
                     mt-6
-                    rounded-[1.25rem]
+
+                    rounded-[1.2rem]
+
                     border
-                    border-amber-200
+                    border-amber-500/20
+
                     bg-amber-50
+
                     p-5
                   "
                 >
-                  <h3 className="font-semibold text-amber-950">
+                  <h3
+                    className="
+                      font-semibold
+
+                      text-amber-950
+                    "
+                  >
                     No saved delivery address
                   </h3>
 
-                  <p className="mt-2 text-sm leading-6 text-amber-800">
+                  <p
+                    className="
+                      mt-2
+
+                      text-sm
+                      leading-6
+
+                      text-amber-800
+                    "
+                  >
                     Add an address to your account before placing your order.
                   </p>
 
@@ -815,13 +1324,22 @@ function Checkout() {
                     to="/account"
                     className="
                       mt-4
+
                       inline-flex
+                      min-h-10
+
+                      items-center
+                      justify-center
+
                       rounded-full
+
                       bg-amber-900
+
                       px-4
-                      py-2.5
+
                       text-sm
                       font-semibold
+
                       text-white
                     "
                   >
@@ -831,43 +1349,66 @@ function Checkout() {
               )}
             </section>
 
-            {/* ORDER ITEMS */}
+            {/* ==============================================
+                STEP 2 — ORDER ITEMS
+            ============================================== */}
+
             <section
               className="
                 rounded-[1.75rem]
+
                 border
                 border-brand-border
+
                 bg-brand-surface
+
                 p-5
 
                 sm:p-6
               "
             >
-              <div className="flex items-start gap-4">
+              <div
+                className="
+                  flex
+                  items-start
+
+                  gap-4
+                "
+              >
                 <span
                   className="
                     inline-flex
                     h-11
                     w-11
                     shrink-0
+
                     items-center
                     justify-center
+
                     rounded-full
-                    bg-brand-pale-champagne
-                    text-brand-bronze
+
+                    bg-brand-accent-soft
+
+                    text-brand-accent-text
                   "
                 >
-                  <ShoppingBagOutlinedIcon fontSize="small" />
+                  <ShoppingBagOutlinedIcon
+                    sx={{
+                      fontSize: 20,
+                    }}
+                  />
                 </span>
 
                 <div>
                   <p
                     className="
-                      text-[0.6rem]
+                      text-[0.58rem]
                       font-bold
                       uppercase
+
                       tracking-[0.18em]
-                      text-brand-bronze
+
+                      text-brand-accent-text
                     "
                   >
                     Step 2
@@ -876,11 +1417,15 @@ function Checkout() {
                   <h2
                     className="
                       mt-1
+
                       font-display
+
                       text-2xl
                       font-medium
+
                       tracking-[-0.03em]
-                      text-brand-espresso
+
+                      text-brand-text
 
                       sm:text-3xl
                     "
@@ -888,7 +1433,16 @@ function Checkout() {
                     Review your pieces
                   </h2>
 
-                  <p className="mt-1 text-sm leading-6 text-brand-muted">
+                  <p
+                    className="
+                      mt-1
+
+                      text-sm
+                      leading-6
+
+                      text-brand-text-muted
+                    "
+                  >
                     Check your selected products and quantities before placing
                     the order.
                   </p>
@@ -902,52 +1456,72 @@ function Checkout() {
               </div>
             </section>
 
-            {/* DELIVERY NOTE */}
+            {/* ==============================================
+                DELIVERY NOTE
+            ============================================== */}
+
             <section
               className="
                 rounded-[1.75rem]
+
                 border
                 border-brand-border
+
                 bg-brand-surface
+
                 p-5
 
                 sm:p-6
               "
             >
-              <div>
-                <p
-                  className="
-                    text-[0.6rem]
-                    font-bold
-                    uppercase
-                    tracking-[0.18em]
-                    text-brand-bronze
-                  "
-                >
-                  Optional
-                </p>
+              <p
+                className="
+                  text-[0.58rem]
+                  font-bold
+                  uppercase
 
-                <label
-                  htmlFor="customer-note"
-                  className="
-                    mt-1
-                    block
-                    font-display
-                    text-2xl
-                    font-medium
-                    tracking-[-0.03em]
-                    text-brand-espresso
+                  tracking-[0.18em]
 
-                    sm:text-3xl
-                  "
-                >
-                  Delivery note
-                </label>
+                  text-brand-accent-text
+                "
+              >
+                Optional
+              </p>
 
-                <p className="mt-1 text-sm leading-6 text-brand-muted">
-                  Add any useful instructions for the store or courier.
-                </p>
-              </div>
+              <label
+                htmlFor="customer-note"
+                className="
+                  mt-1
+
+                  block
+
+                  font-display
+
+                  text-2xl
+                  font-medium
+
+                  tracking-[-0.03em]
+
+                  text-brand-text
+
+                  sm:text-3xl
+                "
+              >
+                Delivery note
+              </label>
+
+              <p
+                className="
+                  mt-1
+
+                  text-sm
+                  leading-6
+
+                  text-brand-text-muted
+                "
+              >
+                Add any useful instructions for the store or courier.
+              </p>
 
               <textarea
                 id="customer-note"
@@ -960,52 +1534,98 @@ function Checkout() {
                 className="
                   mt-5
                   w-full
+
                   resize-y
-                  rounded-[1.25rem]
+
+                  rounded-[1.2rem]
+
                   border
                   border-brand-border
-                  bg-brand-cream
+
+                  bg-brand-surface-soft
+
                   px-4
                   py-3
+
                   text-sm
-                  text-brand-espresso
+
+                  text-brand-text
+
                   outline-none
-                  transition
-                  placeholder:text-brand-muted/60
-                  focus:border-brand-bronze
+
+                  transition-all
+                  duration-200
+
+                  placeholder:text-brand-text-muted/55
+
+                  hover:border-brand-text/20
+
+                  focus:border-brand-accent-fill
+                  focus:bg-brand-surface
                   focus:ring-2
-                  focus:ring-brand-bronze/10
+                  focus:ring-brand-accent-fill/15
+
+                  disabled:cursor-not-allowed
                   disabled:opacity-60
                 "
               />
 
-              <p className="mt-2 text-right text-xs text-brand-muted">
+              <p
+                className="
+                  mt-2
+
+                  text-right
+
+                  text-xs
+
+                  text-brand-text-muted
+                "
+              >
                 {customerNote.length}/{CUSTOMER_NOTE_MAX_LENGTH}
               </p>
             </section>
           </div>
 
-          {/* SUMMARY */}
+          {/* ==================================================
+              SUMMARY
+          ================================================== */}
+
           <aside
             className="
               h-fit
+
               overflow-hidden
+
               rounded-[1.75rem]
-              bg-brand-espresso
-              text-brand-cream
+
+              bg-brand-dark-surface
+
+              text-brand-surface
+
+              shadow-[0_14px_40px_rgba(0,0,0,0.08)]
 
               lg:sticky
               lg:top-24
             "
           >
-            <div className="px-5 pb-6 pt-6 sm:px-6">
+            <div
+              className="
+                px-5
+                pb-6
+                pt-6
+
+                sm:px-6
+              "
+            >
               <p
                 className="
-                  text-[0.62rem]
+                  text-[0.58rem]
                   font-bold
                   uppercase
+
                   tracking-[0.2em]
-                  text-brand-champagne
+
+                  text-brand-accent-fill
                 "
               >
                 Order summary
@@ -1014,69 +1634,147 @@ function Checkout() {
               <h2
                 className="
                   mt-2
+
                   font-display
+
                   text-3xl
                   font-medium
+
                   tracking-[-0.035em]
+
+                  text-brand-surface
                 "
               >
                 Almost yours.
               </h2>
 
+              {/* ============================================
+                  TOTALS
+              ============================================ */}
+
               <div
                 className="
                   mt-6
+
                   space-y-4
+
                   border-b
-                  border-white/10
+                  border-brand-surface/10
+
                   pb-6
                 "
               >
-                <div className="flex justify-between gap-4 text-sm text-brand-cream/65">
+                <div
+                  className="
+                    flex
+                    justify-between
+
+                    gap-4
+
+                    text-sm
+
+                    text-brand-surface/65
+                  "
+                >
                   <span>Items ({summary?.totalQuantity ?? 0})</span>
 
-                  <span className="font-semibold text-brand-cream">
+                  <span
+                    className="
+                      font-semibold
+
+                      text-brand-surface
+                    "
+                  >
                     ${summary?.subtotal ?? "0.00"}
                   </span>
                 </div>
 
-                <div className="flex justify-between gap-4 text-sm text-brand-cream/65">
+                <div
+                  className="
+                    flex
+                    justify-between
+
+                    gap-4
+
+                    text-sm
+
+                    text-brand-surface/65
+                  "
+                >
                   <span>Delivery</span>
 
-                  <span className="font-semibold text-brand-cream">
-                    ${summary?.deliveryFee ?? "0.00"}
+                  <span className="font-semibold text-brand-surface">
+                    {isUpdatingDelivery
+                      ? "Updating..."
+                      : summary?.deliveryAvailable === false
+                        ? "Unavailable"
+                        : `$${summary?.deliveryFee ?? "0.00"}`}
                   </span>
                 </div>
 
-                <div className="flex justify-between gap-4 text-sm text-brand-cream/65">
+                <div
+                  className="
+                    flex
+                    justify-between
+
+                    gap-4
+
+                    text-sm
+
+                    text-brand-surface/65
+                  "
+                >
                   <span>Discount</span>
 
-                  <span className="font-semibold text-brand-cream">
+                  <span
+                    className="
+                      font-semibold
+
+                      text-brand-surface
+                    "
+                  >
                     -$
                     {summary?.discountAmount ?? "0.00"}
                   </span>
                 </div>
               </div>
 
+              {/* ============================================
+                  TOTAL
+              ============================================ */}
+
               <div
                 className="
                   flex
                   items-end
                   justify-between
+
                   gap-4
+
                   pt-6
                 "
               >
-                <span className="text-sm font-medium text-brand-cream/70">
+                <span
+                  className="
+                    text-sm
+                    font-medium
+
+                    text-brand-surface/70
+                  "
+                >
                   Total
                 </span>
 
                 <span
                   className="
                     font-display
+
                     text-3xl
                     font-medium
+
                     tracking-[-0.035em]
+
+                    text-brand-surface
 
                     sm:text-4xl
                   "
@@ -1085,45 +1783,87 @@ function Checkout() {
                 </span>
               </div>
 
-              {/* PAYMENT */}
+              {/* ============================================
+                  PAYMENT METHOD
+              ============================================ */}
+
               <div
                 className="
                   mt-6
-                  rounded-[1.25rem]
+
+                  rounded-[1.2rem]
+
                   border
-                  border-white/10
-                  bg-white/5
+                  border-brand-surface/10
+
+                  bg-brand-surface/5
+
                   p-4
                 "
               >
-                <div className="flex items-center gap-3">
+                <div
+                  className="
+                    flex
+                    items-center
+
+                    gap-3
+                  "
+                >
                   <span
                     className="
                       inline-flex
                       h-9
                       w-9
                       shrink-0
+
                       items-center
                       justify-center
+
                       rounded-full
-                      bg-brand-champagne/10
-                      text-brand-champagne
+
+                      bg-brand-accent-fill/10
+
+                      text-brand-accent-fill
                     "
                   >
-                    <PaymentOutlinedIcon fontSize="small" />
+                    <PaymentOutlinedIcon
+                      sx={{
+                        fontSize: 18,
+                      }}
+                    />
                   </span>
 
                   <div>
-                    <p className="text-sm font-semibold text-brand-cream">
+                    <p
+                      className="
+                        text-sm
+                        font-semibold
+
+                        text-brand-surface
+                      "
+                    >
                       Cash on delivery
                     </p>
 
-                    <p className="mt-0.5 text-xs leading-5 text-brand-cream/50">
+                    <p
+                      className="
+                        mt-0.5
+
+                        text-xs
+                        leading-5
+
+                        text-brand-surface/50
+                      "
+                    >
                       Pay when your order arrives.
                     </p>
                   </div>
                 </div>
               </div>
+
+              {/* ============================================
+                  PLACE ORDER
+              ============================================ */}
 
               <button
                 type="button"
@@ -1131,38 +1871,78 @@ function Checkout() {
                 disabled={!canSubmit}
                 className="
                   mt-6
+
                   inline-flex
+                  min-h-12
                   w-full
+
                   items-center
                   justify-center
+
                   gap-2
+
                   rounded-full
-                  bg-brand-champagne
+
+                  bg-brand-accent-fill
+
                   px-5
-                  py-3.5
+
                   text-sm
                   font-bold
-                  text-brand-espresso
-                  transition
-                  hover:bg-brand-champagne-hover
+
+                  text-brand-text
+
+                  transition-all
+                  duration-200
+
+                  hover:bg-brand-accent-fill-hover
+
+                  active:scale-[0.985]
+
                   disabled:cursor-not-allowed
-                  disabled:bg-white/10
-                  disabled:text-white/35
+                  disabled:bg-brand-surface/10
+                  disabled:text-brand-surface/35
                 "
               >
-                <LockOutlinedIcon fontSize="small" />
+                <LockOutlinedIcon
+                  sx={{
+                    fontSize: 18,
+                  }}
+                />
 
                 {isSubmitting ? "Placing order..." : "Place order"}
               </button>
 
               {!selectedAddressId && (
-                <p className="mt-3 text-center text-xs leading-5 text-red-300">
+                <p
+                  className="
+                    mt-3
+
+                    text-center
+
+                    text-xs
+                    leading-5
+
+                    text-brand-error
+                  "
+                >
                   Select a delivery address before placing your order.
                 </p>
               )}
 
               {!summary?.canPlaceOrder && selectedAddressId && (
-                <p className="mt-3 text-center text-xs leading-5 text-red-300">
+                <p
+                  className="
+                      mt-3
+
+                      text-center
+
+                      text-xs
+                      leading-5
+
+                      text-brand-error
+                    "
+                >
                   Resolve the cart issues before placing your order.
                 </p>
               )}
@@ -1170,10 +1950,13 @@ function Checkout() {
               <p
                 className="
                   mt-4
+
                   text-center
-                  text-[0.65rem]
+
+                  text-[0.62rem]
                   leading-5
-                  text-brand-cream/45
+
+                  text-brand-surface/45
                 "
               >
                 Product prices and inventory are checked again before your order
@@ -1184,15 +1967,25 @@ function Checkout() {
                 to="/cart"
                 className="
                   mt-5
+
                   flex
+                  min-h-9
+
                   items-center
                   justify-center
+
                   gap-1
+
+                  rounded-full
+
                   text-xs
                   font-semibold
-                  text-brand-cream/65
-                  transition
-                  hover:text-brand-champagne
+
+                  text-brand-surface/65
+
+                  transition-colors
+
+                  hover:text-brand-accent-fill
                 "
               >
                 <ArrowBackRoundedIcon
@@ -1204,13 +1997,18 @@ function Checkout() {
               </Link>
             </div>
 
-            {/* TRUST STRIP */}
+            {/* ==============================================
+                TRUST STRIP
+            ============================================== */}
+
             <div
               className="
                 grid
                 grid-cols-2
+
                 border-t
-                border-white/10
+                border-brand-surface/10
+
                 bg-black/10
               "
             >
@@ -1218,9 +2016,12 @@ function Checkout() {
                 className="
                   flex
                   items-center
+
                   gap-2
+
                   border-r
-                  border-white/10
+                  border-brand-surface/10
+
                   px-4
                   py-4
                 "
@@ -1229,10 +2030,23 @@ function Checkout() {
                   sx={{
                     fontSize: 16,
                   }}
-                  className="text-brand-champagne"
+                  className="
+                    shrink-0
+
+                    text-brand-accent-fill
+                  "
                 />
 
-                <span className="text-[0.62rem] font-semibold leading-4 text-brand-cream/60">
+                <span
+                  className="
+                    text-[0.6rem]
+                    font-semibold
+
+                    leading-4
+
+                    text-brand-surface/60
+                  "
+                >
                   Secure order
                 </span>
               </div>
@@ -1241,7 +2055,9 @@ function Checkout() {
                 className="
                   flex
                   items-center
+
                   gap-2
+
                   px-4
                   py-4
                 "
@@ -1250,10 +2066,23 @@ function Checkout() {
                   sx={{
                     fontSize: 17,
                   }}
-                  className="text-brand-champagne"
+                  className="
+                    shrink-0
+
+                    text-brand-accent-fill
+                  "
                 />
 
-                <span className="text-[0.62rem] font-semibold leading-4 text-brand-cream/60">
+                <span
+                  className="
+                    text-[0.6rem]
+                    font-semibold
+
+                    leading-4
+
+                    text-brand-surface/60
+                  "
+                >
                   Delivery details
                 </span>
               </div>

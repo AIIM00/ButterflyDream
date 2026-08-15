@@ -6,6 +6,7 @@ import {
 } from "../services/checkoutService.js";
 import {
   CheckoutValidationError,
+  parseCheckoutQuery,
   parsePlaceOrderInput,
 } from "../utils/checkoutValidation.js";
 import { errorResponse, successResponse } from "../utils/apiResponse.js";
@@ -38,7 +39,8 @@ function handleCheckoutServiceError(error, response) {
   switch (error.code) {
     case "ADDRESS_NOT_FOUND":
       return errorResponse(response, 404, error.message);
-
+    case "DELIVERY_GOVERNORATE_UNAVAILABLE":
+      return errorResponse(response, 409, error.message, error.data);
     case "CART_EMPTY":
       return errorResponse(response, 400, error.message);
 
@@ -100,7 +102,9 @@ export async function getCheckout(request, response, next) {
       return undefined;
     }
 
-    const checkout = await getCustomerCheckout(userId);
+    const input = parseCheckoutQuery(request.query);
+
+    const checkout = await getCustomerCheckout(userId, input);
 
     return successResponse(response, 200, "Checkout retrieved successfully.", {
       checkout,

@@ -31,6 +31,10 @@ import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneR
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 
+/* =========================================================
+   OPTIONS
+========================================================= */
+
 const NOTIFICATION_STATUS_OPTIONS = [
   {
     value: "all",
@@ -77,6 +81,10 @@ const NOTIFICATION_TYPE_OPTIONS = [
   },
 ];
 
+/* =========================================================
+   HELPERS
+========================================================= */
+
 function isCancelledRequest(error, signal) {
   return signal?.aborted || error?.code === "ERR_CANCELED";
 }
@@ -84,6 +92,10 @@ function isCancelledRequest(error, signal) {
 function isAuthenticationError(error) {
   return error?.response?.status === 401 || error?.response?.status === 403;
 }
+
+/* =========================================================
+   NOTIFICATIONS
+========================================================= */
 
 function Notifications() {
   const navigate = useNavigate();
@@ -131,6 +143,10 @@ function Notifications() {
   });
 
   const isLoading = notificationState.requestKey !== requestKey;
+
+  /* =======================================================
+     LOAD NOTIFICATIONS
+  ======================================================= */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -183,11 +199,8 @@ function Notifications() {
 
         setNotificationState({
           requestKey,
-
           notifications: [],
-
           pagination: null,
-
           error,
         });
       }
@@ -209,6 +222,10 @@ function Notifications() {
     type,
   ]);
 
+  /* =======================================================
+     FILTERS
+  ======================================================= */
+
   function updateFilters(updates) {
     const nextParams = new URLSearchParams(searchParams);
 
@@ -228,9 +245,21 @@ function Notifications() {
     setSearchParams(nextParams);
   }
 
+  function clearFilters() {
+    setSearchParams(new URLSearchParams());
+  }
+
+  /* =======================================================
+     RELOAD
+  ======================================================= */
+
   function reloadNotifications() {
     setReloadToken((currentValue) => currentValue + 1);
   }
+
+  /* =======================================================
+     MARK READ
+  ======================================================= */
 
   async function handleMarkRead(notification) {
     try {
@@ -246,6 +275,10 @@ function Notifications() {
     }
   }
 
+  /* =======================================================
+     MARK ALL READ
+  ======================================================= */
+
   async function handleMarkAllRead() {
     try {
       const response = await markAllAsRead();
@@ -260,6 +293,10 @@ function Notifications() {
     }
   }
 
+  /* =======================================================
+     DELETE
+  ======================================================= */
+
   async function handleDelete(notification) {
     try {
       const response = await removeNotification(notification.id);
@@ -271,6 +308,10 @@ function Notifications() {
       toast.error(getApiErrorMessage(error, "Unable to delete notification."));
     }
   }
+
+  /* =======================================================
+     CLEAR READ
+  ======================================================= */
 
   async function handleClearRead() {
     try {
@@ -288,6 +329,10 @@ function Notifications() {
     }
   }
 
+  /* =======================================================
+     OPEN ORDER
+  ======================================================= */
+
   async function handleOpenOrder(notification) {
     if (!notification.isRead) {
       try {
@@ -302,13 +347,26 @@ function Notifications() {
 
   const hasFilters = status !== "all" || Boolean(type);
 
+  /* =========================================================
+     PAGE
+  ========================================================= */
+
   return (
-    <section className="min-h-screen bg-brand-ivory">
+    <section
+      className="
+        min-h-screen
+
+        bg-brand-page
+
+        text-brand-text
+      "
+    >
       <div
         className="
           mx-auto
           w-full
           max-w-6xl
+
           px-4
           pb-16
           pt-7
@@ -321,11 +379,15 @@ function Notifications() {
           lg:pt-14
         "
       >
-        {/* PAGE HEADER */}
+        {/* ==================================================
+            PAGE HEADER
+        ================================================== */}
+
         <header
           className="
             flex
             flex-col
+
             gap-6
 
             sm:flex-row
@@ -338,13 +400,25 @@ function Notifications() {
               to="/account"
               className="
                 inline-flex
+                min-h-9
+
                 items-center
+                justify-center
+
                 gap-1
+
+                rounded-full
+
+                px-2
+
                 text-xs
                 font-semibold
-                text-brand-muted
-                transition
-                hover:text-brand-espresso
+
+                text-brand-text-muted
+
+                transition-colors
+
+                hover:text-brand-text
               "
             >
               <ArrowBackRoundedIcon
@@ -358,11 +432,14 @@ function Notifications() {
             <p
               className="
                 mt-5
-                text-[0.65rem]
+
+                text-[0.62rem]
                 font-bold
                 uppercase
-                tracking-[0.22em]
-                text-brand-bronze
+
+                tracking-[0.2em]
+
+                text-brand-accent-text
               "
             >
               Your Butterfly Dream
@@ -371,12 +448,17 @@ function Notifications() {
             <h1
               className="
                 mt-3
+
                 font-display
+
                 text-[2.65rem]
                 font-medium
+
                 leading-[0.95]
+
                 tracking-[-0.045em]
-                text-brand-espresso
+
+                text-brand-text
 
                 sm:text-5xl
 
@@ -386,54 +468,109 @@ function Notifications() {
               Notifications
             </h1>
 
-            <div className="mt-4 flex items-center gap-3">
+            <div
+              className="
+                mt-4
+
+                flex
+                flex-wrap
+
+                items-center
+
+                gap-3
+              "
+            >
               <span
                 className="
                   inline-flex
                   min-h-7
+
                   items-center
+                  justify-center
+
                   rounded-full
-                  bg-brand-pale-champagne
+
+                  bg-brand-accent-soft
+
                   px-3
+
                   text-xs
                   font-semibold
-                  text-brand-bronze
+
+                  text-brand-accent-text
                 "
               >
                 {unreadCount} unread
               </span>
 
-              <p className="text-sm text-brand-muted">
+              <p
+                className="
+                  text-sm
+
+                  text-brand-text-muted
+                "
+              >
                 Keep up with your orders and account updates.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          {/* ==============================================
+              ACTIONS
+          ============================================== */}
+
+          <div
+            className="
+              flex
+              flex-wrap
+
+              gap-2
+            "
+          >
             <button
               type="button"
               onClick={() => void handleMarkAllRead()}
               disabled={unreadCount === 0 || Boolean(mutationKey)}
               className="
                 inline-flex
+                min-h-10
+
                 items-center
+                justify-center
+
                 gap-2
+
                 rounded-full
+
                 border
                 border-brand-border
+
                 bg-brand-surface
+
                 px-4
-                py-2.5
+
                 text-xs
                 font-semibold
-                text-brand-espresso
-                transition
-                hover:border-brand-espresso
+
+                text-brand-text
+
+                transition-all
+                duration-200
+
+                hover:border-brand-accent-fill/40
+                hover:bg-brand-surface-soft
+
+                active:scale-[0.98]
+
                 disabled:cursor-not-allowed
                 disabled:opacity-40
               "
             >
-              <DoneAllRoundedIcon fontSize="small" />
+              <DoneAllRoundedIcon
+                sx={{
+                  fontSize: 18,
+                }}
+              />
 
               {mutationKey === "read-all" ? "Updating..." : "Mark all read"}
             </button>
@@ -443,16 +580,30 @@ function Notifications() {
               onClick={() => setClearDialogOpen(true)}
               disabled={Boolean(mutationKey)}
               className="
+                inline-flex
+                min-h-10
+
+                items-center
+                justify-center
+
                 rounded-full
-                border
-                border-brand-error/25
+
                 px-4
-                py-2.5
+
                 text-xs
                 font-semibold
-                text-brand-error
-                transition
-                hover:bg-brand-error/10
+
+                text-brand-text-muted
+
+                transition-all
+                duration-200
+
+                hover:bg-brand-error/5
+                hover:text-brand-error
+
+                active:scale-[0.98]
+
+                disabled:cursor-not-allowed
                 disabled:opacity-40
               "
             >
@@ -461,24 +612,36 @@ function Notifications() {
           </div>
         </header>
 
-        {/* FILTERS */}
+        {/* ==================================================
+            FILTERS
+        ================================================== */}
+
         <section
           className="
             mt-8
+
             overflow-hidden
+
             rounded-[1.75rem]
+
             border
             border-brand-border
+
             bg-brand-surface
           "
         >
+          {/* FILTER HEADER */}
+
           <div
             className="
               flex
               items-center
+
               gap-3
+
               border-b
               border-brand-border
+
               px-5
               py-4
 
@@ -488,26 +651,37 @@ function Notifications() {
             <span
               className="
                 inline-flex
-                h-9
-                w-9
+                h-10
+                w-10
+                shrink-0
+
                 items-center
                 justify-center
+
                 rounded-full
-                bg-brand-pale-champagne
-                text-brand-bronze
+
+                bg-brand-accent-soft
+
+                text-brand-accent-text
               "
             >
-              <TuneRoundedIcon fontSize="small" />
+              <TuneRoundedIcon
+                sx={{
+                  fontSize: 19,
+                }}
+              />
             </span>
 
             <div>
               <p
                 className="
-                  text-[0.6rem]
+                  text-[0.56rem]
                   font-bold
                   uppercase
+
                   tracking-[0.18em]
-                  text-brand-bronze
+
+                  text-brand-accent-text
                 "
               >
                 Refine
@@ -516,10 +690,13 @@ function Notifications() {
               <h2
                 className="
                   font-display
+
                   text-xl
                   font-medium
+
                   tracking-[-0.025em]
-                  text-brand-espresso
+
+                  text-brand-text
                 "
               >
                 Find an update
@@ -527,10 +704,14 @@ function Notifications() {
             </div>
           </div>
 
+          {/* FILTER CONTROLS */}
+
           <div
             className="
               grid
+
               gap-4
+
               p-5
 
               sm:grid-cols-2
@@ -539,12 +720,15 @@ function Notifications() {
               lg:grid-cols-[1fr_1fr_auto]
             "
           >
+            {/* STATUS */}
+
             <label>
               <span
                 className="
-                  text-xs
+                  text-[0.68rem]
                   font-semibold
-                  text-brand-espresso
+
+                  text-brand-text
                 "
               >
                 Read status
@@ -561,20 +745,34 @@ function Notifications() {
                 }
                 className="
                   mt-2
+
+                  min-h-12
                   w-full
+
                   rounded-[1rem]
+
                   border
                   border-brand-border
-                  bg-brand-cream
+
+                  bg-brand-surface-soft
+
                   px-4
-                  py-3
+
                   text-sm
-                  text-brand-espresso
+
+                  text-brand-text
+
                   outline-none
-                  transition
-                  focus:border-brand-bronze
+
+                  transition-all
+                  duration-200
+
+                  hover:border-brand-text/20
+
+                  focus:border-brand-accent-fill
+                  focus:bg-brand-surface
                   focus:ring-2
-                  focus:ring-brand-bronze/10
+                  focus:ring-brand-accent-fill/15
                 "
               >
                 {NOTIFICATION_STATUS_OPTIONS.map((option) => (
@@ -585,12 +783,15 @@ function Notifications() {
               </select>
             </label>
 
+            {/* TYPE */}
+
             <label>
               <span
                 className="
-                  text-xs
+                  text-[0.68rem]
                   font-semibold
-                  text-brand-espresso
+
+                  text-brand-text
                 "
               >
                 Notification type
@@ -607,20 +808,34 @@ function Notifications() {
                 }
                 className="
                   mt-2
+
+                  min-h-12
                   w-full
+
                   rounded-[1rem]
+
                   border
                   border-brand-border
-                  bg-brand-cream
+
+                  bg-brand-surface-soft
+
                   px-4
-                  py-3
+
                   text-sm
-                  text-brand-espresso
+
+                  text-brand-text
+
                   outline-none
-                  transition
-                  focus:border-brand-bronze
+
+                  transition-all
+                  duration-200
+
+                  hover:border-brand-text/20
+
+                  focus:border-brand-accent-fill
+                  focus:bg-brand-surface
                   focus:ring-2
-                  focus:ring-brand-bronze/10
+                  focus:ring-brand-accent-fill/15
                 "
               >
                 {NOTIFICATION_TYPE_OPTIONS.map((option) => (
@@ -631,86 +846,138 @@ function Notifications() {
               </select>
             </label>
 
-            <div className="flex items-end">
+            {/* CLEAR */}
+
+            <div
+              className="
+                flex
+                items-end
+              "
+            >
               <button
                 type="button"
-                onClick={() => setSearchParams(new URLSearchParams())}
+                onClick={clearFilters}
                 disabled={!hasFilters}
                 className="
                   inline-flex
+                  min-h-12
                   w-full
+
                   items-center
                   justify-center
+
                   gap-2
+
                   rounded-full
+
                   border
                   border-brand-border
+
+                  bg-brand-surface
+
                   px-4
-                  py-3
+
                   text-sm
                   font-semibold
-                  text-brand-muted
-                  transition
-                  hover:border-brand-espresso
-                  hover:text-brand-espresso
+
+                  text-brand-text-muted
+
+                  transition-all
+
+                  hover:border-brand-accent-fill/40
+                  hover:bg-brand-surface-soft
+                  hover:text-brand-text
+
+                  active:scale-[0.98]
+
                   disabled:cursor-not-allowed
-                  disabled:opacity-40
+                  disabled:opacity-35
 
                   lg:w-auto
                 "
               >
-                <FilterAltOffOutlinedIcon fontSize="small" />
+                <FilterAltOffOutlinedIcon
+                  sx={{
+                    fontSize: 18,
+                  }}
+                />
                 Clear filters
               </button>
             </div>
           </div>
         </section>
 
-        {/* LOADING */}
+        {/* ==================================================
+            LOADING
+        ================================================== */}
+
         {isLoading && (
-          <div className="mt-6 space-y-4">
+          <div
+            className="
+              mt-6
+
+              space-y-3
+            "
+          >
             {Array.from({
               length: 4,
             }).map((_, index) => (
               <div
                 key={index}
                 className="
-                    h-44
-                    animate-pulse
-                    rounded-[1.5rem]
-                    border
-                    border-brand-border
-                    bg-brand-cream
-                  "
+                  h-44
+
+                  animate-pulse
+
+                  rounded-[1.5rem]
+
+                  border
+                  border-brand-border
+
+                  bg-brand-surface-soft
+                "
               />
             ))}
           </div>
         )}
 
-        {/* ERROR */}
+        {/* ==================================================
+            ERROR
+        ================================================== */}
+
         {!isLoading && notificationState.error && (
           <div
             className="
                 mt-6
+
                 rounded-[1.75rem]
+
                 border
                 border-brand-error/20
+
                 bg-brand-surface
+
                 px-6
                 py-12
+
                 text-center
               "
           >
             <span
               className="
                   mx-auto
+
                   inline-flex
                   h-16
                   w-16
+
                   items-center
                   justify-center
+
                   rounded-full
+
                   bg-brand-error/10
+
                   text-brand-error
                 "
             >
@@ -724,11 +991,15 @@ function Notifications() {
             <h2
               className="
                   mt-5
+
                   font-display
+
                   text-3xl
                   font-medium
+
                   tracking-[-0.035em]
-                  text-brand-espresso
+
+                  text-brand-text
                 "
             >
               Notifications could not be loaded.
@@ -739,9 +1010,11 @@ function Notifications() {
                   mx-auto
                   mt-3
                   max-w-lg
+
                   text-sm
                   leading-7
-                  text-brand-muted
+
+                  text-brand-text-muted
                 "
             >
               {getApiErrorMessage(
@@ -755,158 +1028,255 @@ function Notifications() {
               onClick={reloadNotifications}
               className="
                   mt-6
+
                   inline-flex
+                  min-h-11
+
                   items-center
+                  justify-center
+
                   gap-2
+
                   rounded-full
-                  bg-brand-espresso
+
+                  bg-brand-primary
+
                   px-5
-                  py-3
+
                   text-sm
                   font-semibold
-                  text-white
-                  transition
-                  hover:bg-brand-emerald
+
+                  text-brand-surface
+
+                  transition-all
+
+                  hover:bg-brand-primary-hover
+
+                  active:scale-[0.98]
                 "
             >
-              <RefreshRoundedIcon fontSize="small" />
+              <RefreshRoundedIcon
+                sx={{
+                  fontSize: 18,
+                }}
+              />
               Try again
             </button>
           </div>
         )}
 
-        {/* EMPTY STATE */}
+        {/* ==================================================
+            EMPTY STATE
+        ================================================== */}
+
         {!isLoading &&
           !notificationState.error &&
           notificationState.notifications.length === 0 && (
             <div
               className="
+                relative
+
                 mt-6
+
                 overflow-hidden
+
                 rounded-[1.75rem]
+
                 border
                 border-dashed
                 border-brand-border
-                bg-brand-cream
+
+                bg-brand-surface-soft
+
                 px-6
                 py-14
+
                 text-center
 
                 sm:py-16
               "
             >
               <span
+                aria-hidden="true"
                 className="
-                  mx-auto
-                  inline-flex
-                  h-16
-                  w-16
-                  items-center
-                  justify-center
+                  pointer-events-none
+
+                  absolute
+                  -right-16
+                  -top-16
+
+                  h-44
+                  w-44
+
                   rounded-full
-                  bg-brand-surface
-                  text-brand-bronze
-                  shadow-sm
+
+                  border
+                  border-brand-accent-fill/20
                 "
-              >
-                <NotificationsNoneRoundedIcon
-                  sx={{
-                    fontSize: 31,
-                  }}
-                />
-              </span>
+              />
 
-              <p
-                className="
-                  mt-6
-                  text-[0.62rem]
-                  font-bold
-                  uppercase
-                  tracking-[0.2em]
-                  text-brand-bronze
-                "
-              >
-                All caught up
-              </p>
-
-              <h2
-                className="
-                  mt-2
-                  font-display
-                  text-3xl
-                  font-medium
-                  tracking-[-0.035em]
-                  text-brand-espresso
-
-                  sm:text-4xl
-                "
-              >
-                No notifications found.
-              </h2>
-
-              <p
-                className="
-                  mx-auto
-                  mt-3
-                  max-w-lg
-                  text-sm
-                  leading-7
-                  text-brand-muted
-                "
-              >
-                Order confirmations, delivery updates, and important account
-                messages will appear here.
-              </p>
-
-              {hasFilters ? (
-                <button
-                  type="button"
-                  onClick={() => setSearchParams(new URLSearchParams())}
+              <div className="relative z-10">
+                <span
                   className="
-                    mt-7
+                    mx-auto
+
                     inline-flex
+                    h-16
+                    w-16
+
                     items-center
-                    gap-2
+                    justify-center
+
                     rounded-full
-                    border
-                    border-brand-espresso
-                    px-5
-                    py-2.5
-                    text-sm
-                    font-semibold
-                    text-brand-espresso
-                    transition
-                    hover:bg-brand-espresso
-                    hover:text-white
+
+                    bg-brand-surface
+
+                    text-brand-accent-text
+
+                    shadow-sm
                   "
                 >
-                  <FilterAltOffOutlinedIcon fontSize="small" />
-                  Clear filters
-                </button>
-              ) : (
-                <Link
-                  to="/orders"
+                  <NotificationsNoneRoundedIcon
+                    sx={{
+                      fontSize: 31,
+                    }}
+                  />
+                </span>
+
+                <p
                   className="
-                    mt-7
-                    inline-flex
-                    rounded-full
-                    bg-brand-espresso
-                    px-6
-                    py-3
-                    text-sm
-                    font-semibold
-                    text-white
-                    transition
-                    hover:bg-brand-emerald
+                    mt-6
+
+                    text-[0.6rem]
+                    font-bold
+                    uppercase
+
+                    tracking-[0.2em]
+
+                    text-brand-accent-text
                   "
                 >
-                  View my orders
-                </Link>
-              )}
+                  All caught up
+                </p>
+
+                <h2
+                  className="
+                    mt-2
+
+                    font-display
+
+                    text-3xl
+                    font-medium
+
+                    tracking-[-0.035em]
+
+                    text-brand-text
+
+                    sm:text-4xl
+                  "
+                >
+                  No notifications found.
+                </h2>
+
+                <p
+                  className="
+                    mx-auto
+                    mt-3
+                    max-w-lg
+
+                    text-sm
+                    leading-7
+
+                    text-brand-text-muted
+                  "
+                >
+                  Order confirmations, delivery updates, and important account
+                  messages will appear here.
+                </p>
+
+                {hasFilters ? (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="
+                      mt-7
+
+                      inline-flex
+                      min-h-11
+
+                      items-center
+                      justify-center
+
+                      gap-2
+
+                      rounded-full
+
+                      border
+                      border-brand-primary
+
+                      px-5
+
+                      text-sm
+                      font-semibold
+
+                      text-brand-primary
+
+                      transition-all
+
+                      hover:bg-brand-primary
+                      hover:text-brand-surface
+
+                      active:scale-[0.98]
+                    "
+                  >
+                    <FilterAltOffOutlinedIcon
+                      sx={{
+                        fontSize: 18,
+                      }}
+                    />
+                    Clear filters
+                  </button>
+                ) : (
+                  <Link
+                    to="/orders"
+                    className="
+                      mt-7
+
+                      inline-flex
+                      min-h-11
+
+                      items-center
+                      justify-center
+
+                      rounded-full
+
+                      bg-brand-primary
+
+                      px-6
+
+                      text-sm
+                      font-semibold
+
+                      text-brand-surface
+
+                      transition-all
+
+                      hover:bg-brand-primary-hover
+
+                      active:scale-[0.98]
+                    "
+                  >
+                    View my orders
+                  </Link>
+                )}
+              </div>
             </div>
           )}
 
-        {/* NOTIFICATION LIST */}
+        {/* ==================================================
+            NOTIFICATION LIST
+        ================================================== */}
+
         {!isLoading &&
           !notificationState.error &&
           notificationState.notifications.length > 0 && (
@@ -914,20 +1284,24 @@ function Notifications() {
               <div
                 className="
                   mb-4
+
                   flex
                   items-end
                   justify-between
+
                   gap-4
                 "
               >
                 <div>
                   <p
                     className="
-                      text-[0.62rem]
+                      text-[0.6rem]
                       font-bold
                       uppercase
+
                       tracking-[0.18em]
-                      text-brand-bronze
+
+                      text-brand-accent-text
                     "
                   >
                     Recent activity
@@ -936,11 +1310,15 @@ function Notifications() {
                   <h2
                     className="
                       mt-1
+
                       font-display
+
                       text-2xl
                       font-medium
+
                       tracking-[-0.03em]
-                      text-brand-espresso
+
+                      text-brand-text
 
                       sm:text-3xl
                     "
@@ -952,15 +1330,26 @@ function Notifications() {
                 {notificationState.pagination?.total !== undefined && (
                   <span
                     className="
+                      inline-flex
+                      shrink-0
+
+                      items-center
+                      justify-center
+
                       rounded-full
-                      bg-brand-pale-champagne
+
+                      bg-brand-accent-soft
+
                       px-3
                       py-1.5
-                      text-[0.65rem]
+
+                      text-[0.6rem]
                       font-bold
                       uppercase
+
                       tracking-[0.12em]
-                      text-brand-bronze
+
+                      text-brand-accent-text
                     "
                   >
                     {notificationState.pagination.total} total
@@ -989,17 +1378,23 @@ function Notifications() {
             </section>
           )}
 
-        {/* PAGINATION */}
+        {/* ==================================================
+            PAGINATION
+        ================================================== */}
+
         {!isLoading &&
           notificationState.pagination &&
           notificationState.pagination.totalPages > 1 && (
             <div
               className="
                 mt-8
+
                 flex
                 flex-wrap
+
                 items-center
                 justify-center
+
                 gap-3
               "
             >
@@ -1012,17 +1407,31 @@ function Notifications() {
                 }
                 disabled={!notificationState.pagination.hasPreviousPage}
                 className="
+                  inline-flex
+                  min-h-10
+
+                  items-center
+                  justify-center
+
                   rounded-full
+
                   border
                   border-brand-border
+
                   bg-brand-surface
+
                   px-5
-                  py-2.5
+
                   text-sm
                   font-semibold
-                  text-brand-espresso
-                  transition
-                  hover:border-brand-espresso
+
+                  text-brand-text
+
+                  transition-all
+
+                  hover:border-brand-accent-fill/40
+                  hover:bg-brand-surface-soft
+
                   disabled:cursor-not-allowed
                   disabled:opacity-40
                 "
@@ -1032,13 +1441,22 @@ function Notifications() {
 
               <span
                 className="
+                  inline-flex
+                  min-h-10
+
+                  items-center
+                  justify-center
+
                   rounded-full
-                  bg-brand-pale-champagne
+
+                  bg-brand-accent-soft
+
                   px-4
-                  py-2.5
+
                   text-xs
                   font-semibold
-                  text-brand-bronze
+
+                  text-brand-accent-text
                 "
               >
                 Page {page} of {notificationState.pagination.totalPages}
@@ -1053,17 +1471,31 @@ function Notifications() {
                 }
                 disabled={!notificationState.pagination.hasNextPage}
                 className="
+                  inline-flex
+                  min-h-10
+
+                  items-center
+                  justify-center
+
                   rounded-full
+
                   border
                   border-brand-border
+
                   bg-brand-surface
+
                   px-5
-                  py-2.5
+
                   text-sm
                   font-semibold
-                  text-brand-espresso
-                  transition
-                  hover:border-brand-espresso
+
+                  text-brand-text
+
+                  transition-all
+
+                  hover:border-brand-accent-fill/40
+                  hover:bg-brand-surface-soft
+
                   disabled:cursor-not-allowed
                   disabled:opacity-40
                 "
@@ -1072,6 +1504,10 @@ function Notifications() {
               </button>
             </div>
           )}
+
+        {/* ==================================================
+            CLEAR READ DIALOG
+        ================================================== */}
 
         <ClearReadNotificationsDialog
           open={clearDialogOpen}

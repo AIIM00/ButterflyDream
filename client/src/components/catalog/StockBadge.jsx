@@ -2,17 +2,44 @@ function StockBadge({ status, compact = false }) {
   const badgeConfig = {
     IN_STOCK: {
       label: "In stock",
-      className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+
+      containerClassName: `
+        border-brand-success/20
+        bg-brand-success/10
+        text-brand-success
+      `,
+
+      dotClassName: `
+        bg-brand-success
+      `,
     },
 
     LOW_STOCK: {
       label: "Low stock",
-      className: "border-amber-200 bg-amber-50 text-amber-700",
+
+      containerClassName: `
+        border-amber-500/20
+        bg-amber-50
+        text-amber-700
+      `,
+
+      dotClassName: `
+        bg-amber-500
+      `,
     },
 
     OUT_OF_STOCK: {
       label: "Out of stock",
-      className: "border-red-200 bg-red-50 text-red-700",
+
+      containerClassName: `
+        border-brand-error/20
+        bg-brand-error/10
+        text-brand-error
+      `,
+
+      dotClassName: `
+        bg-brand-error
+      `,
     },
   };
 
@@ -23,12 +50,56 @@ function StockBadge({ status, compact = false }) {
 
   return (
     <span
-      className={[
-        "inline-flex items-center rounded-full border font-semibold",
-        compact ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
-        config.className,
-      ].join(" ")}
+      className={`
+        inline-flex
+        w-fit
+
+        items-center
+        justify-center
+
+        rounded-full
+
+        border
+
+        font-semibold
+
+        transition-colors
+
+        ${config.containerClassName}
+
+        ${
+          compact
+            ? `
+                gap-1.5
+                px-2.5
+                py-1
+
+                text-[0.65rem]
+              `
+            : `
+                gap-2
+                px-3
+                py-1.5
+
+                text-xs
+              `
+        }
+      `}
     >
+      {/* STATUS DOT */}
+
+      <span
+        aria-hidden="true"
+        className={`
+          shrink-0
+          rounded-full
+
+          ${config.dotClassName}
+
+          ${compact ? "h-1.5 w-1.5" : "h-2 w-2"}
+        `}
+      />
+
       {config.label}
     </span>
   );
