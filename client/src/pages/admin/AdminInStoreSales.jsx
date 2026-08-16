@@ -1,22 +1,32 @@
 import { useEffect, useMemo, useState } from "react";
-
-import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
+
+// Toast
+import { toast } from "react-toastify";
+
 // MUI Icons
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import ImageNotSupportedOutlinedIcon from "@mui/icons-material/ImageNotSupportedOutlined";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
-import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
+
 // Services
 import {
   createInStoreSale,
   fetchInStoreSaleProducts,
 } from "../../services/adminInStoreSaleApi.js";
+
 // Utils
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
+
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function formatMoney(value) {
   const numericValue = Number(value);
@@ -31,19 +41,34 @@ function formatMoney(value) {
   }).format(numericValue);
 }
 
-function ProductImage({ product }) {
+function ProductImage({ product, size = "normal" }) {
+  const dimensions =
+    size === "small"
+      ? "h-14 w-14 rounded-xl"
+      : "h-[4.5rem] w-[4.5rem] rounded-[1rem] sm:h-20 sm:w-20";
+
   if (!product.image?.imageUrl) {
     return (
       <div
-        className="
-          flex h-16 w-16 shrink-0
-          items-center justify-center
-          rounded-xl
-          bg-[var(--color-soft-ivory)]
-          text-[var(--color-warm-gray)]
-        "
+        className={[
+          `
+            flex
+            shrink-0
+            items-center
+            justify-center
+            bg-gray-100
+            text-gray-400
+            ring-1
+            ring-gray-200/70
+          `,
+          dimensions,
+        ].join(" ")}
       >
-        <ImageNotSupportedOutlinedIcon />
+        <ImageNotSupportedOutlinedIcon
+          sx={{
+            fontSize: size === "small" ? 19 : 22,
+          }}
+        />
       </div>
     );
   }
@@ -52,10 +77,16 @@ function ProductImage({ product }) {
     <img
       src={product.image.imageUrl}
       alt={product.image.altText || product.productName || "Product"}
-      className="
-        h-16 w-16 shrink-0
-        rounded-xl object-cover
-      "
+      loading="lazy"
+      className={[
+        `
+          shrink-0
+          object-cover
+          ring-1
+          ring-gray-200/70
+        `,
+        dimensions,
+      ].join(" ")}
     />
   );
 }
@@ -65,24 +96,78 @@ function StockLabel({ product }) {
 
   if (stock <= 0) {
     return (
-      <span className="text-xs font-semibold text-red-600">Out of stock</span>
+      <span
+        className="
+          inline-flex
+          items-center
+          gap-1.5
+          rounded-full
+          bg-red-50
+          px-2.5
+          py-1
+          text-[0.62rem]
+          font-bold
+          text-red-700
+
+          sm:text-xs
+        "
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+        Out of stock
+      </span>
     );
   }
 
   if (stock <= Number(product.lowStockThreshold ?? 0)) {
     return (
-      <span className="text-xs font-semibold text-amber-700">
-        {stock} left · Low stock
+      <span
+        className="
+          inline-flex
+          items-center
+          gap-1.5
+          rounded-full
+          bg-amber-50
+          px-2.5
+          py-1
+          text-[0.62rem]
+          font-bold
+          text-amber-700
+
+          sm:text-xs
+        "
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+        {stock} left
       </span>
     );
   }
 
   return (
-    <span className="text-xs font-semibold text-emerald-700">
+    <span
+      className="
+        inline-flex
+        items-center
+        gap-1.5
+        rounded-full
+        bg-emerald-50
+        px-2.5
+        py-1
+        text-[0.62rem]
+        font-bold
+        text-emerald-700
+
+        sm:text-xs
+      "
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
       {stock} in stock
     </span>
   );
 }
+
+/* =========================================================
+   SEARCH RESULT CARD
+========================================================= */
 
 function ProductResultCard({ product, selectedQuantity, onAdd }) {
   const stockQuantity = Number(product.stockQuantity ?? 0);
@@ -94,119 +179,186 @@ function ProductResultCard({ product, selectedQuantity, onAdd }) {
   return (
     <article
       className="
+        overflow-hidden
+        rounded-[1.15rem]
         border
-        border-[var(--color-warm-light-gray)]
+        border-gray-200
         bg-white
-        p-4
+        transition-all
+
+        hover:border-gray-300
+        hover:shadow-sm
       "
     >
-      <div className="flex gap-4">
-        <ProductImage product={product} />
+      <div className="p-4">
+        <div className="flex items-start gap-3.5">
+          <ProductImage product={product} />
 
-        <div className="min-w-0 flex-1">
-          <div
-            className="
-              flex flex-col gap-3
-              sm:flex-row sm:items-start
-              sm:justify-between
-            "
-          >
-            <div className="min-w-0">
-              <p
-                className="
-                  truncate text-base font-bold
-                  text-[var(--color-deep-espresso)]
-                "
-              >
-                {product.productName}
-              </p>
+          <div className="min-w-0 flex-1">
+            <div
+              className="
+                flex
+                items-start
+                justify-between
+                gap-3
+              "
+            >
+              <div className="min-w-0">
+                <p
+                  className="
+                    line-clamp-2
+                    text-sm
+                    font-bold
+                    leading-5
+                    text-gray-950
 
-              <p
-                className="
-                  mt-1 text-sm font-medium
-                  text-[var(--color-warm-gray)]
-                "
-              >
-                {product.displayName}
-              </p>
+                    sm:text-base
+                  "
+                >
+                  {product.productName}
+                </p>
 
-              <p
-                className="
-                  mt-1 text-xs
-                  uppercase
-                  tracking-[0.08em]
-                  text-[var(--color-warm-gray)]
-                "
-              >
-                SKU: {product.sku}
-              </p>
-            </div>
+                <p
+                  className="
+                    mt-1
+                    truncate
+                    text-[0.68rem]
+                    font-medium
+                    text-gray-500
 
-            <div className="shrink-0 sm:text-right">
-              <p
-                className="
-                  text-lg font-bold
-                  text-[var(--color-deep-espresso)]
-                "
-              >
-                {formatMoney(product.price)}
-              </p>
+                    sm:text-xs
+                  "
+                >
+                  {product.displayName}
+                </p>
 
-              <div className="mt-1">
-                <StockLabel product={product} />
+                <p
+                  className="
+                    mt-1
+                    truncate
+                    text-[0.58rem]
+                    font-semibold
+                    uppercase
+                    tracking-[0.08em]
+                    text-gray-400
+
+                    sm:text-[0.65rem]
+                  "
+                >
+                  SKU: {product.sku}
+                </p>
+              </div>
+
+              <div className="shrink-0 text-right">
+                <p
+                  className="
+                    text-sm
+                    font-bold
+                    tracking-[-0.025em]
+                    text-gray-950
+
+                    sm:text-base
+                  "
+                >
+                  {formatMoney(product.price)}
+                </p>
+
+                <div className="mt-1.5">
+                  <StockLabel product={product} />
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <div
-            className="
-              mt-4 flex flex-wrap
-              items-center justify-between
-              gap-3
-            "
-          >
-            <div className="text-xs text-[var(--color-warm-gray)]">
-              {product.category?.name || "Uncategorized"}
-
-              {selectedQuantity > 0 && (
-                <span className="ml-2 font-semibold">
-                  · {selectedQuantity} already added
-                </span>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onAdd(product)}
-              disabled={!canAdd}
+        <div
+          className="
+            mt-4
+            flex
+            items-center
+            justify-between
+            gap-3
+          "
+        >
+          <div className="min-w-0">
+            <p
               className="
-                inline-flex min-h-10
-                items-center justify-center
-                gap-2 rounded-full
-                bg-[var(--color-deep-espresso)]
-                px-5
-                text-sm font-semibold
-                text-white
-                transition
-                hover:opacity-90
-                disabled:cursor-not-allowed
-                disabled:opacity-40
+                truncate
+                text-[0.65rem]
+                font-medium
+                text-gray-400
+
+                sm:text-xs
               "
             >
-              <AddRoundedIcon fontSize="small" />
+              {product.category?.name || "Uncategorized"}
+            </p>
 
-              {stockQuantity <= 0
-                ? "Out of stock"
-                : !canAdd
-                  ? "Max added"
-                  : "Add to sale"}
-            </button>
+            {selectedQuantity > 0 && (
+              <p
+                className="
+                  mt-1
+                  text-[0.62rem]
+                  font-bold
+                  text-blue-600
+
+                  sm:text-xs
+                "
+              >
+                {selectedQuantity} already in basket
+              </p>
+            )}
           </div>
+
+          <button
+            type="button"
+            onClick={() => onAdd(product)}
+            disabled={!canAdd}
+            className="
+              inline-flex
+              min-h-10
+              shrink-0
+              items-center
+              justify-center
+              gap-1.5
+              rounded-full
+              bg-gray-950
+              px-3.5
+              text-xs
+              font-bold
+              text-white
+              transition-colors
+
+              hover:bg-gray-800
+
+              disabled:cursor-not-allowed
+              disabled:bg-gray-200
+              disabled:text-gray-400
+
+              sm:px-4
+            "
+          >
+            <AddRoundedIcon
+              sx={{
+                fontSize: 16,
+              }}
+            />
+
+            {stockQuantity <= 0
+              ? "Out of stock"
+              : !canAdd
+                ? "Max added"
+                : "Add"}
+          </button>
         </div>
       </div>
     </article>
   );
 }
+
+/* =========================================================
+   BASKET ITEM
+========================================================= */
 
 function SaleItem({ item, onIncrease, onDecrease, onRemove }) {
   const lineTotal = Number(item.price) * Number(item.quantity);
@@ -215,21 +367,33 @@ function SaleItem({ item, onIncrease, onDecrease, onRemove }) {
     <article
       className="
         border-b
-        border-[var(--color-warm-light-gray)]
+        border-gray-100
         py-4
+
+        first:pt-0
         last:border-b-0
+        last:pb-0
       "
     >
-      <div className="flex gap-3">
-        <ProductImage product={item} />
+      <div className="flex items-start gap-3">
+        <ProductImage product={item} size="small" />
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
+          <div
+            className="
+              flex
+              items-start
+              justify-between
+              gap-2
+            "
+          >
             <div className="min-w-0">
               <p
                 className="
-                  truncate text-sm font-bold
-                  text-[var(--color-deep-espresso)]
+                  truncate
+                  text-sm
+                  font-bold
+                  text-gray-950
                 "
               >
                 {item.productName}
@@ -237,8 +401,12 @@ function SaleItem({ item, onIncrease, onDecrease, onRemove }) {
 
               <p
                 className="
-                  mt-1 text-xs
-                  text-[var(--color-warm-gray)]
+                  mt-1
+                  truncate
+                  text-[0.65rem]
+                  text-gray-500
+
+                  sm:text-xs
                 "
               >
                 {item.displayName}
@@ -246,9 +414,13 @@ function SaleItem({ item, onIncrease, onDecrease, onRemove }) {
 
               <p
                 className="
-                  mt-1 text-[0.6875rem]
-                  uppercase tracking-[0.08em]
-                  text-[var(--color-warm-gray)]
+                  mt-1
+                  truncate
+                  text-[0.58rem]
+                  font-medium
+                  uppercase
+                  tracking-[0.08em]
+                  text-gray-400
                 "
               >
                 {item.sku}
@@ -258,55 +430,81 @@ function SaleItem({ item, onIncrease, onDecrease, onRemove }) {
             <button
               type="button"
               onClick={() => onRemove(item.id)}
-              className="
-                flex h-9 w-9 shrink-0
-                items-center justify-center
-                rounded-full
-                text-red-600
-                transition
-                hover:bg-red-50
-              "
               aria-label={`Remove ${item.productName}`}
+              className="
+                flex
+                h-8
+                w-8
+                shrink-0
+                items-center
+                justify-center
+                rounded-full
+                text-gray-400
+                transition-colors
+
+                hover:bg-red-50
+                hover:text-red-600
+              "
             >
-              <DeleteOutlineRoundedIcon fontSize="small" />
+              <DeleteOutlineRoundedIcon
+                sx={{
+                  fontSize: 17,
+                }}
+              />
             </button>
           </div>
 
           <div
             className="
-              mt-4 flex flex-wrap
-              items-center justify-between
+              mt-3
+              flex
+              items-center
+              justify-between
               gap-3
             "
           >
+            {/* QUANTITY */}
             <div
               className="
-                inline-flex items-center
+                inline-flex
+                items-center
                 rounded-full
                 border
-                border-[var(--color-warm-light-gray)]
+                border-gray-200
+                bg-white
               "
             >
               <button
                 type="button"
                 onClick={() => onDecrease(item.id)}
                 className="
-                  flex h-9 w-9
-                  items-center justify-center
+                  flex
+                  h-8
+                  w-8
+                  items-center
+                  justify-center
                   rounded-full
-                  transition
-                  hover:bg-[var(--color-soft-ivory)]
+                  text-gray-600
+                  transition-colors
+
+                  hover:bg-gray-100
                 "
                 aria-label="Decrease quantity"
               >
-                <RemoveRoundedIcon fontSize="small" />
+                <RemoveRoundedIcon
+                  sx={{
+                    fontSize: 16,
+                  }}
+                />
               </button>
 
               <span
                 className="
-                  min-w-10 text-center
-                  text-sm font-bold
-                  text-[var(--color-deep-espresso)]
+                  min-w-8
+                  text-center
+                  text-xs
+                  font-bold
+                  text-gray-900
                 "
               >
                 {item.quantity}
@@ -317,25 +515,36 @@ function SaleItem({ item, onIncrease, onDecrease, onRemove }) {
                 onClick={() => onIncrease(item.id)}
                 disabled={item.quantity >= item.stockQuantity}
                 className="
-                  flex h-9 w-9
-                  items-center justify-center
+                  flex
+                  h-8
+                  w-8
+                  items-center
+                  justify-center
                   rounded-full
-                  transition
-                  hover:bg-[var(--color-soft-ivory)]
+                  text-gray-600
+                  transition-colors
+
+                  hover:bg-gray-100
+
                   disabled:cursor-not-allowed
                   disabled:opacity-30
                 "
                 aria-label="Increase quantity"
               >
-                <AddRoundedIcon fontSize="small" />
+                <AddRoundedIcon
+                  sx={{
+                    fontSize: 16,
+                  }}
+                />
               </button>
             </div>
 
+            {/* PRICE */}
             <div className="text-right">
               <p
                 className="
-                  text-xs
-                  text-[var(--color-warm-gray)]
+                  text-[0.6rem]
+                  text-gray-400
                 "
               >
                 {formatMoney(item.price)} each
@@ -343,8 +552,10 @@ function SaleItem({ item, onIncrease, onDecrease, onRemove }) {
 
               <p
                 className="
-                  mt-1 font-bold
-                  text-[var(--color-deep-espresso)]
+                  mt-0.5
+                  text-sm
+                  font-bold
+                  text-gray-950
                 "
               >
                 {formatMoney(lineTotal)}
@@ -356,6 +567,10 @@ function SaleItem({ item, onIncrease, onDecrease, onRemove }) {
     </article>
   );
 }
+
+/* =========================================================
+   PAGE
+========================================================= */
 
 function AdminInStoreSales() {
   const [searchInput, setSearchInput] = useState("");
@@ -369,6 +584,7 @@ function AdminInStoreSales() {
   });
 
   const [saleItems, setSaleItems] = useState([]);
+
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
@@ -383,6 +599,10 @@ function AdminInStoreSales() {
     note: "",
   });
 
+  /* =======================================================
+     SEARCH DEBOUNCE
+  ======================================================= */
+
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       setSearchTerm(searchInput.trim());
@@ -392,6 +612,10 @@ function AdminInStoreSales() {
       window.clearTimeout(timeoutId);
     };
   }, [searchInput]);
+
+  /* =======================================================
+     LOAD PRODUCTS
+  ======================================================= */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -410,9 +634,11 @@ function AdminInStoreSales() {
 
         setRequestState({
           key: searchTerm,
+
           products: Array.isArray(response.data?.products)
             ? response.data.products
             : [],
+
           error: null,
         });
       } catch (error) {
@@ -443,6 +669,10 @@ function AdminInStoreSales() {
 
   const error = currentRequest ? requestState.error : null;
 
+  /* =======================================================
+     TOTALS
+  ======================================================= */
+
   const subtotal = useMemo(
     () =>
       saleItems.reduce(
@@ -463,6 +693,16 @@ function AdminInStoreSales() {
   }, [checkoutForm.discountAmount]);
 
   const totalAmount = Math.max(subtotal - discountAmount, 0);
+
+  const totalUnits = saleItems.reduce(
+    (total, item) => total + Number(item.quantity),
+    0,
+  );
+
+  /* =======================================================
+     BASKET
+  ======================================================= */
+
   function getSelectedQuantity(variantId) {
     return saleItems.find((item) => item.id === variantId)?.quantity ?? 0;
   }
@@ -540,6 +780,10 @@ function AdminInStoreSales() {
     );
   }
 
+  /* =======================================================
+     CHECKOUT FORM
+  ======================================================= */
+
   function updateCheckoutField(name, value) {
     setCheckoutForm((currentForm) => ({
       ...currentForm,
@@ -547,16 +791,22 @@ function AdminInStoreSales() {
     }));
   }
 
+  /* =======================================================
+     RECORD SALE
+  ======================================================= */
+
   async function handleRecordSale(event) {
     event.preventDefault();
 
     if (saleItems.length === 0) {
       toast.error("Add at least one product to the sale.");
+
       return;
     }
 
     if (discountAmount > subtotal) {
       toast.error("Discount cannot be greater than the subtotal.");
+
       return;
     }
 
@@ -594,8 +844,6 @@ function AdminInStoreSales() {
 
       setIsCheckoutOpen(false);
 
-      // Reload products so the displayed stock
-      // immediately reflects the physical sale.
       setProductRefreshKey((currentKey) => currentKey + 1);
     } catch (error) {
       toast.error(
@@ -606,129 +854,212 @@ function AdminInStoreSales() {
     }
   }
 
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
   return (
-    <section className="space-y-7">
-      {/* HEADER */}
+    <section
+      className="
+        mx-auto
+        w-full
+        max-w-[100rem]
+        space-y-5
 
-      {/* HEADER */}
+        sm:space-y-6
+      "
+    >
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+      <header
+        className="
+          flex
+          flex-col
+          gap-4
 
-      <header>
-        <p
-          className="
-      text-sm font-semibold
-      uppercase tracking-widest
-      text-[var(--color-warm-gray)]
-    "
-        >
-          Physical store
-        </p>
+          sm:flex-row
+          sm:items-end
+          sm:justify-between
+          sm:gap-6
+        "
+      >
+        <div className="min-w-0">
+          <p
+            className="
+              text-[0.62rem]
+              font-bold
+              uppercase
+              tracking-[0.13em]
+              text-gray-400
+            "
+          >
+            Physical store
+          </p>
+
+          <h1
+            className="
+              mt-1
+              text-2xl
+              font-bold
+              tracking-[-0.035em]
+              text-gray-950
+
+              sm:text-3xl
+            "
+          >
+            New in-store sale
+          </h1>
+
+          <p
+            className="
+              mt-1.5
+              max-w-2xl
+              text-xs
+              leading-5
+              text-gray-500
+
+              sm:text-sm
+              sm:leading-6
+            "
+          >
+            Record physical-store purchases while keeping your shared inventory
+            synchronized.
+          </p>
+        </div>
 
         <div
           className="
-      mt-2 flex flex-col gap-4
-      sm:flex-row sm:items-end
-      sm:justify-between
-    "
-        >
-          <div>
-            <h1
-              className="
-          font-display text-3xl
-          font-medium
-          text-[var(--color-deep-espresso)]
-        "
-            >
-              New in-store sale
-            </h1>
+            grid
+            grid-cols-2
+            gap-2
 
-            <p
-              className="
-          mt-3 max-w-2xl
-          text-sm leading-6
-          text-[var(--color-warm-gray)]
-        "
-            >
-              Record products sold in the physical store and keep online and
-              store inventory synchronized.
-            </p>
-          </div>
+            sm:flex
+            sm:shrink-0
+          "
+        >
+          <Link
+            to="/admin/in-store-sales/history"
+            className="
+              inline-flex
+              min-h-11
+              items-center
+              justify-center
+              gap-2
+              rounded-full
+              border
+              border-gray-200
+              bg-white
+              px-4
+              text-xs
+              font-bold
+              text-gray-700
+              transition-all
+
+              hover:border-gray-300
+              hover:bg-gray-100
+              hover:text-gray-950
+
+              sm:text-sm
+            "
+          >
+            <HistoryRoundedIcon
+              sx={{
+                fontSize: 17,
+              }}
+            />
+            History
+          </Link>
 
           <div
             className="
-        flex flex-wrap
-        items-center gap-3
-      "
+              inline-flex
+              min-h-11
+              items-center
+              justify-center
+              gap-2
+              rounded-full
+              bg-gray-100
+              px-4
+              text-xs
+              font-bold
+              text-gray-700
+
+              sm:text-sm
+            "
           >
-            {/* SALES HISTORY */}
-
-            <Link
-              to="/admin/in-store-sales/history"
-              className="
-          inline-flex min-h-11
-          items-center justify-center
-          gap-2 rounded-full
-          border
-          border-[var(--color-warm-light-gray)]
-          bg-white
-          px-5
-          text-sm font-semibold
-          text-[var(--color-deep-espresso)]
-          transition
-          hover:border-[var(--color-deep-bronze)]
-          hover:text-[var(--color-deep-bronze)]
-        "
-            >
-              <HistoryRoundedIcon fontSize="small" />
-              Sales History
-            </Link>
-
-            {/* POS BADGE */}
-
-            <div
-              className="
-          flex w-fit items-center gap-2
-          rounded-full
-          bg-[var(--color-soft-ivory)]
-          px-4 py-2
-          text-sm font-semibold
-          text-[var(--color-deep-bronze)]
-        "
-            >
-              <StorefrontRoundedIcon fontSize="small" />
-              Physical POS
-            </div>
+            <StorefrontRoundedIcon
+              sx={{
+                fontSize: 17,
+              }}
+            />
+            Physical POS
           </div>
         </div>
       </header>
 
-      {/* MAIN */}
-
+      {/* =====================================================
+          MAIN
+      ===================================================== */}
       <div
         className="
-          grid gap-6
-          xl:grid-cols-[minmax(0,1fr)_380px]
+          grid
+          gap-4
+
+          sm:gap-5
+
+          xl:grid-cols-[minmax(0,1fr)_23rem]
+
+          2xl:grid-cols-[minmax(0,1fr)_25rem]
         "
       >
-        {/* PRODUCT SEARCH */}
-
+        {/* ===================================================
+            PRODUCT SEARCH
+        =================================================== */}
         <section
           className="
+            overflow-hidden
+            rounded-[1.4rem]
             border
-            border-[var(--color-warm-light-gray)]
+            border-gray-200/80
             bg-white
+            shadow-[0_8px_24px_rgba(15,23,42,0.04)]
           "
         >
+          {/* SEARCH HEADER */}
           <div
             className="
               border-b
-              border-[var(--color-warm-light-gray)]
-              p-5 sm:p-6
+              border-gray-100
+              px-4
+              py-4
+
+              sm:px-5
+              sm:py-5
+
+              lg:px-6
             "
           >
+            <p
+              className="
+                text-[0.62rem]
+                font-bold
+                uppercase
+                tracking-[0.12em]
+                text-gray-400
+              "
+            >
+              Catalog
+            </p>
+
             <h2
               className="
-                text-lg font-bold
-                text-[var(--color-deep-espresso)]
+                mt-1
+                text-lg
+                font-bold
+                text-gray-950
+
+                sm:text-xl
               "
             >
               Find products
@@ -736,19 +1067,29 @@ function AdminInStoreSales() {
 
             <p
               className="
-                mt-1 text-sm
-                text-[var(--color-warm-gray)]
+                mt-1
+                text-xs
+                leading-5
+                text-gray-500
+
+                sm:text-sm
               "
             >
               Search by product name, variant, or SKU.
             </p>
 
-            <label className="relative mt-5 block">
+            <label className="relative mt-4 block">
               <SearchRoundedIcon
+                sx={{
+                  fontSize: 20,
+                }}
                 className="
-                  absolute left-4 top-1/2
+                  pointer-events-none
+                  absolute
+                  left-3.5
+                  top-1/2
                   -translate-y-1/2
-                  text-[var(--color-warm-gray)]
+                  text-gray-400
                 "
               />
 
@@ -759,72 +1100,142 @@ function AdminInStoreSales() {
                 maxLength={100}
                 placeholder="Search products or SKU..."
                 className="
-                  min-h-12 w-full
+                  min-h-12
+                  w-full
                   rounded-full
                   border
-                  border-[var(--color-warm-light-gray)]
+                  border-gray-200
                   bg-white
-                  py-3 pl-12 pr-5
+                  py-2
+                  pl-11
+                  pr-4
                   text-sm
-                  text-[var(--color-deep-espresso)]
+                  text-gray-900
                   outline-none
                   transition
-                  focus:border-[var(--color-deep-bronze)]
+
+                  placeholder:text-gray-400
+
+                  focus:border-gray-400
+                  focus:ring-4
+                  focus:ring-gray-950/[0.035]
                 "
               />
             </label>
           </div>
 
-          <div className="p-5 sm:p-6">
+          {/* RESULTS */}
+          <div
+            className="
+              p-4
+
+              sm:p-5
+
+              lg:p-6
+            "
+          >
+            {/* LOADING */}
             {isLoading && (
               <div className="space-y-3">
-                {Array.from({ length: 4 }).map((_, index) => (
+                {Array.from({
+                  length: 4,
+                }).map((_, index) => (
                   <div
                     key={index}
                     className="
-                        h-28 animate-pulse
-                        bg-[var(--color-soft-ivory)]
-                      "
+                      h-40
+                      animate-pulse
+                      rounded-[1.15rem]
+                      bg-gray-100
+
+                      sm:h-36
+                    "
                   />
                 ))}
               </div>
             )}
 
+            {/* ERROR */}
             {!isLoading && error && (
               <div
                 className="
-                  border border-red-200
+                  rounded-[1rem]
+                  border
+                  border-red-200
                   bg-red-50
-                  p-5 text-sm
+                  p-4
+                  text-xs
+                  font-medium
+                  leading-5
                   text-red-700
+
+                  sm:text-sm
                 "
               >
                 {getApiErrorMessage(error, "Unable to load products.")}
               </div>
             )}
 
+            {/* EMPTY */}
             {!isLoading && !error && products.length === 0 && (
               <div
                 className="
-                    py-16 text-center
-                    text-[var(--color-warm-gray)]
+                    flex
+                    min-h-[16rem]
+                    flex-col
+                    items-center
+                    justify-center
+                    px-5
+                    text-center
                   "
               >
-                <SearchRoundedIcon sx={{ fontSize: 42 }} />
+                <span
+                  className="
+                      flex
+                      h-12
+                      w-12
+                      items-center
+                      justify-center
+                      rounded-full
+                      bg-gray-100
+                      text-gray-400
+                      ring-1
+                      ring-gray-200
+                    "
+                >
+                  <SearchRoundedIcon
+                    sx={{
+                      fontSize: 22,
+                    }}
+                  />
+                </span>
 
                 <p
                   className="
-                      mt-4 font-semibold
-                      text-[var(--color-deep-espresso)]
+                      mt-4
+                      text-sm
+                      font-bold
+                      text-gray-900
                     "
                 >
                   No products found
                 </p>
 
-                <p className="mt-2 text-sm">Try another product name or SKU.</p>
+                <p
+                  className="
+                      mt-1
+                      text-xs
+                      text-gray-500
+
+                      sm:text-sm
+                    "
+                >
+                  Try another product name, variant, or SKU.
+                </p>
               </div>
             )}
 
+            {/* PRODUCTS */}
             {!isLoading && !error && products.length > 0 && (
               <div className="space-y-3">
                 {products.map((product) => (
@@ -840,70 +1251,144 @@ function AdminInStoreSales() {
           </div>
         </section>
 
-        {/* CURRENT SALE */}
-
+        {/* ===================================================
+            CURRENT SALE
+        =================================================== */}
         <aside
           className="
             h-fit
+            overflow-hidden
+            rounded-[1.4rem]
             border
-            border-[var(--color-warm-light-gray)]
+            border-gray-200/80
             bg-white
-            xl:sticky xl:top-6
+            shadow-[0_8px_24px_rgba(15,23,42,0.04)]
+
+            xl:sticky
+            xl:top-24
           "
         >
+          {/* BASKET HEADER */}
           <div
             className="
               border-b
-              border-[var(--color-warm-light-gray)]
-              p-5
+              border-gray-100
+              px-4
+              py-4
+
+              sm:px-5
             "
           >
-            <p
+            <div
               className="
-                text-xs font-semibold
-                uppercase tracking-[0.14em]
-                text-[var(--color-deep-bronze)]
+                flex
+                items-start
+                justify-between
+                gap-3
               "
             >
-              Current sale
-            </p>
+              <div>
+                <p
+                  className="
+                    text-[0.62rem]
+                    font-bold
+                    uppercase
+                    tracking-[0.12em]
+                    text-gray-400
+                  "
+                >
+                  Current sale
+                </p>
 
-            <h2
-              className="
-                mt-2 text-xl font-bold
-                text-[var(--color-deep-espresso)]
-              "
-            >
-              Sale basket
-            </h2>
+                <h2
+                  className="
+                    mt-1
+                    text-lg
+                    font-bold
+                    text-gray-950
+                  "
+                >
+                  Sale basket
+                </h2>
+              </div>
+
+              <span
+                className="
+                  inline-flex
+                  min-h-8
+                  items-center
+                  gap-1.5
+                  rounded-full
+                  bg-gray-100
+                  px-2.5
+                  text-xs
+                  font-bold
+                  text-gray-700
+                "
+              >
+                <ShoppingBagOutlinedIcon
+                  sx={{
+                    fontSize: 15,
+                  }}
+                />
+
+                {totalUnits}
+              </span>
+            </div>
 
             <p
               className="
-                mt-1 text-sm
-                text-[var(--color-warm-gray)]
+                mt-1.5
+                text-xs
+                text-gray-500
               "
             >
               {saleItems.length === 0
                 ? "No products added yet."
                 : `${saleItems.length} ${
-                    saleItems.length === 1 ? "product" : "products"
-                  } added.`}
+                    saleItems.length === 1 ? "variant" : "variants"
+                  } selected.`}
             </p>
           </div>
 
-          <div className="px-5">
+          {/* ITEMS */}
+          <div className="px-4 py-4 sm:px-5">
             {saleItems.length === 0 ? (
               <div
                 className="
-                  py-14 text-center
-                  text-[var(--color-warm-gray)]
+                  flex
+                  min-h-[10rem]
+                  flex-col
+                  items-center
+                  justify-center
+                  text-center
                 "
               >
-                <StorefrontRoundedIcon sx={{ fontSize: 40 }} />
+                <span
+                  className="
+                    flex
+                    h-11
+                    w-11
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-gray-100
+                    text-gray-400
+                  "
+                >
+                  <StorefrontRoundedIcon
+                    sx={{
+                      fontSize: 20,
+                    }}
+                  />
+                </span>
 
                 <p
                   className="
-                    mt-3 text-sm font-semibold
+                    mt-3
+                    text-xs
+                    font-semibold
+                    text-gray-500
                   "
                 >
                   Add products to begin the sale.
@@ -922,49 +1407,80 @@ function AdminInStoreSales() {
             )}
           </div>
 
+          {/* =================================================
+              TOTALS / CHECKOUT
+          ================================================= */}
           <div
             className="
-    border-t
-    border-[var(--color-warm-light-gray)]
-    bg-[var(--color-soft-ivory)]
-    p-5
-  "
+              border-t
+              border-gray-100
+              bg-gray-50/60
+              p-4
+
+              sm:p-5
+            "
           >
             {/* SUMMARY */}
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-4">
+            <div className="space-y-2.5">
+              <div
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  gap-4
+                "
+              >
                 <span
                   className="
-          text-sm font-semibold
-          text-[var(--color-warm-gray)]
-        "
+                    text-xs
+                    font-medium
+                    text-gray-500
+
+                    sm:text-sm
+                  "
                 >
                   Subtotal
                 </span>
 
                 <span
                   className="
-          font-bold
-          text-[var(--color-deep-espresso)]
-        "
+                    text-sm
+                    font-bold
+                    text-gray-900
+                  "
                 >
                   {formatMoney(subtotal)}
                 </span>
               </div>
 
               {discountAmount > 0 && (
-                <div className="flex items-center justify-between gap-4">
+                <div
+                  className="
+                    flex
+                    items-center
+                    justify-between
+                    gap-4
+                  "
+                >
                   <span
                     className="
-            text-sm font-semibold
-            text-[var(--color-warm-gray)]
-          "
+                      text-xs
+                      font-medium
+                      text-gray-500
+
+                      sm:text-sm
+                    "
                   >
                     Discount
                   </span>
 
-                  <span className="font-bold text-emerald-700">
+                  <span
+                    className="
+                      text-sm
+                      font-bold
+                      text-emerald-700
+                    "
+                  >
                     -{formatMoney(discountAmount)}
                   </span>
                 </div>
@@ -972,76 +1488,106 @@ function AdminInStoreSales() {
 
               <div
                 className="
-        flex items-center justify-between
-        gap-4 border-t
-        border-[var(--color-warm-light-gray)]
-        pt-3
-      "
+                  flex
+                  items-center
+                  justify-between
+                  gap-4
+                  border-t
+                  border-gray-200
+                  pt-3
+                "
               >
                 <span
                   className="
-          font-bold
-          text-[var(--color-deep-espresso)]
-        "
+                    text-sm
+                    font-bold
+                    text-gray-900
+                  "
                 >
                   Total
                 </span>
 
                 <span
                   className="
-          text-xl font-bold
-          text-[var(--color-deep-espresso)]
-        "
+                    text-xl
+                    font-bold
+                    tracking-[-0.035em]
+                    text-gray-950
+                  "
                 >
                   {formatMoney(totalAmount)}
                 </span>
               </div>
             </div>
 
+            {/* =================================================
+                CONTINUE
+            ================================================= */}
             {!isCheckoutOpen ? (
               <button
                 type="button"
                 disabled={saleItems.length === 0}
                 onClick={() => setIsCheckoutOpen(true)}
                 className="
-        mt-5 inline-flex
-        min-h-12 w-full
-        items-center justify-center
-        rounded-full
-        bg-[var(--color-deep-espresso)]
-        px-6
-        font-semibold text-white
-        transition
-        hover:opacity-90
-        disabled:cursor-not-allowed
-        disabled:opacity-40
-      "
+                  mt-5
+                  inline-flex
+                  min-h-12
+                  w-full
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-gray-950
+                  px-5
+                  text-sm
+                  font-bold
+                  text-white
+                  transition-colors
+
+                  hover:bg-gray-800
+
+                  disabled:cursor-not-allowed
+                  disabled:bg-gray-200
+                  disabled:text-gray-400
+                "
               >
                 Continue sale
               </button>
             ) : (
+              /* ===============================================
+                 CHECKOUT
+              =============================================== */
               <form
                 onSubmit={handleRecordSale}
                 className="
-        mt-6 space-y-5
-        border-t
-        border-[var(--color-warm-light-gray)]
-        pt-5
-      "
+                  mt-5
+                  space-y-5
+                  border-t
+                  border-gray-200
+                  pt-5
+                "
               >
                 {/* PAYMENT */}
-
                 <fieldset>
                   <legend
                     className="
-            text-sm font-bold
-            text-[var(--color-deep-espresso)]
-          "
+                      text-xs
+                      font-bold
+                      text-gray-800
+
+                      sm:text-sm
+                    "
                   >
                     Payment method
                   </legend>
 
-                  <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div
+                    className="
+                      mt-3
+                      grid
+                      grid-cols-3
+                      gap-2
+                    "
+                  >
                     {[
                       ["CASH", "Cash"],
                       ["CARD", "Card"],
@@ -1056,24 +1602,32 @@ function AdminInStoreSales() {
                           onClick={() =>
                             updateCheckoutField("paymentMethod", value)
                           }
+                          disabled={isSubmittingSale}
                           className={[
                             `
-                    min-h-10 rounded-full
-                    border px-3
-                    text-sm font-semibold
-                    transition
-                  `,
+                                min-h-10
+                                rounded-full
+                                border
+                                px-2
+                                text-xs
+                                font-bold
+                                transition-all
+
+                                sm:text-sm
+                              `,
                             selected
                               ? `
-                      border-[var(--color-deep-espresso)]
-                      bg-[var(--color-deep-espresso)]
-                      text-white
-                    `
+                                  border-gray-950
+                                  bg-gray-950
+                                  text-white
+                                `
                               : `
-                      border-[var(--color-warm-light-gray)]
-                      bg-white
-                      text-[var(--color-deep-espresso)]
-                    `,
+                                  border-gray-200
+                                  bg-white
+                                  text-gray-700
+
+                                  hover:border-gray-400
+                                `,
                           ].join(" ")}
                         >
                           {label}
@@ -1084,30 +1638,55 @@ function AdminInStoreSales() {
                 </fieldset>
 
                 {/* DISCOUNT */}
-
-                <label className="block">
-                  <span
+                <div>
+                  <label
+                    htmlFor="sale-discount"
                     className="
-            text-sm font-bold
-            text-[var(--color-deep-espresso)]
-          "
+                      text-xs
+                      font-bold
+                      text-gray-800
+
+                      sm:text-sm
+                    "
                   >
                     Discount
-                  </span>
+                  </label>
 
-                  <div className="relative mt-2">
+                  <div
+                    className="
+                      mt-2
+                      flex
+                      min-h-11
+                      overflow-hidden
+                      rounded-full
+                      border
+                      border-gray-200
+                      bg-white
+                      transition
+
+                      focus-within:border-gray-400
+                      focus-within:ring-4
+                      focus-within:ring-gray-950/[0.035]
+                    "
+                  >
                     <span
                       className="
-              absolute left-4 top-1/2
-              -translate-y-1/2
-              text-sm font-semibold
-              text-[var(--color-warm-gray)]
-            "
+                        flex
+                        items-center
+                        border-r
+                        border-gray-200
+                        bg-gray-50
+                        px-3
+                        text-xs
+                        font-bold
+                        text-gray-500
+                      "
                     >
                       $
                     </span>
 
                     <input
+                      id="sale-discount"
                       type="number"
                       min="0"
                       step="0.01"
@@ -1118,56 +1697,69 @@ function AdminInStoreSales() {
                           event.target.value,
                         )
                       }
+                      disabled={isSubmittingSale}
                       placeholder="0.00"
                       className="
-              min-h-11 w-full
-              rounded-full
-              border
-              border-[var(--color-warm-light-gray)]
-              bg-white
-              py-2 pl-8 pr-4
-              text-sm
-              outline-none
-              focus:border-[var(--color-deep-bronze)]
-            "
+                        min-w-0
+                        flex-1
+                        bg-white
+                        px-3
+                        text-sm
+                        text-gray-900
+                        outline-none
+
+                        disabled:bg-gray-100
+                      "
                     />
                   </div>
 
                   {discountAmount > subtotal && (
-                    <p className="mt-2 text-xs font-semibold text-red-600">
+                    <p
+                      className="
+                        mt-2
+                        text-[0.65rem]
+                        font-bold
+                        text-red-600
+
+                        sm:text-xs
+                      "
+                    >
                       Discount cannot exceed the subtotal.
                     </p>
                   )}
-                </label>
+                </div>
 
                 {/* CUSTOMER */}
-
                 <div
                   className="
-          border-t
-          border-[var(--color-warm-light-gray)]
-          pt-5
-        "
+                    border-t
+                    border-gray-200
+                    pt-5
+                  "
                 >
                   <p
                     className="
-            text-sm font-bold
-            text-[var(--color-deep-espresso)]
-          "
+                      text-sm
+                      font-bold
+                      text-gray-900
+                    "
                   >
                     Customer details
                   </p>
 
                   <p
                     className="
-            mt-1 text-xs
-            text-[var(--color-warm-gray)]
-          "
+                      mt-1
+                      text-[0.65rem]
+                      text-gray-500
+
+                      sm:text-xs
+                    "
                   >
                     Optional for walk-in customers.
                   </p>
 
-                  <div className="mt-4 space-y-3">
+                  <div className="mt-3 space-y-3">
                     <input
                       type="text"
                       maxLength={120}
@@ -1175,18 +1767,26 @@ function AdminInStoreSales() {
                       onChange={(event) =>
                         updateCheckoutField("customerName", event.target.value)
                       }
+                      disabled={isSubmittingSale}
                       placeholder="Customer name"
                       className="
-              min-h-11 w-full
-              rounded-full
-              border
-              border-[var(--color-warm-light-gray)]
-              bg-white
-              px-4
-              text-sm
-              outline-none
-              focus:border-[var(--color-deep-bronze)]
-            "
+                        min-h-11
+                        w-full
+                        rounded-[0.9rem]
+                        border
+                        border-gray-200
+                        bg-white
+                        px-4
+                        text-sm
+                        text-gray-900
+                        outline-none
+
+                        focus:border-gray-400
+                        focus:ring-4
+                        focus:ring-gray-950/[0.035]
+
+                        disabled:bg-gray-100
+                      "
                     />
 
                     <input
@@ -1196,89 +1796,156 @@ function AdminInStoreSales() {
                       onChange={(event) =>
                         updateCheckoutField("customerPhone", event.target.value)
                       }
+                      disabled={isSubmittingSale}
                       placeholder="Phone number"
                       className="
-              min-h-11 w-full
-              rounded-full
-              border
-              border-[var(--color-warm-light-gray)]
-              bg-white
-              px-4
-              text-sm
-              outline-none
-              focus:border-[var(--color-deep-bronze)]
-            "
+                        min-h-11
+                        w-full
+                        rounded-[0.9rem]
+                        border
+                        border-gray-200
+                        bg-white
+                        px-4
+                        text-sm
+                        text-gray-900
+                        outline-none
+
+                        focus:border-gray-400
+                        focus:ring-4
+                        focus:ring-gray-950/[0.035]
+
+                        disabled:bg-gray-100
+                      "
                     />
 
                     <textarea
                       rows={3}
+                      maxLength={1000}
                       value={checkoutForm.note}
                       onChange={(event) =>
                         updateCheckoutField("note", event.target.value)
                       }
+                      disabled={isSubmittingSale}
                       placeholder="Optional sale note..."
                       className="
-              w-full resize-none
-              rounded-2xl
-              border
-              border-[var(--color-warm-light-gray)]
-              bg-white
-              px-4 py-3
-              text-sm
-              outline-none
-              focus:border-[var(--color-deep-bronze)]
-            "
+                        min-h-[6rem]
+                        w-full
+                        resize-y
+                        rounded-[0.9rem]
+                        border
+                        border-gray-200
+                        bg-white
+                        px-4
+                        py-3
+                        text-sm
+                        leading-5
+                        text-gray-900
+                        outline-none
+
+                        focus:border-gray-400
+                        focus:ring-4
+                        focus:ring-gray-950/[0.035]
+
+                        disabled:bg-gray-100
+                      "
                     />
                   </div>
                 </div>
 
                 {/* FINAL TOTAL */}
-
                 <div
                   className="
-          border-t
-          border-[var(--color-warm-light-gray)]
-          pt-5
-        "
+                    rounded-[1rem]
+                    border
+                    border-gray-200
+                    bg-white
+                    p-3.5
+                  "
                 >
-                  <div className="flex items-end justify-between gap-4">
+                  <div
+                    className="
+                      flex
+                      items-end
+                      justify-between
+                      gap-3
+                    "
+                  >
                     <div>
                       <p
                         className="
-                text-xs font-semibold
-                uppercase tracking-[0.12em]
-                text-[var(--color-warm-gray)]
-              "
+                          text-[0.58rem]
+                          font-bold
+                          uppercase
+                          tracking-[0.1em]
+                          text-gray-400
+                        "
                       >
                         Amount to collect
                       </p>
 
                       <p
                         className="
-                mt-1 text-2xl font-bold
-                text-[var(--color-deep-espresso)]
-              "
+                          mt-1
+                          text-xl
+                          font-bold
+                          tracking-[-0.035em]
+                          text-gray-950
+                        "
                       >
                         {formatMoney(totalAmount)}
                       </p>
                     </div>
 
-                    <span
-                      className="
-              rounded-full
-              bg-white
-              px-3 py-1.5
-              text-xs font-bold
-              text-[var(--color-deep-bronze)]
-            "
-                    >
-                      {checkoutForm.paymentMethod}
-                    </span>
+                    <div className="relative">
+                      <select
+                        value={checkoutForm.paymentMethod}
+                        onChange={(event) =>
+                          updateCheckoutField(
+                            "paymentMethod",
+                            event.target.value,
+                          )
+                        }
+                        disabled={isSubmittingSale}
+                        className="
+                          appearance-none
+                          rounded-full
+                          border
+                          border-gray-200
+                          bg-gray-50
+                          py-1.5
+                          pl-3
+                          pr-8
+                          text-[0.65rem]
+                          font-bold
+                          text-gray-700
+                          outline-none
+                        "
+                      >
+                        <option value="CASH">CASH</option>
+
+                        <option value="CARD">CARD</option>
+
+                        <option value="OTHER">OTHER</option>
+                      </select>
+
+                      <KeyboardArrowDownRoundedIcon
+                        sx={{
+                          fontSize: 16,
+                        }}
+                        className="
+                          pointer-events-none
+                          absolute
+                          right-2
+                          top-1/2
+                          -translate-y-1/2
+                          text-gray-400
+                        "
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* ACTIONS */}
-
                 <div className="space-y-2">
                   <button
                     type="submit"
@@ -1288,18 +1955,25 @@ function AdminInStoreSales() {
                       discountAmount > subtotal
                     }
                     className="
-            inline-flex min-h-12
-            w-full items-center
-            justify-center
-            rounded-full
-            bg-[var(--color-deep-espresso)]
-            px-6
-            font-semibold text-white
-            transition
-            hover:opacity-90
-            disabled:cursor-not-allowed
-            disabled:opacity-40
-          "
+                      inline-flex
+                      min-h-12
+                      w-full
+                      items-center
+                      justify-center
+                      rounded-full
+                      bg-gray-950
+                      px-5
+                      text-sm
+                      font-bold
+                      text-white
+                      transition-colors
+
+                      hover:bg-gray-800
+
+                      disabled:cursor-not-allowed
+                      disabled:bg-gray-200
+                      disabled:text-gray-400
+                    "
                   >
                     {isSubmittingSale
                       ? "Recording sale..."
@@ -1311,19 +1985,25 @@ function AdminInStoreSales() {
                     disabled={isSubmittingSale}
                     onClick={() => setIsCheckoutOpen(false)}
                     className="
-            inline-flex min-h-11
-            w-full items-center
-            justify-center
-            rounded-full
-            border
-            border-[var(--color-warm-light-gray)]
-            bg-white
-            px-6
-            text-sm font-semibold
-            text-[var(--color-deep-espresso)]
-            transition
-            disabled:opacity-40
-          "
+                      inline-flex
+                      min-h-11
+                      w-full
+                      items-center
+                      justify-center
+                      rounded-full
+                      border
+                      border-gray-200
+                      bg-white
+                      px-5
+                      text-sm
+                      font-bold
+                      text-gray-700
+                      transition-colors
+
+                      hover:bg-gray-100
+
+                      disabled:opacity-40
+                    "
                   >
                     Back to basket
                   </button>

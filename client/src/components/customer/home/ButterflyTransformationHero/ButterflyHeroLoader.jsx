@@ -6,17 +6,12 @@ export function ButterflyHeroLoader({ progress, isInitialBatchReady }) {
   return (
     <div
       className="
-        absolute
-        inset-0
-        flex
-        items-center
-        justify-center
-
-        bg-gradient-to-l
-        from-[#F7F3EC]
-        via-[#F7F3EC]/90
-        to-transparent
-      "
+    absolute
+    inset-0
+    flex
+    items-center
+    justify-center
+  "
       aria-live="polite"
       aria-busy="true"
     >

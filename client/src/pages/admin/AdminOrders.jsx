@@ -1,19 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+
+// MUI Icons
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import FilterAltOffOutlinedIcon from "@mui/icons-material/FilterAltOffOutlined";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+
+// Components
 import AdminOrderTable from "../../components/admin/orders/AdminOrderTable.jsx";
+
+// Services
 import { fetchAdminOrders } from "../../services/adminOrderApi.js";
+
+// Utils
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
+
 import {
   ADMIN_ORDER_SORT_OPTIONS,
   ADMIN_ORDER_STATUS_OPTIONS,
   ADMIN_PAYMENT_STATUS_OPTIONS,
   formatOrderStatus,
 } from "../../utils/adminOrderWorkflow.js";
+
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function isCancelledRequest(error, signal) {
   return signal?.aborted || error?.code === "ERR_CANCELED";
@@ -23,9 +37,12 @@ function isAuthenticationError(error) {
   return error?.response?.status === 401 || error?.response?.status === 403;
 }
 
+/* =========================================================
+   PAGE
+========================================================= */
+
 function AdminOrders() {
   const navigate = useNavigate();
-
   const location = useLocation();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -64,6 +81,10 @@ function AdminOrders() {
 
   const isLoading = orderState.requestKey !== requestKey;
 
+  /* =======================================================
+     LOAD ORDERS
+  ======================================================= */
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -73,6 +94,7 @@ function AdminOrders() {
           {
             page,
             limit: 15,
+
             search: search || undefined,
 
             status: status || undefined,
@@ -92,8 +114,11 @@ function AdminOrders() {
 
         setOrderState({
           requestKey,
+
           orders: response.orders ?? [],
+
           pagination: response.pagination ?? null,
+
           error: null,
         });
       } catch (error) {
@@ -104,6 +129,7 @@ function AdminOrders() {
         if (isAuthenticationError(error)) {
           navigate("/admin/login", {
             replace: true,
+
             state: {
               from: `${location.pathname}${location.search}`,
             },
@@ -137,6 +163,10 @@ function AdminOrders() {
     sort,
     status,
   ]);
+
+  /* =======================================================
+     FILTER HELPERS
+  ======================================================= */
 
   function updateFilters(updates) {
     const nextParams = new URLSearchParams(searchParams);
@@ -174,166 +204,633 @@ function AdminOrders() {
     Boolean(paymentStatus) ||
     sort !== "newest";
 
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
   return (
-    <section>
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">
+    <section
+      className="
+        mx-auto
+        w-full
+        max-w-[100rem]
+        space-y-5
+
+        sm:space-y-6
+      "
+    >
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+      <header
+        className="
+          flex
+          flex-col
+          gap-4
+
+          sm:flex-row
+          sm:items-end
+          sm:justify-between
+          sm:gap-6
+        "
+      >
+        <div className="min-w-0">
+          <p
+            className="
+              text-[0.62rem]
+              font-bold
+              uppercase
+              tracking-[0.13em]
+              text-gray-400
+            "
+          >
             Order management
           </p>
 
-          <h1 className="mt-2 text-3xl font-bold text-gray-950">
+          <h1
+            className="
+              mt-1
+              text-2xl
+              font-bold
+              tracking-[-0.035em]
+              text-gray-950
+
+              sm:text-3xl
+            "
+          >
             Customer orders
           </h1>
 
-          <p className="mt-2 text-gray-600">
-            Review orders, update statuses, manage payments, and coordinate
+          <p
+            className="
+              mt-1.5
+              max-w-2xl
+              text-xs
+              leading-5
+              text-gray-500
+
+              sm:text-sm
+              sm:leading-6
+            "
+          >
+            Review orders, manage fulfillment, update payments, and coordinate
             delivery.
           </p>
         </div>
 
         {orderState.pagination && (
-          <div className="rounded-xl bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700">
-            {orderState.pagination.totalItems} total orders
+          <div
+            className="
+              inline-flex
+              w-fit
+              shrink-0
+              items-center
+              gap-2
+              rounded-full
+              bg-gray-100
+              px-3.5
+              py-2
+            "
+          >
+            <span
+              className="
+                h-1.5
+                w-1.5
+                rounded-full
+                bg-gray-950
+              "
+            />
+
+            <span
+              className="
+                text-xs
+                font-bold
+                text-gray-700
+              "
+            >
+              {orderState.pagination.totalItems}{" "}
+              {orderState.pagination.totalItems === 1 ? "order" : "orders"}
+            </span>
           </div>
         )}
       </header>
 
-      <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-        <form
-          onSubmit={handleSearchSubmit}
-          className="flex flex-col gap-3 lg:flex-row"
-        >
-          <div className="relative flex-1">
-            <SearchRoundedIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      {/* =====================================================
+          FILTERS
+      ===================================================== */}
+      <section
+        className="
+          overflow-hidden
+          rounded-[1.4rem]
+          border
+          border-gray-200/80
+          bg-white
+          shadow-[0_8px_24px_rgba(15,23,42,0.04)]
+        "
+      >
+        {/* FILTER HEADER */}
+        <div
+          className="
+            flex
+            items-center
+            justify-between
+            gap-3
+            border-b
+            border-gray-100
+            px-4
+            py-4
 
-            <input
-              key={search}
-              type="search"
-              name="search"
-              defaultValue={search}
-              placeholder="Search order number, customer, email, or phone"
-              className="w-full rounded-xl border border-gray-300 py-3 pl-11 pr-4 outline-none focus:border-gray-950"
-            />
+            sm:px-5
+
+            lg:px-6
+          "
+        >
+          <div>
+            <p
+              className="
+                text-[0.62rem]
+                font-bold
+                uppercase
+                tracking-[0.12em]
+                text-gray-400
+              "
+            >
+              Search & filter
+            </p>
+
+            <h2
+              className="
+                mt-1
+                text-base
+                font-bold
+                text-gray-950
+
+                sm:text-lg
+              "
+            >
+              Find orders
+            </h2>
           </div>
 
-          <button
-            type="submit"
-            className="rounded-xl bg-gray-950 px-6 py-3 font-semibold text-white"
-          >
-            Search
-          </button>
-        </form>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <label>
-            <span className="text-sm font-semibold text-gray-700">
-              Order status
-            </span>
-
-            <select
-              value={status}
-              onChange={(event) =>
-                updateFilters({
-                  status: event.target.value,
-                  page: 1,
-                })
-              }
-              className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
-            >
-              {ADMIN_ORDER_STATUS_OPTIONS.map((option) => (
-                <option key={option || "all"} value={option}>
-                  {formatOrderStatus(option)}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span className="text-sm font-semibold text-gray-700">
-              Payment status
-            </span>
-
-            <select
-              value={paymentStatus}
-              onChange={(event) =>
-                updateFilters({
-                  paymentStatus: event.target.value,
-                  page: 1,
-                })
-              }
-              className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
-            >
-              {ADMIN_PAYMENT_STATUS_OPTIONS.map((option) => (
-                <option key={option || "all"} value={option}>
-                  {option ? formatOrderStatus(option) : "All payments"}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span className="text-sm font-semibold text-gray-700">Sort</span>
-
-            <select
-              value={sort}
-              onChange={(event) =>
-                updateFilters({
-                  sort: event.target.value,
-                  page: 1,
-                })
-              }
-              className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
-            >
-              {ADMIN_ORDER_SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="flex items-end">
+          {hasFilters && (
             <button
               type="button"
               onClick={clearFilters}
-              disabled={!hasFilters}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-3 font-semibold text-gray-700 hover:border-gray-950 disabled:cursor-not-allowed disabled:opacity-40"
+              className="
+                inline-flex
+                shrink-0
+                items-center
+                gap-1.5
+                rounded-full
+                px-3
+                py-2
+                text-[0.68rem]
+                font-bold
+                text-gray-500
+                transition-colors
+
+                hover:bg-gray-100
+                hover:text-gray-950
+
+                sm:text-xs
+              "
             >
-              <FilterAltOffOutlinedIcon />
-              Clear filters
+              <FilterAltOffOutlinedIcon
+                sx={{
+                  fontSize: 15,
+                }}
+              />
+              Clear
             </button>
+          )}
+        </div>
+
+        <div
+          className="
+            p-4
+
+            sm:p-5
+
+            lg:p-6
+          "
+        >
+          {/* SEARCH */}
+          <form
+            onSubmit={handleSearchSubmit}
+            className="
+              flex
+              flex-col
+              gap-2
+
+              sm:flex-row
+            "
+          >
+            <div
+              className="
+                relative
+                flex-1
+              "
+            >
+              <SearchRoundedIcon
+                sx={{
+                  fontSize: 19,
+                }}
+                className="
+                  pointer-events-none
+                  absolute
+                  left-3.5
+                  top-1/2
+                  -translate-y-1/2
+                  text-gray-400
+                "
+              />
+
+              <input
+                key={search}
+                type="search"
+                name="search"
+                defaultValue={search}
+                placeholder="Order number, customer, email or phone"
+                className="
+                  min-h-11
+                  w-full
+                  rounded-[0.95rem]
+                  border
+                  border-gray-200
+                  bg-white
+                  py-2
+                  pl-10
+                  pr-4
+                  text-sm
+                  text-gray-900
+                  outline-none
+                  transition
+
+                  placeholder:text-gray-400
+
+                  focus:border-gray-400
+                  focus:ring-4
+                  focus:ring-gray-950/[0.035]
+                "
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="
+                inline-flex
+                min-h-11
+                w-full
+                items-center
+                justify-center
+                rounded-full
+                bg-gray-950
+                px-5
+                text-sm
+                font-bold
+                text-white
+                transition-colors
+
+                hover:bg-gray-800
+
+                sm:w-auto
+                sm:min-w-24
+              "
+            >
+              Search
+            </button>
+          </form>
+
+          {/* FILTER GRID */}
+          <div
+            className="
+              mt-4
+              grid
+              gap-3
+
+              sm:grid-cols-2
+
+              lg:grid-cols-3
+            "
+          >
+            {/* ORDER STATUS */}
+            <div>
+              <label
+                htmlFor="orders-status"
+                className="
+                  text-[0.65rem]
+                  font-bold
+                  text-gray-600
+
+                  sm:text-xs
+                "
+              >
+                Order status
+              </label>
+
+              <div className="relative mt-1.5">
+                <select
+                  id="orders-status"
+                  value={status}
+                  onChange={(event) =>
+                    updateFilters({
+                      status: event.target.value,
+
+                      page: 1,
+                    })
+                  }
+                  className="
+                    min-h-11
+                    w-full
+                    appearance-none
+                    rounded-[0.95rem]
+                    border
+                    border-gray-200
+                    bg-white
+                    px-3.5
+                    pr-9
+                    text-sm
+                    font-semibold
+                    text-gray-700
+                    outline-none
+
+                    focus:border-gray-400
+                    focus:ring-4
+                    focus:ring-gray-950/[0.035]
+                  "
+                >
+                  {ADMIN_ORDER_STATUS_OPTIONS.map((option) => (
+                    <option key={option || "all"} value={option}>
+                      {formatOrderStatus(option)}
+                    </option>
+                  ))}
+                </select>
+
+                <KeyboardArrowDownRoundedIcon
+                  sx={{
+                    fontSize: 18,
+                  }}
+                  className="
+                    pointer-events-none
+                    absolute
+                    right-3
+                    top-1/2
+                    -translate-y-1/2
+                    text-gray-400
+                  "
+                />
+              </div>
+            </div>
+
+            {/* PAYMENT STATUS */}
+            <div>
+              <label
+                htmlFor="orders-payment-status"
+                className="
+                  text-[0.65rem]
+                  font-bold
+                  text-gray-600
+
+                  sm:text-xs
+                "
+              >
+                Payment status
+              </label>
+
+              <div className="relative mt-1.5">
+                <select
+                  id="orders-payment-status"
+                  value={paymentStatus}
+                  onChange={(event) =>
+                    updateFilters({
+                      paymentStatus: event.target.value,
+
+                      page: 1,
+                    })
+                  }
+                  className="
+                    min-h-11
+                    w-full
+                    appearance-none
+                    rounded-[0.95rem]
+                    border
+                    border-gray-200
+                    bg-white
+                    px-3.5
+                    pr-9
+                    text-sm
+                    font-semibold
+                    text-gray-700
+                    outline-none
+
+                    focus:border-gray-400
+                    focus:ring-4
+                    focus:ring-gray-950/[0.035]
+                  "
+                >
+                  {ADMIN_PAYMENT_STATUS_OPTIONS.map((option) => (
+                    <option key={option || "all"} value={option}>
+                      {option ? formatOrderStatus(option) : "All payments"}
+                    </option>
+                  ))}
+                </select>
+
+                <KeyboardArrowDownRoundedIcon
+                  sx={{
+                    fontSize: 18,
+                  }}
+                  className="
+                    pointer-events-none
+                    absolute
+                    right-3
+                    top-1/2
+                    -translate-y-1/2
+                    text-gray-400
+                  "
+                />
+              </div>
+            </div>
+
+            {/* SORT */}
+            <div
+              className="
+                sm:col-span-2
+
+                lg:col-span-1
+              "
+            >
+              <label
+                htmlFor="orders-sort"
+                className="
+                  text-[0.65rem]
+                  font-bold
+                  text-gray-600
+
+                  sm:text-xs
+                "
+              >
+                Sort
+              </label>
+
+              <div className="relative mt-1.5">
+                <select
+                  id="orders-sort"
+                  value={sort}
+                  onChange={(event) =>
+                    updateFilters({
+                      sort: event.target.value,
+
+                      page: 1,
+                    })
+                  }
+                  className="
+                    min-h-11
+                    w-full
+                    appearance-none
+                    rounded-[0.95rem]
+                    border
+                    border-gray-200
+                    bg-white
+                    px-3.5
+                    pr-9
+                    text-sm
+                    font-semibold
+                    text-gray-700
+                    outline-none
+
+                    focus:border-gray-400
+                    focus:ring-4
+                    focus:ring-gray-950/[0.035]
+                  "
+                >
+                  {ADMIN_ORDER_SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <KeyboardArrowDownRoundedIcon
+                  sx={{
+                    fontSize: 18,
+                  }}
+                  className="
+                    pointer-events-none
+                    absolute
+                    right-3
+                    top-1/2
+                    -translate-y-1/2
+                    text-gray-400
+                  "
+                />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
+      {/* =====================================================
+          LOADING
+      ===================================================== */}
       {isLoading && (
-        <div className="mt-8 space-y-4">
+        <div className="space-y-3">
           {Array.from({
             length: 5,
           }).map((_, index) => (
             <div
               key={index}
-              className="h-24 animate-pulse rounded-2xl bg-gray-100"
+              className="
+                h-40
+                animate-pulse
+                rounded-[1.2rem]
+                bg-gray-100
+
+                lg:h-20
+              "
             />
           ))}
         </div>
       )}
 
+      {/* =====================================================
+          ERROR
+      ===================================================== */}
       {!isLoading && orderState.error && (
-        <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
-          <ErrorOutlineRoundedIcon
-            className="text-red-500"
-            sx={{
-              fontSize: 54,
-            }}
-          />
+        <div
+          className="
+              rounded-[1.4rem]
+              border
+              border-red-200
+              bg-white
+              px-5
+              py-10
+              text-center
+              shadow-[0_8px_24px_rgba(15,23,42,0.04)]
 
-          <h2 className="mt-4 text-xl font-bold text-red-900">
+              sm:px-8
+              sm:py-12
+            "
+        >
+          <span
+            className="
+                mx-auto
+                flex
+                h-14
+                w-14
+                items-center
+                justify-center
+                rounded-full
+                bg-red-50
+                text-red-600
+                ring-1
+                ring-red-100
+              "
+          >
+            <ErrorOutlineRoundedIcon
+              sx={{
+                fontSize: 26,
+              }}
+            />
+          </span>
+
+          <p
+            className="
+                mt-5
+                text-[0.62rem]
+                font-bold
+                uppercase
+                tracking-[0.12em]
+                text-red-500
+              "
+          >
+            Loading error
+          </p>
+
+          <h2
+            className="
+                mt-1.5
+                text-xl
+                font-bold
+                tracking-[-0.025em]
+                text-gray-950
+              "
+          >
             Orders could not be loaded
           </h2>
 
-          <p className="mt-2 text-red-700">
+          <p
+            className="
+                mx-auto
+                mt-2
+                max-w-md
+                text-xs
+                leading-5
+                text-gray-500
+
+                sm:text-sm
+                sm:leading-6
+              "
+          >
             {getApiErrorMessage(
               orderState.error,
               "Unable to load admin orders.",
@@ -343,43 +840,183 @@ function AdminOrders() {
           <button
             type="button"
             onClick={() => setReloadToken((currentValue) => currentValue + 1)}
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-700 px-5 py-2.5 font-semibold text-white"
+            className="
+                mt-5
+                inline-flex
+                min-h-11
+                items-center
+                justify-center
+                gap-2
+                rounded-full
+                bg-gray-950
+                px-5
+                text-sm
+                font-bold
+                text-white
+                transition-colors
+
+                hover:bg-gray-800
+              "
           >
-            <RefreshRoundedIcon />
+            <RefreshRoundedIcon
+              sx={{
+                fontSize: 18,
+              }}
+            />
             Try again
           </button>
         </div>
       )}
 
+      {/* =====================================================
+          EMPTY
+      ===================================================== */}
       {!isLoading && !orderState.error && orderState.orders.length === 0 && (
-        <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-12 text-center">
-          <ReceiptLongOutlinedIcon
-            className="text-gray-400"
-            sx={{
-              fontSize: 58,
-            }}
-          />
+        <div
+          className="
+              rounded-[1.4rem]
+              border
+              border-gray-200/80
+              bg-white
+              px-5
+              py-10
+              text-center
+              shadow-[0_8px_24px_rgba(15,23,42,0.04)]
 
-          <h2 className="mt-4 text-2xl font-bold text-gray-950">
+              sm:px-8
+              sm:py-14
+            "
+        >
+          <span
+            className="
+                mx-auto
+                flex
+                h-14
+                w-14
+                items-center
+                justify-center
+                rounded-full
+                bg-gray-100
+                text-gray-400
+                ring-1
+                ring-gray-200
+              "
+          >
+            <ReceiptLongOutlinedIcon
+              sx={{
+                fontSize: 25,
+              }}
+            />
+          </span>
+
+          <p
+            className="
+                mt-5
+                text-[0.62rem]
+                font-bold
+                uppercase
+                tracking-[0.12em]
+                text-gray-400
+              "
+          >
+            Orders
+          </p>
+
+          <h2
+            className="
+                mt-1.5
+                text-xl
+                font-bold
+                text-gray-950
+
+                sm:text-2xl
+              "
+          >
             No orders found
           </h2>
 
-          <p className="mt-2 text-gray-600">
-            No orders match the selected filters.
+          <p
+            className="
+                mx-auto
+                mt-2
+                max-w-md
+                text-xs
+                leading-5
+                text-gray-500
+
+                sm:text-sm
+              "
+          >
+            {hasFilters
+              ? "No customer orders match the selected filters."
+              : "Customer orders will appear here once they are placed."}
           </p>
+
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="
+                  mt-5
+                  inline-flex
+                  min-h-11
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-full
+                  border
+                  border-gray-200
+                  bg-white
+                  px-5
+                  text-sm
+                  font-bold
+                  text-gray-700
+                  transition-colors
+
+                  hover:bg-gray-100
+                "
+            >
+              <FilterAltOffOutlinedIcon
+                sx={{
+                  fontSize: 17,
+                }}
+              />
+              Clear filters
+            </button>
+          )}
         </div>
       )}
 
+      {/* =====================================================
+          ORDERS
+      ===================================================== */}
       {!isLoading && !orderState.error && orderState.orders.length > 0 && (
-        <div className="mt-8">
-          <AdminOrderTable orders={orderState.orders} />
-        </div>
+        <AdminOrderTable orders={orderState.orders} />
       )}
 
+      {/* =====================================================
+          PAGINATION
+      ===================================================== */}
       {!isLoading &&
         orderState.pagination &&
         orderState.pagination.totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-4">
+          <div
+            className="
+              flex
+              items-center
+              justify-between
+              gap-3
+              rounded-[1.1rem]
+              border
+              border-gray-200
+              bg-white
+              p-2
+              shadow-[0_4px_14px_rgba(15,23,42,0.025)]
+
+              sm:mx-auto
+              sm:w-fit
+            "
+          >
             <button
               type="button"
               onClick={() =>
@@ -388,13 +1025,45 @@ function AdminOrders() {
                 })
               }
               disabled={!orderState.pagination.hasPreviousPage}
-              className="rounded-xl border border-gray-300 px-5 py-2.5 font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="
+                inline-flex
+                min-h-10
+                items-center
+                justify-center
+                rounded-full
+                border
+                border-gray-200
+                bg-white
+                px-3.5
+                text-xs
+                font-bold
+                text-gray-700
+                transition-colors
+
+                hover:bg-gray-100
+
+                disabled:cursor-not-allowed
+                disabled:opacity-30
+
+                sm:px-4
+              "
             >
               Previous
             </button>
 
-            <span className="text-sm font-semibold text-gray-600">
-              Page {page} of {orderState.pagination.totalPages}
+            <span
+              className="
+                whitespace-nowrap
+                px-1
+                text-[0.68rem]
+                font-semibold
+                text-gray-500
+
+                sm:px-3
+                sm:text-xs
+              "
+            >
+              {page} / {orderState.pagination.totalPages}
             </span>
 
             <button
@@ -405,7 +1074,27 @@ function AdminOrders() {
                 })
               }
               disabled={!orderState.pagination.hasNextPage}
-              className="rounded-xl border border-gray-300 px-5 py-2.5 font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="
+                inline-flex
+                min-h-10
+                items-center
+                justify-center
+                rounded-full
+                bg-gray-950
+                px-3.5
+                text-xs
+                font-bold
+                text-white
+                transition-colors
+
+                hover:bg-gray-800
+
+                disabled:cursor-not-allowed
+                disabled:bg-gray-200
+                disabled:text-gray-400
+
+                sm:px-4
+              "
             >
               Next
             </button>

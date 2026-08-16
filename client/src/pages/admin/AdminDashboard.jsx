@@ -1,27 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+
+// MUI Icons
 import AttachMoneyRoundedIcon from "@mui/icons-material/AttachMoneyRounded";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
+
+// Components
 import AdminMetricCard from "../../components/admin/dashboard/AdminMetricCard.jsx";
 import DashboardBreakdown from "../../components/admin/dashboard/DashboardBreakdown.jsx";
 import DashboardLowStock from "../../components/admin/dashboard/DashboardLowStock.jsx";
 import DashboardRecentOrders from "../../components/admin/dashboard/DashboardRecentOrders.jsx";
 import DashboardTopProducts from "../../components/admin/dashboard/DashboardTopProducts.jsx";
+
+// Services
 import {
   fetchAdminDashboard,
   fetchAdminStoreSettings,
 } from "../../services/adminDashboardApi.js";
+
+// Utils
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
 import formatCurrency from "../../utils/formatCurrency.js";
 import { formatOrderStatus } from "../../utils/adminOrderWorkflow.js";
+
+/* =========================================================
+   DASHBOARD PERIODS
+========================================================= */
 
 const DASHBOARD_PERIODS = [
   {
@@ -43,6 +56,10 @@ const DASHBOARD_PERIODS = [
 ];
 
 const VALID_PERIODS = new Set(DASHBOARD_PERIODS.map((period) => period.value));
+
+/* =========================================================
+   BREAKDOWN STYLES
+========================================================= */
 
 const ORDER_STATUS_STYLES = {
   PENDING: {
@@ -71,8 +88,8 @@ const ORDER_STATUS_STYLES = {
   },
 
   DELIVERED: {
-    dotClassName: "bg-green-500",
-    barClassName: "bg-green-500",
+    dotClassName: "bg-emerald-500",
+    barClassName: "bg-emerald-500",
   },
 
   CANCELLED: {
@@ -93,8 +110,8 @@ const PAYMENT_STATUS_STYLES = {
   },
 
   PAID: {
-    dotClassName: "bg-green-500",
-    barClassName: "bg-green-500",
+    dotClassName: "bg-emerald-500",
+    barClassName: "bg-emerald-500",
   },
 
   FAILED: {
@@ -108,6 +125,10 @@ const PAYMENT_STATUS_STYLES = {
   },
 };
 
+/* =========================================================
+   HELPERS
+========================================================= */
+
 function isCancelledRequest(error, signal) {
   return signal?.aborted || error?.code === "ERR_CANCELED";
 }
@@ -115,6 +136,10 @@ function isCancelledRequest(error, signal) {
 function isAuthenticationError(error) {
   return error?.response?.status === 401 || error?.response?.status === 403;
 }
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -141,6 +166,10 @@ function AdminDashboard() {
   });
 
   const isLoading = dashboardState.requestKey !== requestKey;
+
+  /* =======================================================
+     LOAD DASHBOARD
+  ======================================================= */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -180,6 +209,7 @@ function AdminDashboard() {
         if (isAuthenticationError(error)) {
           navigate("/admin/login", {
             replace: true,
+
             state: {
               from: `${location.pathname}${location.search}`,
             },
@@ -204,6 +234,10 @@ function AdminDashboard() {
     };
   }, [location.pathname, location.search, navigate, period, requestKey]);
 
+  /* =======================================================
+     PERIOD
+  ======================================================= */
+
   function handlePeriodChange(event) {
     const nextParams = new URLSearchParams(searchParams);
 
@@ -212,62 +246,281 @@ function AdminDashboard() {
     setSearchParams(nextParams);
   }
 
+  /* =======================================================
+     LOADING
+  ======================================================= */
+
   if (isLoading) {
     return (
-      <section>
-        <div className="h-24 animate-pulse rounded-2xl bg-gray-100" />
+      <section
+        className="
+          mx-auto
+          w-full
+          max-w-[100rem]
+        "
+      >
+        {/* PAGE HEADER */}
+        <div
+          className="
+            flex
+            flex-col
+            gap-4
 
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            sm:flex-row
+            sm:items-end
+            sm:justify-between
+          "
+        >
+          <div className="flex-1">
+            <div
+              className="
+                h-3
+                w-28
+                animate-pulse
+                rounded-full
+                bg-gray-100
+              "
+            />
+
+            <div
+              className="
+                mt-3
+                h-8
+                w-40
+                animate-pulse
+                rounded-lg
+                bg-gray-100
+              "
+            />
+
+            <div
+              className="
+                mt-3
+                h-4
+                w-72
+                max-w-full
+                animate-pulse
+                rounded
+                bg-gray-100
+              "
+            />
+          </div>
+
+          <div
+            className="
+              h-12
+              w-full
+              animate-pulse
+              rounded-[0.95rem]
+              bg-gray-100
+
+              sm:w-52
+            "
+          />
+        </div>
+
+        {/* METRICS */}
+        <div
+          className="
+            mt-5
+            grid
+            grid-cols-1
+            gap-3
+
+            sm:mt-6
+            sm:grid-cols-2
+            sm:gap-4
+
+            xl:grid-cols-4
+          "
+        >
           {Array.from({
             length: 8,
           }).map((_, index) => (
             <div
               key={index}
-              className="h-40 animate-pulse rounded-2xl bg-gray-100"
+              className="
+                h-36
+                animate-pulse
+                rounded-[1.4rem]
+                bg-gray-100
+
+                sm:h-40
+              "
             />
           ))}
         </div>
 
-        <div className="mt-8 grid gap-8 xl:grid-cols-2">
-          <div className="h-96 animate-pulse rounded-2xl bg-gray-100" />
-          <div className="h-96 animate-pulse rounded-2xl bg-gray-100" />
+        {/* BREAKDOWNS */}
+        <div
+          className="
+            mt-5
+            grid
+            gap-4
+
+            sm:mt-6
+
+            xl:grid-cols-2
+          "
+        >
+          <div
+            className="
+              h-80
+              animate-pulse
+              rounded-[1.4rem]
+              bg-gray-100
+            "
+          />
+
+          <div
+            className="
+              h-80
+              animate-pulse
+              rounded-[1.4rem]
+              bg-gray-100
+            "
+          />
         </div>
       </section>
     );
   }
 
+  /* =======================================================
+     ERROR
+  ======================================================= */
+
   if (dashboardState.error) {
     return (
-      <section className="py-16 text-center">
-        <ErrorOutlineRoundedIcon
-          className="text-red-500"
-          sx={{
-            fontSize: 64,
-          }}
-        />
+      <section
+        className="
+          mx-auto
+          flex
+          min-h-[60vh]
+          w-full
+          max-w-xl
+          items-center
+          justify-center
+          px-2
+        "
+      >
+        <div
+          className="
+            w-full
+            rounded-[1.4rem]
+            border
+            border-red-200
+            bg-white
+            p-5
+            text-center
+            shadow-[0_8px_24px_rgba(15,23,42,0.04)]
 
-        <h1 className="mt-5 text-3xl font-bold text-gray-950">
-          Dashboard could not be loaded
-        </h1>
-
-        <p className="mt-3 text-gray-600">
-          {getApiErrorMessage(
-            dashboardState.error,
-            "Unable to load dashboard data.",
-          )}
-        </p>
-
-        <button
-          type="button"
-          onClick={() => setReloadToken((currentValue) => currentValue + 1)}
-          className="mt-7 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-6 py-3 font-semibold text-white"
+            sm:p-8
+          "
         >
-          <RefreshRoundedIcon />
-          Try again
-        </button>
+          <span
+            className="
+              mx-auto
+              flex
+              h-14
+              w-14
+              items-center
+              justify-center
+              rounded-full
+              bg-red-50
+              text-red-600
+              ring-1
+              ring-red-100
+            "
+          >
+            <ErrorOutlineRoundedIcon
+              sx={{
+                fontSize: 26,
+              }}
+            />
+          </span>
+
+          <p
+            className="
+              mt-5
+              text-[0.62rem]
+              font-bold
+              uppercase
+              tracking-[0.12em]
+              text-red-500
+            "
+          >
+            Dashboard error
+          </p>
+
+          <h1
+            className="
+              mt-1.5
+              text-xl
+              font-bold
+              tracking-[-0.025em]
+              text-gray-950
+
+              sm:text-2xl
+            "
+          >
+            Dashboard could not be loaded
+          </h1>
+
+          <p
+            className="
+              mx-auto
+              mt-2
+              max-w-md
+              text-xs
+              leading-5
+              text-gray-500
+
+              sm:text-sm
+              sm:leading-6
+            "
+          >
+            {getApiErrorMessage(
+              dashboardState.error,
+              "Unable to load dashboard data.",
+            )}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setReloadToken((currentValue) => currentValue + 1)}
+            className="
+              mt-5
+              inline-flex
+              min-h-11
+              items-center
+              justify-center
+              gap-2
+              rounded-full
+              bg-gray-950
+              px-5
+              text-sm
+              font-bold
+              text-white
+              transition-colors
+
+              hover:bg-gray-800
+            "
+          >
+            <RefreshRoundedIcon
+              sx={{
+                fontSize: 18,
+              }}
+            />
+            Try again
+          </button>
+        </div>
       </section>
     );
   }
+
+  /* =========================================================
+     DATA
+  ========================================================= */
 
   const dashboard = dashboardState.dashboard;
 
@@ -278,8 +531,11 @@ function AdminDashboard() {
   const orderStatusItems = Object.entries(dashboard.orders.byStatus).map(
     ([status, value]) => ({
       key: status,
+
       label: formatOrderStatus(status),
+
       value,
+
       ...ORDER_STATUS_STYLES[status],
     }),
   );
@@ -288,63 +544,247 @@ function AdminDashboard() {
     dashboard.orders.byPaymentStatus,
   ).map(([status, value]) => ({
     key: status,
+
     label: formatOrderStatus(status),
+
     value,
+
     ...PAYMENT_STATUS_STYLES[status],
   }));
 
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
   return (
-    <section>
-      <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">
+    <section
+      className="
+        mx-auto
+        w-full
+        max-w-[100rem]
+      "
+    >
+      {/* =====================================================
+          PAGE HEADER
+      ===================================================== */}
+      <header
+        className="
+          flex
+          flex-col
+          gap-4
+
+          sm:flex-row
+          sm:items-end
+          sm:justify-between
+
+          lg:gap-6
+        "
+      >
+        <div className="min-w-0">
+          <p
+            className="
+              text-[0.62rem]
+              font-bold
+              uppercase
+              tracking-[0.13em]
+              text-gray-400
+            "
+          >
             Store overview
           </p>
 
-          <h1 className="mt-2 text-3xl font-bold text-gray-950">Dashboard</h1>
+          <h1
+            className="
+              mt-1
+              text-2xl
+              font-bold
+              tracking-[-0.035em]
+              text-gray-950
 
-          <p className="mt-2 text-gray-600">
-            Monitor sales, orders, customers, products, and inventory.
+              sm:text-3xl
+            "
+          >
+            Dashboard
+          </h1>
+
+          <p
+            className="
+              mt-1.5
+              max-w-xl
+              text-xs
+              leading-5
+              text-gray-500
+
+              sm:text-sm
+              sm:leading-6
+            "
+          >
+            Monitor sales, orders, customers, products, and inventory from one
+            place.
           </p>
         </div>
 
-        <label className="w-full sm:w-56">
-          <span className="text-sm font-semibold text-gray-700">
-            Reporting period
-          </span>
+        {/* REPORTING PERIOD */}
+        <div
+          className="
+            w-full
 
-          <select
-            value={period}
-            onChange={handlePeriodChange}
-            className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+            sm:w-52
+            sm:shrink-0
+          "
+        >
+          <label
+            htmlFor="dashboard-period"
+            className="
+              text-[0.65rem]
+              font-bold
+              text-gray-600
+
+              sm:text-xs
+            "
           >
-            {DASHBOARD_PERIODS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            Reporting period
+          </label>
+
+          <div className="relative mt-1.5">
+            <select
+              id="dashboard-period"
+              value={period}
+              onChange={handlePeriodChange}
+              className="
+                min-h-11
+                w-full
+                appearance-none
+                rounded-[0.95rem]
+                border
+                border-gray-200
+                bg-white
+                px-3.5
+                pr-10
+                text-sm
+                font-semibold
+                text-gray-800
+                outline-none
+                transition
+
+                focus:border-gray-400
+                focus:ring-4
+                focus:ring-gray-950/[0.035]
+              "
+            >
+              {DASHBOARD_PERIODS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <KeyboardArrowDownRoundedIcon
+              sx={{
+                fontSize: 19,
+              }}
+              className="
+                pointer-events-none
+                absolute
+                right-3
+                top-1/2
+                -translate-y-1/2
+                text-gray-400
+              "
+            />
+          </div>
+        </div>
       </header>
 
+      {/* =====================================================
+          ORDERING DISABLED WARNING
+      ===================================================== */}
       {!setting.ordersEnabled && (
-        <div className="mt-8 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-          <WarningAmberRoundedIcon className="shrink-0 text-amber-700" />
+        <div
+          className="
+            mt-5
+            flex
+            items-start
+            gap-3
+            rounded-[1.15rem]
+            border
+            border-amber-200
+            bg-amber-50/70
+            p-3.5
+
+            sm:mt-6
+            sm:p-4
+          "
+        >
+          <span
+            className="
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-full
+              bg-white
+              text-amber-600
+              shadow-sm
+              ring-1
+              ring-amber-100
+            "
+          >
+            <WarningAmberRoundedIcon
+              sx={{
+                fontSize: 18,
+              }}
+            />
+          </span>
 
           <div>
-            <h2 className="font-bold text-amber-900">
+            <p
+              className="
+                text-sm
+                font-bold
+                text-amber-900
+              "
+            >
               Customer ordering is disabled
-            </h2>
+            </p>
 
-            <p className="mt-1 text-sm text-amber-800">
-              Customers can browse and use their carts, but they cannot place
-              new orders.
+            <p
+              className="
+                mt-1
+                text-xs
+                leading-5
+                text-amber-700
+
+                sm:text-sm
+                sm:leading-6
+              "
+            >
+              Customers can still browse products and manage their carts, but
+              new orders cannot currently be placed.
             </p>
           </div>
         </div>
       )}
 
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      {/* =====================================================
+          METRICS
+      ===================================================== */}
+      <div
+        className="
+          mt-5
+          grid
+          grid-cols-1
+          gap-3
+
+          sm:mt-6
+          sm:grid-cols-2
+          sm:gap-4
+
+          xl:grid-cols-4
+        "
+      >
         <AdminMetricCard
           icon={PaidOutlinedIcon}
           label="Paid revenue"
@@ -413,7 +853,20 @@ function AdminDashboard() {
         />
       </div>
 
-      <div className="mt-8 grid gap-8 xl:grid-cols-2">
+      {/* =====================================================
+          STATUS BREAKDOWNS
+      ===================================================== */}
+      <div
+        className="
+          mt-5
+          grid
+          gap-4
+
+          sm:mt-6
+
+          xl:grid-cols-2
+        "
+      >
         <DashboardBreakdown
           title="Orders by status"
           description="Distribution of orders in the selected period."
@@ -427,11 +880,36 @@ function AdminDashboard() {
         />
       </div>
 
-      <div className="mt-8">
+      {/* =====================================================
+          RECENT ORDERS
+      ===================================================== */}
+      <div
+        className="
+          mt-5
+
+          sm:mt-6
+        "
+      >
         <DashboardRecentOrders orders={dashboard.recentOrders} />
       </div>
 
-      <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_24rem]">
+      {/* =====================================================
+          INVENTORY + TOP PRODUCTS
+      ===================================================== */}
+      <div
+        className="
+          mt-5
+          grid
+          items-start
+          gap-4
+
+          sm:mt-6
+
+          xl:grid-cols-[minmax(0,1fr)_24rem]
+
+          2xl:grid-cols-[minmax(0,1fr)_28rem]
+        "
+      >
         <DashboardLowStock
           items={dashboard.inventory.lowStockItems}
           lowStockCount={dashboard.inventory.lowStockCount}

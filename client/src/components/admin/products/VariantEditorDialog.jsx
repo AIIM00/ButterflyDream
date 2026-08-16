@@ -9,6 +9,12 @@ import {
 } from "@mui/material";
 
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
+import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
+import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
+import StraightenOutlinedIcon from "@mui/icons-material/StraightenOutlined";
 
 const METAL_COLORS = [
   {
@@ -94,6 +100,10 @@ const SIZE_TYPES = [
     label: "Custom",
   },
 ];
+
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function getVariantOptions(variant) {
   if (!variant?.options || typeof variant.options !== "object") {
@@ -194,13 +204,11 @@ function buildOptions(formData) {
 
   if (metalColor) {
     options.metalColor = metalColor;
-
     options.metalColorHex = formData.metalColorHex;
   }
 
   if (stoneColor) {
     options.stoneColor = stoneColor;
-
     options.stoneColorHex = formData.stoneColorHex;
   }
 
@@ -261,6 +269,10 @@ function buildPayload(formData) {
   };
 }
 
+/* =========================================================
+   COLOR OPTION
+========================================================= */
+
 function ColorOption({ name, hex, selected, onClick }) {
   return (
     <button
@@ -269,36 +281,54 @@ function ColorOption({ name, hex, selected, onClick }) {
       className={[
         `
           inline-flex
-          min-h-11
+          min-h-10
           items-center
-          gap-2.5
+          gap-2
+
           rounded-full
+
           border
-          px-4
-          text-sm
-          font-semibold
-          transition-colors
+
+          px-3
+
+          text-xs
+          font-bold
+
+          transition-all
+
+          sm:min-h-11
+          sm:px-4
+          sm:text-sm
         `,
         selected
           ? `
-            border-[var(--color-deep-espresso)]
-            bg-[var(--color-soft-ivory)]
-            text-[var(--color-deep-espresso)]
+            border-gray-950
+            bg-gray-950
+            text-white
           `
           : `
-            border-[var(--color-warm-light-gray)]
+            border-gray-200
             bg-white
-            text-[var(--color-warm-gray)]
-            hover:border-[var(--color-antique-champagne)]
+            text-gray-700
+
+            hover:border-gray-400
+            hover:bg-gray-50
           `,
       ].join(" ")}
     >
       <span
         className="
-          h-5 w-5
+          h-4
+          w-4
           shrink-0
+
           rounded-full
-          border border-black/10
+
+          border
+          border-black/10
+
+          sm:h-5
+          sm:w-5
         "
         style={{
           backgroundColor: hex,
@@ -311,13 +341,68 @@ function ColorOption({ name, hex, selected, onClick }) {
   );
 }
 
-function VariantEditorDialog({
-  open,
-  variant = null,
-  isSubmitting,
-  onClose,
-  onSubmit,
-}) {
+/* =========================================================
+   SECTION HEADER
+========================================================= */
+
+function SectionHeading({ icon: Icon, title, description }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span
+        className="
+          flex
+          h-9
+          w-9
+          shrink-0
+          items-center
+          justify-center
+
+          rounded-xl
+
+          bg-gray-100
+          text-gray-600
+        "
+      >
+        <Icon sx={{ fontSize: 18 }} />
+      </span>
+
+      <div>
+        <h3
+          className="
+            text-sm
+            font-bold
+            text-gray-950
+
+            sm:text-base
+          "
+        >
+          {title}
+        </h3>
+
+        {description && (
+          <p
+            className="
+              mt-1
+              text-[0.68rem]
+              leading-5
+              text-gray-500
+
+              sm:text-xs
+            "
+          >
+            {description}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   FORM
+========================================================= */
+
+function VariantEditorForm({ variant, isSubmitting, onClose, onSubmit }) {
   const [formData, setFormData] = useState(() => createFormState(variant));
 
   const [validationError, setValidationError] = useState("");
@@ -331,6 +416,10 @@ function VariantEditorDialog({
       ...currentData,
       [name]: value,
     }));
+
+    if (validationError) {
+      setValidationError("");
+    }
   }
 
   function selectMetalColor(color) {
@@ -338,9 +427,12 @@ function VariantEditorDialog({
       ...currentData,
 
       metalColor: color.name,
-
       metalColorHex: color.hex,
     }));
+
+    if (validationError) {
+      setValidationError("");
+    }
   }
 
   function selectStoneColor(color) {
@@ -348,8 +440,18 @@ function VariantEditorDialog({
       ...currentData,
 
       stoneColor: color.name,
-
       stoneColorHex: color.hex,
+    }));
+
+    if (validationError) {
+      setValidationError("");
+    }
+  }
+
+  function clearStone() {
+    setFormData((currentData) => ({
+      ...currentData,
+      stoneColor: "",
     }));
   }
 
@@ -363,676 +465,1104 @@ function VariantEditorDialog({
 
       await onSubmit(payload);
     } catch (error) {
-      setValidationError(error.message);
+      setValidationError(error?.message || "The variant could not be saved.");
     }
   }
 
   return (
-    <Dialog
-      open={open}
-      onClose={isSubmitting ? undefined : onClose}
-      fullWidth
-      maxWidth="md"
-    >
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>
-          <div
+    <form onSubmit={handleSubmit}>
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+      <DialogTitle sx={{ padding: 0 }}>
+        <div
+          className="
+            flex
+            items-start
+            justify-between
+            gap-4
+
+            border-b
+            border-gray-100
+
+            px-4
+            py-4
+
+            sm:px-6
+            sm:py-5
+          "
+        >
+          <div className="min-w-0">
+            <p
+              className="
+                text-[0.62rem]
+                font-bold
+                uppercase
+                tracking-[0.13em]
+                text-gray-400
+              "
+            >
+              Product option
+            </p>
+
+            <h2
+              className="
+                mt-1
+                text-lg
+                font-bold
+                tracking-[-0.025em]
+                text-gray-950
+
+                sm:text-xl
+              "
+            >
+              {isEditing ? "Edit variant" : "Add variant"}
+            </h2>
+
+            <p
+              className="
+                mt-1.5
+                max-w-lg
+
+                text-xs
+                leading-5
+                text-gray-500
+
+                sm:text-sm
+              "
+            >
+              Create one purchasable combination of color, stone, size, price
+              and inventory.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            aria-label="Close variant editor"
             className="
-              flex items-start
-              justify-between
-              gap-4
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+
+              rounded-full
+
+              text-gray-400
+
+              transition-colors
+
+              hover:bg-gray-100
+              hover:text-gray-950
+
+              disabled:cursor-not-allowed
+              disabled:opacity-40
             "
           >
-            <div>
-              <p
-                className="
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-[0.18em]
-                  text-[var(--color-warm-gray)]
-                "
-              >
-                Product option
-              </p>
+            <CloseRoundedIcon sx={{ fontSize: 20 }} />
+          </button>
+        </div>
+      </DialogTitle>
 
-              <h2
-                className="
-                  mt-1
-                  font-display
-                  text-3xl
-                  font-medium
-                  text-[var(--color-deep-espresso)]
-                "
-              >
-                {isEditing ? "Edit variant" : "Add variant"}
-              </h2>
+      {/* =====================================================
+          CONTENT
+      ===================================================== */}
+      <DialogContent sx={{ padding: 0 }}>
+        <div
+          className="
+            space-y-7
 
-              <p
+            px-4
+            py-5
+
+            sm:space-y-8
+            sm:px-6
+            sm:py-6
+          "
+        >
+          {/* VALIDATION */}
+          {validationError && (
+            <div
+              className="
+                rounded-[1rem]
+
+                border
+                border-red-200
+
+                bg-red-50
+
+                px-3.5
+                py-3
+
+                text-xs
+                font-medium
+                leading-5
+                text-red-700
+
+                sm:px-4
+                sm:text-sm
+              "
+            >
+              {validationError}
+            </div>
+          )}
+
+          {/* =================================================
+              PREVIEW
+          ================================================= */}
+          <section
+            className="
+              rounded-[1rem]
+
+              border
+              border-gray-200
+
+              bg-gray-50/70
+
+              p-4
+
+              sm:p-5
+            "
+          >
+            <p
+              className="
+                text-[0.6rem]
+                font-bold
+                uppercase
+                tracking-[0.12em]
+                text-gray-400
+              "
+            >
+              Variant preview
+            </p>
+
+            <p
+              className="
+                mt-2
+
+                text-base
+                font-bold
+                leading-6
+                tracking-[-0.02em]
+                text-gray-950
+
+                sm:text-lg
+              "
+            >
+              {displayName}
+            </p>
+          </section>
+
+          {/* =================================================
+              IDENTIFICATION
+          ================================================= */}
+          <section>
+            <SectionHeading
+              icon={SellOutlinedIcon}
+              title="Identification"
+              description="Use a unique SKU for this specific purchasable variant."
+            />
+
+            <label
+              htmlFor="variant-sku"
+              className="
+                mt-4
+                block
+
+                text-xs
+                font-bold
+                text-gray-800
+
+                sm:text-sm
+              "
+            >
+              SKU
+              <input
+                id="variant-sku"
+                value={formData.sku}
+                onChange={(event) => updateField("sku", event.target.value)}
+                disabled={isSubmitting}
+                placeholder="RING-GOLD-EMERALD-8"
                 className="
                   mt-2
-                  text-sm
-                  text-[var(--color-warm-gray)]
+                  min-h-12
+                  w-full
+
+                  rounded-[0.95rem]
+
+                  border
+                  border-gray-200
+
+                  bg-white
+
+                  px-4
+
+                  font-normal
+                  text-gray-900
+
+                  outline-none
+                  transition
+
+                  placeholder:text-gray-400
+
+                  focus:border-gray-400
+                  focus:ring-4
+                  focus:ring-gray-950/[0.035]
+
+                  disabled:cursor-not-allowed
+                  disabled:bg-gray-100
                 "
-              >
-                One variant is one purchasable combination of color, stone and
-                size.
-              </p>
+              />
+            </label>
+          </section>
+
+          {/* =================================================
+              METAL
+          ================================================= */}
+          <section>
+            <SectionHeading
+              icon={PaletteOutlinedIcon}
+              title="Metal / finish"
+              description="Choose the finish customers will see for this variant."
+            />
+
+            <div
+              className="
+                mt-4
+                flex
+                flex-wrap
+                gap-2
+              "
+            >
+              {METAL_COLORS.map((color) => (
+                <ColorOption
+                  key={color.name}
+                  {...color}
+                  selected={formData.metalColor === color.name}
+                  onClick={() => selectMetalColor(color)}
+                />
+              ))}
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              aria-label="Close"
+            <div
               className="
-                flex h-11 w-11
-                shrink-0
-                items-center
-                justify-center
-                rounded-full
-                transition-colors
-                hover:bg-[var(--color-soft-ivory)]
-              "
-            >
-              <CloseRoundedIcon />
-            </button>
-          </div>
-        </DialogTitle>
+                mt-4
+                grid
+                gap-3
 
-        <DialogContent dividers>
-          <div className="space-y-8 py-2">
-            {validationError && (
-              <div
-                className="
-                  border
-                  border-[var(--color-error)]/25
-                  bg-[var(--color-error)]/5
-                  px-4 py-3
-                  text-sm
-                  text-[var(--color-error)]
-                "
-              >
-                {validationError}
-              </div>
-            )}
-
-            {/* VARIANT PREVIEW */}
-
-            <section
-              className="
-                border
-                border-[var(--color-warm-light-gray)]
-                bg-[var(--color-soft-ivory)]
-                p-5
-              "
-            >
-              <p
-                className="
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-[0.16em]
-                  text-[var(--color-warm-gray)]
-                "
-              >
-                Variant preview
-              </p>
-
-              <p
-                className="
-                  mt-2
-                  text-lg
-                  font-bold
-                  text-[var(--color-deep-espresso)]
-                "
-              >
-                {displayName}
-              </p>
-            </section>
-
-            {/* SKU */}
-
-            <section>
-              <h3 className="font-bold">Identification</h3>
-
-              <label className="mt-4 block text-sm font-semibold">
-                SKU
-                <input
-                  value={formData.sku}
-                  onChange={(event) => updateField("sku", event.target.value)}
-                  disabled={isSubmitting}
-                  placeholder="RING-GOLD-EMERALD-8"
-                  className="
-                    mt-2
-                    w-full
-                    rounded-xl
-                    border
-                    border-[var(--color-warm-light-gray)]
-                    px-4 py-3
-                    font-normal
-                    outline-none
-                    focus:border-[var(--color-antique-champagne)]
-                  "
-                />
-              </label>
-            </section>
-
-            {/* METAL COLOR */}
-
-            <section>
-              <div>
-                <h3 className="font-bold">Metal / finish color</h3>
-
-                <p
-                  className="
-                    mt-1
-                    text-sm
-                    text-[var(--color-warm-gray)]
-                  "
-                >
-                  Used for gold, silver, rose gold and other finishes.
-                </p>
-              </div>
-
-              <div
-                className="
-                  mt-4
-                  flex
-                  flex-wrap
-                  gap-2
-                "
-              >
-                {METAL_COLORS.map((color) => (
-                  <ColorOption
-                    key={color.name}
-                    {...color}
-                    selected={formData.metalColor === color.name}
-                    onClick={() => selectMetalColor(color)}
-                  />
-                ))}
-              </div>
-
-              <div
-                className="
-                  mt-4
-                  grid gap-4
-                  sm:grid-cols-[minmax(0,1fr)_8rem]
-                "
-              >
-                <label className="text-sm font-semibold">
-                  Custom color name
-                  <input
-                    value={formData.metalColor}
-                    onChange={(event) =>
-                      updateField("metalColor", event.target.value)
-                    }
-                    disabled={isSubmitting}
-                    placeholder="Champagne Gold"
-                    className="
-                      mt-2
-                      w-full
-                      rounded-xl
-                      border
-                      border-[var(--color-warm-light-gray)]
-                      px-4 py-3
-                      font-normal
-                    "
-                  />
-                </label>
-
-                <label className="text-sm font-semibold">
-                  Swatch
-                  <input
-                    type="color"
-                    value={formData.metalColorHex}
-                    onChange={(event) =>
-                      updateField("metalColorHex", event.target.value)
-                    }
-                    className="
-                      mt-2
-                      h-12
-                      w-full
-                      cursor-pointer
-                      rounded-xl
-                      border
-                      border-[var(--color-warm-light-gray)]
-                      bg-white
-                      p-1
-                    "
-                  />
-                </label>
-              </div>
-            </section>
-
-            {/* STONE COLOR */}
-
-            <section>
-              <div
-                className="
-                  flex
-                  items-start
-                  justify-between
-                  gap-4
-                "
-              >
-                <div>
-                  <h3 className="font-bold">Stone color</h3>
-
-                  <p
-                    className="
-                      mt-1
-                      text-sm
-                      text-[var(--color-warm-gray)]
-                    "
-                  >
-                    Optional. Leave empty for products without stones.
-                  </p>
-                </div>
-
-                {formData.stoneColor && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData((currentData) => ({
-                        ...currentData,
-                        stoneColor: "",
-                      }))
-                    }
-                    className="
-                      min-h-10
-                      rounded-full
-                      px-4
-                      text-sm
-                      font-semibold
-                      text-[var(--color-error)]
-                    "
-                  >
-                    No stone
-                  </button>
-                )}
-              </div>
-
-              <div
-                className="
-                  mt-4
-                  flex
-                  flex-wrap
-                  gap-2
-                "
-              >
-                {STONE_COLORS.map((color) => (
-                  <ColorOption
-                    key={color.name}
-                    {...color}
-                    selected={formData.stoneColor === color.name}
-                    onClick={() => selectStoneColor(color)}
-                  />
-                ))}
-              </div>
-
-              <div
-                className="
-                  mt-4
-                  grid gap-4
-                  sm:grid-cols-[minmax(0,1fr)_8rem]
-                "
-              >
-                <label className="text-sm font-semibold">
-                  Custom stone color
-                  <input
-                    value={formData.stoneColor}
-                    onChange={(event) =>
-                      updateField("stoneColor", event.target.value)
-                    }
-                    disabled={isSubmitting}
-                    placeholder="Emerald"
-                    className="
-                      mt-2
-                      w-full
-                      rounded-xl
-                      border
-                      border-[var(--color-warm-light-gray)]
-                      px-4 py-3
-                      font-normal
-                    "
-                  />
-                </label>
-
-                <label className="text-sm font-semibold">
-                  Swatch
-                  <input
-                    type="color"
-                    value={formData.stoneColorHex}
-                    onChange={(event) =>
-                      updateField("stoneColorHex", event.target.value)
-                    }
-                    className="
-                      mt-2
-                      h-12
-                      w-full
-                      cursor-pointer
-                      rounded-xl
-                      border
-                      border-[var(--color-warm-light-gray)]
-                      bg-white
-                      p-1
-                    "
-                  />
-                </label>
-              </div>
-            </section>
-
-            {/* SIZE */}
-
-            <section>
-              <h3 className="font-bold">Size</h3>
-
-              <p
-                className="
-                  mt-1
-                  text-sm
-                  text-[var(--color-warm-gray)]
-                "
-              >
-                Select the sizing system appropriate for this accessory.
-              </p>
-
-              <label className="mt-4 block text-sm font-semibold">
-                Size format
-                <select
-                  value={formData.sizeType}
-                  onChange={(event) => {
-                    const nextType = event.target.value;
-
-                    setFormData((currentData) => ({
-                      ...currentData,
-                      sizeType: nextType,
-
-                      size: nextType === "NONE" ? "" : currentData.size,
-                    }));
-                  }}
-                  disabled={isSubmitting}
-                  className="
-                    mt-2
-                    w-full
-                    rounded-xl
-                    border
-                    border-[var(--color-warm-light-gray)]
-                    bg-white
-                    px-4 py-3
-                    font-normal
-                  "
-                >
-                  {SIZE_TYPES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              {formData.sizeType === "LETTER" && (
-                <div
-                  className="
-                    mt-4
-                    flex flex-wrap
-                    gap-2
-                  "
-                >
-                  {LETTER_SIZES.map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => updateField("size", size)}
-                      className={[
-                        `
-                            flex
-                            h-11
-                            min-w-12
-                            items-center
-                            justify-center
-                            rounded-full
-                            border
-                            px-4
-                            text-sm
-                            font-bold
-                          `,
-                        formData.size === size
-                          ? `
-                              border-[var(--color-deep-espresso)]
-                              bg-[var(--color-deep-espresso)]
-                              text-white
-                            `
-                          : `
-                              border-[var(--color-warm-light-gray)]
-                              bg-white
-                              text-[var(--color-deep-espresso)]
-                            `,
-                      ].join(" ")}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {formData.sizeType === "RING" && (
-                <div
-                  className="
-                    mt-4
-                    flex flex-wrap
-                    gap-2
-                  "
-                >
-                  {RING_SIZES.map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => updateField("size", size)}
-                      className={[
-                        `
-                            flex
-                            h-11
-                            min-w-11
-                            items-center
-                            justify-center
-                            rounded-full
-                            border
-                            px-3
-                            text-sm
-                            font-bold
-                          `,
-                        String(formData.size) === size
-                          ? `
-                              border-[var(--color-deep-espresso)]
-                              bg-[var(--color-deep-espresso)]
-                              text-white
-                            `
-                          : `
-                              border-[var(--color-warm-light-gray)]
-                              bg-white
-                              text-[var(--color-deep-espresso)]
-                            `,
-                      ].join(" ")}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {(formData.sizeType === "LENGTH" ||
-                formData.sizeType === "CUSTOM") && (
-                <label className="mt-4 block text-sm font-semibold">
-                  {formData.sizeType === "LENGTH" ? "Length" : "Custom size"}
-
-                  <input
-                    value={formData.size}
-                    onChange={(event) =>
-                      updateField("size", event.target.value)
-                    }
-                    placeholder={
-                      formData.sizeType === "LENGTH" ? "45 cm" : "One Size"
-                    }
-                    className="
-                      mt-2
-                      w-full
-                      rounded-xl
-                      border
-                      border-[var(--color-warm-light-gray)]
-                      px-4 py-3
-                      font-normal
-                    "
-                  />
-                </label>
-              )}
-            </section>
-
-            {/* PRICE & STOCK */}
-
-            <section>
-              <h3 className="font-bold">Price & inventory</h3>
-
-              <div
-                className="
-                  mt-4
-                  grid gap-4
-                  sm:grid-cols-3
-                "
-              >
-                <label className="text-sm font-semibold">
-                  Price
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.price}
-                    onChange={(event) =>
-                      updateField("price", event.target.value)
-                    }
-                    disabled={isSubmitting}
-                    className="
-                      mt-2
-                      w-full
-                      rounded-xl
-                      border
-                      border-[var(--color-warm-light-gray)]
-                      px-4 py-3
-                      font-normal
-                    "
-                  />
-                </label>
-
-                <label className="text-sm font-semibold">
-                  Stock
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={formData.stockQuantity}
-                    onChange={(event) =>
-                      updateField("stockQuantity", event.target.value)
-                    }
-                    disabled={isSubmitting}
-                    className="
-                      mt-2
-                      w-full
-                      rounded-xl
-                      border
-                      border-[var(--color-warm-light-gray)]
-                      px-4 py-3
-                      font-normal
-                    "
-                  />
-                </label>
-
-                <label className="text-sm font-semibold">
-                  Low stock at
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={formData.lowStockThreshold}
-                    onChange={(event) =>
-                      updateField("lowStockThreshold", event.target.value)
-                    }
-                    disabled={isSubmitting}
-                    className="
-                      mt-2
-                      w-full
-                      rounded-xl
-                      border
-                      border-[var(--color-warm-light-gray)]
-                      px-4 py-3
-                      font-normal
-                    "
-                  />
-                </label>
-              </div>
-            </section>
-
-            <section
-              className="
-                grid gap-3
-                bg-[var(--color-soft-ivory)]
-                p-4
-                sm:grid-cols-2
+                sm:grid-cols-[minmax(0,1fr)_7rem]
+                sm:gap-4
               "
             >
               <label
                 className="
-                  flex
-                  items-center
+                  text-xs
+                  font-bold
+                  text-gray-800
+
+                  sm:text-sm
+                "
+              >
+                Custom color name
+                <input
+                  value={formData.metalColor}
+                  onChange={(event) =>
+                    updateField("metalColor", event.target.value)
+                  }
+                  disabled={isSubmitting}
+                  placeholder="Champagne Gold"
+                  className="
+                    mt-2
+                    min-h-12
+                    w-full
+
+                    rounded-[0.95rem]
+
+                    border
+                    border-gray-200
+
+                    px-4
+
+                    font-normal
+                    text-gray-900
+
+                    outline-none
+
+                    focus:border-gray-400
+                    focus:ring-4
+                    focus:ring-gray-950/[0.035]
+                  "
+                />
+              </label>
+
+              <label
+                className="
+                  text-xs
+                  font-bold
+                  text-gray-800
+
+                  sm:text-sm
+                "
+              >
+                Swatch
+                <input
+                  type="color"
+                  value={formData.metalColorHex}
+                  onChange={(event) =>
+                    updateField("metalColorHex", event.target.value)
+                  }
+                  disabled={isSubmitting}
+                  className="
+                    mt-2
+                    h-12
+                    w-full
+
+                    cursor-pointer
+
+                    rounded-[0.95rem]
+
+                    border
+                    border-gray-200
+
+                    bg-white
+                    p-1
+                  "
+                />
+              </label>
+            </div>
+          </section>
+
+          {/* =================================================
+              STONE
+          ================================================= */}
+          <section>
+            <div
+              className="
+                flex
+                items-start
+                justify-between
+                gap-3
+              "
+            >
+              <SectionHeading
+                icon={PaletteOutlinedIcon}
+                title="Stone color"
+                description="Optional for products that include a stone or crystal."
+              />
+
+              {formData.stoneColor && (
+                <button
+                  type="button"
+                  onClick={clearStone}
+                  disabled={isSubmitting}
+                  className="
+                    shrink-0
+
+                    rounded-full
+
+                    px-2.5
+                    py-1.5
+
+                    text-[0.65rem]
+                    font-bold
+                    text-red-600
+
+                    transition
+
+                    hover:bg-red-50
+
+                    sm:px-3
+                    sm:text-xs
+                  "
+                >
+                  No stone
+                </button>
+              )}
+            </div>
+
+            <div
+              className="
+                mt-4
+                flex
+                flex-wrap
+                gap-2
+              "
+            >
+              {STONE_COLORS.map((color) => (
+                <ColorOption
+                  key={color.name}
+                  {...color}
+                  selected={formData.stoneColor === color.name}
+                  onClick={() => selectStoneColor(color)}
+                />
+              ))}
+            </div>
+
+            <div
+              className="
+                mt-4
+                grid
+                gap-3
+
+                sm:grid-cols-[minmax(0,1fr)_7rem]
+                sm:gap-4
+              "
+            >
+              <label
+                className="
+                  text-xs
+                  font-bold
+                  text-gray-800
+
+                  sm:text-sm
+                "
+              >
+                Custom stone color
+                <input
+                  value={formData.stoneColor}
+                  onChange={(event) =>
+                    updateField("stoneColor", event.target.value)
+                  }
+                  disabled={isSubmitting}
+                  placeholder="Emerald"
+                  className="
+                    mt-2
+                    min-h-12
+                    w-full
+
+                    rounded-[0.95rem]
+
+                    border
+                    border-gray-200
+
+                    px-4
+
+                    font-normal
+                    text-gray-900
+
+                    outline-none
+
+                    focus:border-gray-400
+                    focus:ring-4
+                    focus:ring-gray-950/[0.035]
+                  "
+                />
+              </label>
+
+              <label
+                className="
+                  text-xs
+                  font-bold
+                  text-gray-800
+
+                  sm:text-sm
+                "
+              >
+                Swatch
+                <input
+                  type="color"
+                  value={formData.stoneColorHex}
+                  onChange={(event) =>
+                    updateField("stoneColorHex", event.target.value)
+                  }
+                  disabled={isSubmitting}
+                  className="
+                    mt-2
+                    h-12
+                    w-full
+
+                    cursor-pointer
+
+                    rounded-[0.95rem]
+
+                    border
+                    border-gray-200
+
+                    bg-white
+                    p-1
+                  "
+                />
+              </label>
+            </div>
+          </section>
+
+          {/* =================================================
+              SIZE
+          ================================================= */}
+          <section>
+            <SectionHeading
+              icon={StraightenOutlinedIcon}
+              title="Size"
+              description="Choose the sizing system appropriate for this product."
+            />
+
+            <label
+              htmlFor="variant-size-type"
+              className="
+                mt-4
+                block
+
+                text-xs
+                font-bold
+                text-gray-800
+
+                sm:text-sm
+              "
+            >
+              Size format
+            </label>
+
+            <div className="relative mt-2">
+              <select
+                id="variant-size-type"
+                value={formData.sizeType}
+                onChange={(event) => {
+                  const nextType = event.target.value;
+
+                  setFormData((currentData) => ({
+                    ...currentData,
+
+                    sizeType: nextType,
+
+                    size: nextType === "NONE" ? "" : currentData.size,
+                  }));
+                }}
+                disabled={isSubmitting}
+                className="
+                  min-h-12
+                  w-full
+                  appearance-none
+
+                  rounded-[0.95rem]
+
+                  border
+                  border-gray-200
+
+                  bg-white
+
+                  px-4
+                  pr-11
+
+                  text-sm
+                  font-medium
+                  text-gray-900
+
+                  outline-none
+
+                  focus:border-gray-400
+                  focus:ring-4
+                  focus:ring-gray-950/[0.035]
+
+                  disabled:bg-gray-100
+                "
+              >
+                {SIZE_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+
+              <KeyboardArrowDownRoundedIcon
+                sx={{ fontSize: 20 }}
+                className="
+                  pointer-events-none
+                  absolute
+                  right-3.5
+                  top-1/2
+                  -translate-y-1/2
+                  text-gray-400
+                "
+              />
+            </div>
+
+            {formData.sizeType === "LETTER" && (
+              <div
+                className="
+                  mt-4
+                  grid
+                  grid-cols-5
                   gap-2
-                  font-semibold
+                "
+              >
+                {LETTER_SIZES.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => updateField("size", size)}
+                    className={[
+                      `
+                        flex
+                        min-h-11
+                        items-center
+                        justify-center
+
+                        rounded-full
+
+                        border
+
+                        text-xs
+                        font-bold
+
+                        transition
+
+                        sm:text-sm
+                      `,
+                      formData.size === size
+                        ? `
+                          border-gray-950
+                          bg-gray-950
+                          text-white
+                        `
+                        : `
+                          border-gray-200
+                          bg-white
+                          text-gray-700
+
+                          hover:border-gray-400
+                        `,
+                    ].join(" ")}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {formData.sizeType === "RING" && (
+              <div
+                className="
+                  mt-4
+                  grid
+                  grid-cols-5
+                  gap-2
+
+                  sm:grid-cols-10
+                "
+              >
+                {RING_SIZES.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => updateField("size", size)}
+                    className={[
+                      `
+                        flex
+                        min-h-11
+                        items-center
+                        justify-center
+
+                        rounded-full
+
+                        border
+
+                        px-2
+
+                        text-xs
+                        font-bold
+
+                        transition
+
+                        sm:text-sm
+                      `,
+                      String(formData.size) === size
+                        ? `
+                          border-gray-950
+                          bg-gray-950
+                          text-white
+                        `
+                        : `
+                          border-gray-200
+                          bg-white
+                          text-gray-700
+
+                          hover:border-gray-400
+                        `,
+                    ].join(" ")}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {(formData.sizeType === "LENGTH" ||
+              formData.sizeType === "CUSTOM") && (
+              <label
+                className="
+                  mt-4
+                  block
+
+                  text-xs
+                  font-bold
+                  text-gray-800
+
+                  sm:text-sm
+                "
+              >
+                {formData.sizeType === "LENGTH" ? "Length" : "Custom size"}
+
+                <input
+                  value={formData.size}
+                  onChange={(event) => updateField("size", event.target.value)}
+                  disabled={isSubmitting}
+                  placeholder={
+                    formData.sizeType === "LENGTH" ? "45 cm" : "One Size"
+                  }
+                  className="
+                    mt-2
+                    min-h-12
+                    w-full
+
+                    rounded-[0.95rem]
+
+                    border
+                    border-gray-200
+
+                    px-4
+
+                    font-normal
+                    text-gray-900
+
+                    outline-none
+
+                    focus:border-gray-400
+                    focus:ring-4
+                    focus:ring-gray-950/[0.035]
+                  "
+                />
+              </label>
+            )}
+          </section>
+
+          {/* =================================================
+              PRICE & INVENTORY
+          ================================================= */}
+          <section>
+            <SectionHeading
+              icon={Inventory2OutlinedIcon}
+              title="Price & inventory"
+              description="Set the selling price and stock controls for this variant."
+            />
+
+            <div
+              className="
+                mt-4
+                grid
+                gap-3
+
+                sm:grid-cols-3
+                sm:gap-4
+              "
+            >
+              <label
+                className="
+                  text-xs
+                  font-bold
+                  text-gray-800
+
+                  sm:text-sm
+                "
+              >
+                Price
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.price}
+                  onChange={(event) => updateField("price", event.target.value)}
+                  disabled={isSubmitting}
+                  className="
+                    mt-2
+                    min-h-12
+                    w-full
+
+                    rounded-[0.95rem]
+
+                    border
+                    border-gray-200
+
+                    px-4
+
+                    font-normal
+
+                    outline-none
+
+                    focus:border-gray-400
+                    focus:ring-4
+                    focus:ring-gray-950/[0.035]
+
+                    disabled:bg-gray-100
+                  "
+                />
+              </label>
+
+              <label
+                className="
+                  text-xs
+                  font-bold
+                  text-gray-800
+
+                  sm:text-sm
+                "
+              >
+                Stock
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.stockQuantity}
+                  onChange={(event) =>
+                    updateField("stockQuantity", event.target.value)
+                  }
+                  disabled={isSubmitting}
+                  className="
+                    mt-2
+                    min-h-12
+                    w-full
+
+                    rounded-[0.95rem]
+
+                    border
+                    border-gray-200
+
+                    px-4
+
+                    font-normal
+
+                    outline-none
+
+                    focus:border-gray-400
+                    focus:ring-4
+                    focus:ring-gray-950/[0.035]
+
+                    disabled:bg-gray-100
+                  "
+                />
+              </label>
+
+              <label
+                className="
+                  text-xs
+                  font-bold
+                  text-gray-800
+
+                  sm:text-sm
+                "
+              >
+                Low stock at
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.lowStockThreshold}
+                  onChange={(event) =>
+                    updateField("lowStockThreshold", event.target.value)
+                  }
+                  disabled={isSubmitting}
+                  className="
+                    mt-2
+                    min-h-12
+                    w-full
+
+                    rounded-[0.95rem]
+
+                    border
+                    border-gray-200
+
+                    px-4
+
+                    font-normal
+
+                    outline-none
+
+                    focus:border-gray-400
+                    focus:ring-4
+                    focus:ring-gray-950/[0.035]
+
+                    disabled:bg-gray-100
+                  "
+                />
+              </label>
+            </div>
+          </section>
+
+          {/* =================================================
+              FLAGS
+          ================================================= */}
+          <section
+            className="
+              grid
+              gap-3
+
+              rounded-[1rem]
+
+              border
+              border-gray-200
+
+              bg-gray-50/70
+
+              p-3.5
+
+              sm:grid-cols-2
+              sm:p-4
+            "
+          >
+            <label
+              className="
+                flex
+                cursor-pointer
+                items-start
+                gap-3
+              "
+            >
+              <Checkbox
+                checked={formData.isDefault}
+                onChange={(event) =>
+                  updateField("isDefault", event.target.checked)
+                }
+                disabled={isSubmitting}
+                sx={{
+                  padding: 0,
+                  marginTop: "2px",
+                }}
+              />
+
+              <div>
+                <p
+                  className="
+                    text-sm
+                    font-bold
+                    text-gray-900
+                  "
+                >
+                  Default variant
+                </p>
+
+                <p
+                  className="
+                    mt-1
+                    text-xs
+                    leading-5
+                    text-gray-500
+                  "
+                >
+                  Selected first when customers open the product.
+                </p>
+              </div>
+            </label>
+
+            {!isEditing && (
+              <label
+                className="
+                  flex
+                  cursor-pointer
+                  items-start
+                  gap-3
                 "
               >
                 <Checkbox
-                  checked={formData.isDefault}
+                  checked={formData.isActive}
                   onChange={(event) =>
-                    updateField("isDefault", event.target.checked)
+                    updateField("isActive", event.target.checked)
                   }
                   disabled={isSubmitting}
+                  sx={{
+                    padding: 0,
+                    marginTop: "2px",
+                  }}
                 />
-                Default variant
+
+                <div>
+                  <p
+                    className="
+                      text-sm
+                      font-bold
+                      text-gray-900
+                    "
+                  >
+                    Active variant
+                  </p>
+
+                  <p
+                    className="
+                      mt-1
+                      text-xs
+                      leading-5
+                      text-gray-500
+                    "
+                  >
+                    Allow customers to purchase this option.
+                  </p>
+                </div>
               </label>
+            )}
+          </section>
+        </div>
+      </DialogContent>
 
-              {!isEditing && (
-                <label
-                  className="
-                    flex
-                    items-center
-                    gap-2
-                    font-semibold
-                  "
-                >
-                  <Checkbox
-                    checked={formData.isActive}
-                    onChange={(event) =>
-                      updateField("isActive", event.target.checked)
-                    }
-                    disabled={isSubmitting}
-                  />
-                  Active variant
-                </label>
-              )}
-            </section>
-          </div>
-        </DialogContent>
+      {/* =====================================================
+          ACTIONS
+      ===================================================== */}
+      <DialogActions sx={{ padding: 0 }}>
+        <div
+          className="
+            flex
+            w-full
+            flex-col-reverse
+            gap-2.5
 
-        <DialogActions className="px-6 py-4">
+            border-t
+            border-gray-100
+
+            bg-gray-50/60
+
+            px-4
+            py-4
+
+            sm:flex-row
+            sm:items-center
+            sm:justify-end
+            sm:px-6
+          "
+        >
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
             className="
+              inline-flex
               min-h-11
+              w-full
+              items-center
+              justify-center
+
               rounded-full
+
               border
-              border-[var(--color-warm-light-gray)]
+              border-gray-200
+
+              bg-white
+
               px-5
-              font-semibold
+
+              text-sm
+              font-bold
+              text-gray-700
+
+              transition-all
+
+              hover:border-gray-300
+              hover:bg-gray-100
+              hover:text-gray-950
+
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+
+              sm:w-auto
             "
           >
             Cancel
@@ -1042,19 +1572,94 @@ function VariantEditorDialog({
             type="submit"
             disabled={isSubmitting}
             className="
+              inline-flex
               min-h-11
+              w-full
+              items-center
+              justify-center
+              gap-2
+
               rounded-full
-              bg-[var(--color-deep-espresso)]
-              px-6
-              font-semibold
+
+              bg-gray-950
+
+              px-5
+
+              text-sm
+              font-bold
               text-white
-              disabled:opacity-50
+
+              transition-colors
+
+              hover:bg-gray-800
+
+              disabled:cursor-not-allowed
+              disabled:bg-gray-200
+              disabled:text-gray-400
+
+              sm:min-w-[10rem]
+              sm:w-auto
             "
           >
-            {isSubmitting ? "Saving..." : "Save variant"}
+            <SaveOutlinedIcon sx={{ fontSize: 17 }} />
+
+            {isSubmitting
+              ? "Saving..."
+              : isEditing
+                ? "Save changes"
+                : "Add variant"}
           </button>
-        </DialogActions>
-      </form>
+        </div>
+      </DialogActions>
+    </form>
+  );
+}
+
+/* =========================================================
+   DIALOG
+========================================================= */
+
+function VariantEditorDialog({
+  open,
+  variant = null,
+  isSubmitting,
+  onClose,
+  onSubmit,
+}) {
+  return (
+    <Dialog
+      open={open}
+      onClose={isSubmitting ? undefined : onClose}
+      fullWidth
+      maxWidth="md"
+      sx={{
+        "& .MuiDialog-paper": {
+          width: "calc(100% - 24px)",
+          maxHeight: "calc(100% - 24px)",
+          margin: "12px",
+          borderRadius: "22px",
+          overflow: "hidden",
+        },
+
+        "@media (min-width: 640px)": {
+          "& .MuiDialog-paper": {
+            width: "100%",
+            maxHeight: "calc(100% - 64px)",
+            margin: "32px",
+            borderRadius: "24px",
+          },
+        },
+      }}
+    >
+      {open && (
+        <VariantEditorForm
+          key={variant?.id ?? "new-variant"}
+          variant={variant}
+          isSubmitting={isSubmitting}
+          onClose={onClose}
+          onSubmit={onSubmit}
+        />
+      )}
     </Dialog>
   );
 }

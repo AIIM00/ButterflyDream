@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ButterflyCanvas } from "./ButterflyCanvas.jsx";
-import { ButterflyHeroLoader } from "./ButterflyHeroLoader.jsx";
 import {
   butterflyHeroConfig,
   getButterflyDesktopFramePaths,
@@ -15,11 +14,10 @@ export function ButterflyTransformationHero({ sectionRef }) {
   const framePaths = useMemo(() => getButterflyDesktopFramePaths(), []);
 
   const {
-    initialProgress,
     loadedCount,
     failedCount,
     isPriorityCoverageReady,
-    isInitialBatchReady,
+
     getFrameImage,
     totalFrames,
   } = useFrameSequence({
@@ -54,12 +52,10 @@ export function ButterflyTransformationHero({ sectionRef }) {
     inset-0
     z-0
     overflow-hidden
-    bg-brand-ivory
 
     transition-opacity
     duration-300
     ease-out
-
     ${isVisible ? "visible opacity-100" : "invisible opacity-0"}
   `}
         aria-hidden="true"
@@ -77,26 +73,6 @@ export function ButterflyTransformationHero({ sectionRef }) {
   "
         />
       </div>
-
-      {!isInitialBatchReady?.current && (
-        <div
-          className="
-      pointer-events-none
-      absolute
-      inset-y-0
-      right-0
-      z-[20]
-      w-[48%]
-      sm:w-[46%]
-      lg:w-[42%]
-    "
-        >
-          <ButterflyHeroLoader
-            progress={initialProgress}
-            isInitialBatchReady={isInitialBatchReady}
-          />
-        </div>
-      )}
 
       {failedCount > 0 && (
         <p className="sr-only" aria-live="polite">

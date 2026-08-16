@@ -1,6 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
 
-//MUI Icons
+// MUI Icons
 import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
@@ -11,9 +11,14 @@ import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import ShoppingBagRoundedIcon from "@mui/icons-material/ShoppingBagRounded";
-import WarehouseRoundedIcon from "@mui/icons-material/WarehouseRounded";
 import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
+import WarehouseRoundedIcon from "@mui/icons-material/WarehouseRounded";
 import WebRoundedIcon from "@mui/icons-material/WebRounded";
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
 const adminNavigation = [
   {
     label: "Dashboard",
@@ -67,23 +72,90 @@ const adminNavigation = [
   },
 ];
 
+/* =========================================================
+   SIDEBAR CONTENT
+========================================================= */
+
 function SidebarContent({ onClose, onLogout, isLoggingOut, showCloseButton }) {
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex h-20 items-center justify-between border-b border-gray-800 px-6">
+    <div className="flex h-full min-h-0 flex-col">
+      {/* =====================================================
+          BRAND
+      ===================================================== */}
+      <div
+        className="
+          flex
+          min-h-[4.75rem]
+          items-center
+          justify-between
+          gap-3
+          border-b
+          border-white/[0.07]
+          px-4
+
+          sm:px-5
+        "
+      >
         <Link
           to="/admin/dashboard"
-          className="flex items-center gap-3"
           onClick={onClose}
+          className="
+            group
+            flex
+            min-w-0
+            items-center
+            gap-3
+          "
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-bold text-gray-950">
+          {/* LOGO */}
+          <span
+            className="
+              flex
+              h-10
+              w-10
+              shrink-0
+              items-center
+              justify-center
+              rounded-full
+              bg-white
+              text-sm
+              font-black
+              tracking-[-0.04em]
+              text-gray-950
+              shadow-sm
+              transition-transform
+
+              group-hover:scale-[1.03]
+            "
+          >
             B
           </span>
 
-          <div>
-            <p className="font-bold text-white">Butterfly Dream</p>
+          <div className="min-w-0">
+            <p
+              className="
+                truncate
+                text-sm
+                font-bold
+                tracking-[-0.02em]
+                text-white
+              "
+            >
+              Butterfly Dream
+            </p>
 
-            <p className="text-xs text-gray-400">Administration</p>
+            <p
+              className="
+                mt-0.5
+                text-[0.6rem]
+                font-semibold
+                uppercase
+                tracking-[0.12em]
+                text-gray-500
+              "
+            >
+              Administration
+            </p>
           </div>
         </Link>
 
@@ -92,68 +164,328 @@ function SidebarContent({ onClose, onLogout, isLoggingOut, showCloseButton }) {
             type="button"
             onClick={onClose}
             aria-label="Close admin menu"
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white"
+            className="
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-full
+              text-gray-500
+              transition-colors
+
+              hover:bg-white/10
+              hover:text-white
+            "
           >
-            <CloseRoundedIcon />
+            <CloseRoundedIcon
+              sx={{
+                fontSize: 20,
+              }}
+            />
           </button>
         )}
       </div>
 
+      {/* =====================================================
+          NAVIGATION
+      ===================================================== */}
       <nav
-        className="flex-1 space-y-1 overflow-y-auto px-4 py-6"
         aria-label="Admin navigation"
-      >
-        {adminNavigation.map(({ label, path, icon: Icon }) => (
-          <NavLink
-            key={path}
-            to={path}
-            onClick={onClose}
-            className={({ isActive }) =>
-              [
-                "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition",
-                isActive
-                  ? "bg-white text-gray-950"
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white",
-              ].join(" ")
-            }
-          >
-            <Icon fontSize="small" />
+        className="
+          min-h-0
+          flex-1
+          overflow-y-auto
+          px-3
+          py-4
 
-            <span>{label}</span>
-          </NavLink>
-        ))}
+          [scrollbar-width:thin]
+          [scrollbar-color:rgba(255,255,255,0.15)_transparent]
+
+          sm:px-4
+        "
+      >
+        <p
+          className="
+            mb-2
+            px-3
+            text-[0.58rem]
+            font-bold
+            uppercase
+            tracking-[0.14em]
+            text-gray-600
+          "
+        >
+          Workspace
+        </p>
+
+        <div className="space-y-1">
+          {adminNavigation.map(({ label, path, icon: Icon }) => (
+            <NavLink
+              key={path}
+              to={path}
+              onClick={onClose}
+              className={({ isActive }) =>
+                [
+                  `
+                      group
+                      relative
+                      flex
+                      min-h-11
+                      items-center
+                      gap-3
+                      overflow-hidden
+                      rounded-xl
+                      px-3
+                      text-sm
+                      font-semibold
+                      transition-all
+                    `,
+                  isActive
+                    ? `
+                        bg-white
+                        text-gray-950
+                        shadow-sm
+                      `
+                    : `
+                        text-gray-400
+
+                        hover:bg-white/[0.06]
+                        hover:text-white
+                      `,
+                ].join(" ")
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {/* ACTIVE BAR */}
+                  {isActive && (
+                    <span
+                      className="
+                          absolute
+                          left-0
+                          top-1/2
+                          h-5
+                          w-[3px]
+                          -translate-y-1/2
+                          rounded-r-full
+                          bg-gray-950
+                        "
+                    />
+                  )}
+
+                  <span
+                    className={[
+                      `
+                          flex
+                          h-8
+                          w-8
+                          shrink-0
+                          items-center
+                          justify-center
+                          rounded-lg
+                          transition-colors
+                        `,
+                      isActive
+                        ? "bg-gray-100 text-gray-950"
+                        : `
+                            text-gray-500
+
+                            group-hover:bg-white/[0.06]
+                            group-hover:text-white
+                          `,
+                    ].join(" ")}
+                  >
+                    <Icon
+                      sx={{
+                        fontSize: 18,
+                      }}
+                    />
+                  </span>
+
+                  <span className="truncate">{label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
       </nav>
 
-      <div className="space-y-2 border-t border-gray-800 p-4">
-        <Link
-          to="/"
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-gray-400 transition hover:bg-gray-800 hover:text-white"
-        >
-          <OpenInNewRoundedIcon fontSize="small" />
-          View storefront
-        </Link>
+      {/* =====================================================
+          FOOTER
+      ===================================================== */}
+      <div
+        className="
+          shrink-0
+          border-t
+          border-white/[0.07]
+          p-3
 
-        <button
-          type="button"
-          onClick={onLogout}
-          disabled={isLoggingOut}
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-red-300 transition hover:bg-red-950/50 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+          sm:p-4
+        "
+      >
+        <p
+          className="
+            mb-2
+            px-3
+            text-[0.58rem]
+            font-bold
+            uppercase
+            tracking-[0.14em]
+            text-gray-600
+          "
         >
-          <LogoutRoundedIcon fontSize="small" />
+          Account
+        </p>
 
-          {isLoggingOut ? "Signing out..." : "Sign out"}
-        </button>
+        <div className="space-y-1">
+          {/* STOREFRONT */}
+          <Link
+            to="/"
+            target="_blank"
+            rel="noreferrer"
+            className="
+              group
+              flex
+              min-h-11
+              items-center
+              gap-3
+              rounded-xl
+              px-3
+              text-sm
+              font-semibold
+              text-gray-400
+              transition-colors
+
+              hover:bg-white/[0.06]
+              hover:text-white
+            "
+          >
+            <span
+              className="
+                flex
+                h-8
+                w-8
+                shrink-0
+                items-center
+                justify-center
+                rounded-lg
+                text-gray-500
+                transition-colors
+
+                group-hover:bg-white/[0.06]
+                group-hover:text-white
+              "
+            >
+              <OpenInNewRoundedIcon
+                sx={{
+                  fontSize: 17,
+                }}
+              />
+            </span>
+
+            <span className="min-w-0 flex-1 truncate">View storefront</span>
+
+            <OpenInNewRoundedIcon
+              sx={{
+                fontSize: 14,
+              }}
+              className="
+                shrink-0
+                text-gray-600
+                transition-colors
+
+                group-hover:text-gray-400
+              "
+            />
+          </Link>
+
+          {/* LOGOUT */}
+          <button
+            type="button"
+            onClick={onLogout}
+            disabled={isLoggingOut}
+            className="
+              group
+              flex
+              min-h-11
+              w-full
+              items-center
+              gap-3
+              rounded-xl
+              px-3
+              text-left
+              text-sm
+              font-semibold
+              text-red-300
+              transition-colors
+
+              hover:bg-red-500/10
+              hover:text-red-200
+
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
+          >
+            <span
+              className="
+                flex
+                h-8
+                w-8
+                shrink-0
+                items-center
+                justify-center
+                rounded-lg
+                text-red-400
+                transition-colors
+
+                group-hover:bg-red-500/10
+                group-hover:text-red-300
+              "
+            >
+              <LogoutRoundedIcon
+                sx={{
+                  fontSize: 18,
+                }}
+              />
+            </span>
+
+            <span className="truncate">
+              {isLoggingOut ? "Signing out..." : "Sign out"}
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
 function AdminSidebar({ isMobileOpen, onMobileClose, onLogout, isLoggingOut }) {
   return (
     <>
-      <aside className="hidden h-screen w-72 shrink-0 bg-gray-950 lg:sticky lg:top-0 lg:block">
+      {/* =====================================================
+          DESKTOP
+      ===================================================== */}
+      <aside
+        className="
+          sticky
+          top-0
+          hidden
+          h-screen
+          w-[17rem]
+          shrink-0
+          bg-gray-950
+
+          lg:block
+
+          xl:w-72
+        "
+      >
         <SidebarContent
           onClose={() => {}}
           onLogout={onLogout}
@@ -162,16 +494,43 @@ function AdminSidebar({ isMobileOpen, onMobileClose, onLogout, isLoggingOut }) {
         />
       </aside>
 
+      {/* =====================================================
+          MOBILE / TABLET DRAWER
+      ===================================================== */}
       {isMobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div
+          className="
+            fixed
+            inset-0
+            z-50
+
+            lg:hidden
+          "
+        >
+          {/* BACKDROP */}
           <button
             type="button"
             aria-label="Close admin navigation"
             onClick={onMobileClose}
-            className="absolute inset-0 bg-gray-950/60"
+            className="
+              absolute
+              inset-0
+              bg-gray-950/65
+              backdrop-blur-[2px]
+            "
           />
 
-          <aside className="relative h-full w-[min(19rem,88vw)] bg-gray-950 shadow-2xl">
+          {/* DRAWER */}
+          <aside
+            className="
+              relative
+              h-full
+              w-[min(18rem,86vw)]
+              overflow-hidden
+              bg-gray-950
+              shadow-[18px_0_50px_rgba(0,0,0,0.28)]
+            "
+          >
             <SidebarContent
               onClose={onMobileClose}
               onLogout={onLogout}

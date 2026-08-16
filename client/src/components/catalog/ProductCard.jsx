@@ -1,31 +1,12 @@
-import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-// MUI Icons
-import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
-import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 
-// Components
 import WishlistToggleButton from "../wishlist/WishlistToggleButton.jsx";
 
 /* =========================================================
    HELPERS
 ========================================================= */
-
-function getSortedImages(product) {
-  return [...(product.images ?? [])].sort(
-    (firstImage, secondImage) =>
-      Number(firstImage.position ?? 0) - Number(secondImage.position ?? 0),
-  );
-}
-
-function getDefaultVariant(product) {
-  return (
-    product.variants?.find((variant) => variant.isDefault) ??
-    product.variants?.[0] ??
-    null
-  );
-}
 
 function getDisplayPrice(product, defaultVariant) {
   if (defaultVariant?.price !== undefined && defaultVariant?.price !== null) {
@@ -39,492 +20,435 @@ function getDisplayPrice(product, defaultVariant) {
   return `$${product.pricing?.minimum ?? 0}`;
 }
 
-function getShortDescription(product) {
-  if (!product.description?.trim()) {
-    return "A refined piece designed to become part of your story.";
+/* =========================================================
+   PRODUCT IMAGE
+========================================================= */
+
+function ProductImage({ image, product }) {
+  if (!image?.imageUrl) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-brand-surface-soft text-xs text-brand-text-muted">
+        No image available
+      </div>
+    );
   }
 
-  return product.description.trim();
+  return (
+    <img
+      src={image.imageUrl}
+      alt={image.altText || product.name}
+      loading="lazy"
+      className="
+        h-full
+        w-full
+        object-cover
+        transition-transform
+        duration-500
+        group-hover:scale-[1.035]
+      "
+    />
+  );
 }
 
 /* =========================================================
-   PRODUCT CARD
+   COMPACT CARD
 ========================================================= */
 
-function ProductCard({ product }) {
-  const images = useMemo(() => getSortedImages(product), [product]);
-
-  const defaultVariant = useMemo(() => getDefaultVariant(product), [product]);
-
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-
-  const activeImage = images[activeImageIndex] ?? images[0] ?? null;
-
-  const price = getDisplayPrice(product, defaultVariant);
-
-  const description = getShortDescription(product);
-
-  const isFeatured = Boolean(product.isFeatured);
-
-  const productUrl = `/products/${product.slug}`;
-
+function CompactProductCard({ product, productUrl, primaryImage, price }) {
   return (
     <article
-      className={`
+      className="
         group
-        relative
-
-        w-[350px]
-        max-w-full
-
+        min-w-0
+        w-full
         overflow-hidden
-
-        rounded-[1.75rem]
-
+        rounded-[1.2rem]
         border
-
-        p-4
-
+        border-brand-border
+        bg-brand-surface
+        shadow-[0_8px_24px_rgba(0,0,0,0.045)]
         transition-all
         duration-300
 
         hover:-translate-y-1
-
-        ${
-          isFeatured
-            ? `
-                border-brand-accent-fill/35
-                bg-brand-accent-soft
-
-                shadow-[0_14px_35px_rgb(var(--theme-accent-fill)/0.16)]
-
-                hover:shadow-[0_20px_45px_rgb(var(--theme-accent-fill)/0.22)]
-              `
-            : `
-                border-brand-border
-                bg-brand-surface-soft
-
-                shadow-[0_10px_26px_rgba(0,0,0,0.05)]
-
-                hover:shadow-[0_16px_34px_rgba(0,0,0,0.08)]
-              `
-        }
-      `}
+        hover:shadow-[0_14px_32px_rgba(0,0,0,0.075)]
+      "
     >
-      {/* ==================================================
-          TOP AREA
-      ================================================== */}
-
+      {/* IMAGE */}
       <div
         className="
-          mb-3
-          flex
-          min-h-9
-          items-center
-          justify-between
-          gap-3
+          relative
+          aspect-square
+          w-full
+          overflow-hidden
+          bg-brand-surface-soft
         "
-      >
-        {/* FEATURED LABEL */}
-
-        {isFeatured ? (
-          <span
-            className="
-              inline-flex
-              items-center
-              gap-1.5
-
-              rounded-full
-
-              bg-brand-accent-fill/15
-
-              px-3
-              py-1.5
-
-              text-[0.58rem]
-              font-bold
-              uppercase
-              tracking-[0.12em]
-
-              text-brand-accent-text
-            "
-          >
-            <AutoAwesomeRoundedIcon
-              sx={{
-                fontSize: 12,
-              }}
-            />
-            Featured product
-          </span>
-        ) : (
-          /*
-           * Empty element keeps the wishlist
-           * aligned to the right on normal cards.
-           */
-          <span aria-hidden="true" />
-        )}
-
-        {/* WISHLIST */}
-
-        <WishlistToggleButton
-          productId={product.id}
-          variant={isFeatured ? "featured" : "default"}
-        />
-      </div>
-
-      {/* ==================================================
-          IMAGE FRAME
-      ================================================== */}
-
-      <div
-        className={`
-          rounded-[1.35rem]
-
-          p-2.5
-
-          ${
-            isFeatured
-              ? `
-                  bg-brand-accent-fill/10
-
-                  shadow-[0_8px_24px_rgb(var(--theme-accent-fill)/0.18)]
-                `
-              : `
-                  bg-brand-surface
-
-                  shadow-[inset_0_4px_12px_rgba(0,0,0,0.09)]
-                `
-          }
-        `}
       >
         <Link
           to={productUrl}
           aria-label={`View ${product.name}`}
-          className="
-            block
-
-            overflow-hidden
-
-            rounded-[1rem]
-
-            bg-brand-surface
-          "
+          className="block h-full w-full"
         >
-          <div
-            className="
-              aspect-square
-              overflow-hidden
-            "
-          >
-            {activeImage ? (
-              <img
-                src={activeImage.imageUrl}
-                alt={activeImage.altText || product.name}
-                loading="lazy"
-                className="
-                  h-full
-                  w-full
-
-                  object-contain
-
-                  transition-transform
-                  duration-500
-
-                  group-hover:scale-[1.035]
-                "
-              />
-            ) : (
-              <div
-                className="
-                  flex
-                  h-full
-                  w-full
-
-                  items-center
-                  justify-center
-
-                  px-4
-
-                  text-center
-                  text-sm
-
-                  text-brand-text-muted
-                "
-              >
-                No image available
-              </div>
-            )}
-          </div>
+          <ProductImage image={primaryImage} product={product} />
         </Link>
-      </div>
 
-      {/* ==================================================
-          IMAGE SWITCHER
-      ================================================== */}
-
-      {images.length > 1 && (
+        {/* WISHLIST ON IMAGE */}
         <div
           className="
-            mt-3
+            absolute
+            right-1
+            top-1
+            z-10
 
-            flex
-            min-h-6
-
-            items-center
-            justify-center
-
-            gap-1
+            rounded-full
+            bg-brand-surface/90
+            shadow-[0_4px_14px_rgba(0,0,0,0.08)]
+            backdrop-blur-sm
           "
         >
-          {images.map((image, index) => {
-            const isActive = activeImageIndex === index;
-
-            return (
-              <button
-                key={image.id ?? `${product.id}-${index}`}
-                type="button"
-                aria-label={`Show ${product.name} image ${index + 1}`}
-                aria-pressed={isActive}
-                onClick={() => setActiveImageIndex(index)}
-                className="
-                    flex
-                    h-6
-                    min-w-6
-
-                    items-center
-                    justify-center
-
-                    rounded-full
-
-                    focus-visible:outline-none
-                    focus-visible:ring-2
-                    focus-visible:ring-brand-accent-fill/40
-                  "
-              >
-                <span
-                  className={`
-                      block
-
-                      h-1.5
-
-                      rounded-full
-
-                      transition-all
-                      duration-300
-
-                      ${
-                        isActive
-                          ? isFeatured
-                            ? `
-                                w-4
-                                bg-brand-accent-text
-                              `
-                            : `
-                                w-4
-                                bg-brand-primary
-                              `
-                          : isFeatured
-                            ? `
-                                w-1.5
-                                bg-brand-accent-fill/40
-                              `
-                            : `
-                                w-1.5
-                                bg-brand-text-muted/30
-                              `
-                      }
-                    `}
-                />
-              </button>
-            );
-          })}
+          <WishlistToggleButton productId={product.id} variant="default" />
         </div>
-      )}
+      </div>
 
-      {/* ==================================================
-          PRODUCT INFORMATION
-      ================================================== */}
+      {/* CONTENT */}
+      <div
+        className="
+          flex
+          min-h-[8.2rem]
+          flex-col
+          p-3
 
-      <div className={images.length > 1 ? "mt-2" : "mt-4"}>
+          sm:min-h-[9rem]
+          sm:p-4
+        "
+      >
         {/* CATEGORY */}
-
         <p
-          className={`
-            text-[0.58rem]
-
+          className="
+            truncate
+            text-[0.5rem]
             font-bold
             uppercase
+            tracking-[0.15em]
+            text-brand-bronze
 
-            tracking-[0.16em]
-
-            ${isFeatured ? "text-brand-accent-text" : "text-brand-text-muted"}
-          `}
+            sm:text-[0.56rem]
+          "
         >
           {product.category?.name ?? "Butterfly Dream"}
         </p>
 
-        {/* PRODUCT NAME */}
-
-        <Link to={productUrl} className="block">
+        {/* NAME */}
+        <Link to={productUrl} className="mt-1.5 block">
           <h3
             className="
-              mt-2
-
               line-clamp-2
+              min-h-[2.25rem]
 
               font-display
-
-              text-[1.45rem]
+              text-[0.98rem]
               font-medium
-
-              leading-[1.05]
-
-              tracking-[-0.035em]
-
+              leading-[1.12]
+              tracking-[-0.025em]
               text-brand-text
 
               transition-colors
               duration-300
 
               group-hover:text-brand-accent-text
+
+              sm:min-h-[2.6rem]
+              sm:text-[1.1rem]
             "
           >
             {product.name}
           </h3>
         </Link>
 
-        {/* DESCRIPTION */}
-
-        <p
+        {/* PRICE + VIEW */}
+        <div
           className="
-            mt-2
-
-            line-clamp-2
-
-            text-[0.8rem]
-
-            leading-5
-
-            text-brand-text-muted
+            mt-auto
+            flex
+            items-end
+            justify-between
+            gap-2
+            pt-3
           "
         >
-          {description}
-        </p>
-      </div>
-
-      {/* ==================================================
-          PRICE + ACTION
-      ================================================== */}
-
-      <div
-        className="
-          mt-6
-
-          flex
-
-          items-center
-          justify-between
-
-          gap-3
-        "
-      >
-        {/* PRICE */}
-
-        <div className="min-w-0">
           <p
             className="
-              text-[0.52rem]
-
-              font-semibold
-              uppercase
-
-              tracking-[0.12em]
-
-              text-brand-text-muted
-            "
-          >
-            Price
-          </p>
-
-          <p
-            className="
-              mt-1
-
+              min-w-0
+              truncate
               font-display
-
-              text-[1.65rem]
+              text-[0.95rem]
               font-semibold
-
               leading-none
-
-              tracking-[-0.04em]
-
+              tracking-[-0.025em]
               text-brand-text
+
+              sm:text-lg
             "
           >
             {price}
           </p>
+
+          <Link
+            to={productUrl}
+            className="
+              inline-flex
+              shrink-0
+              items-center
+              gap-0.5
+
+              text-[0.55rem]
+              font-semibold
+              uppercase
+              tracking-[0.08em]
+              text-brand-text-muted
+
+              transition-colors
+              duration-200
+
+              hover:text-brand-accent-text
+
+              sm:text-[0.62rem]
+            "
+          >
+            View piece
+            <ArrowForwardRoundedIcon
+              sx={{
+                fontSize: 13,
+              }}
+            />
+          </Link>
         </div>
-
-        {/* ADD TO CART */}
-
-        <Link
-          to={productUrl}
-          className={`
-            inline-flex
-
-            min-h-11
-            shrink-0
-
-            items-center
-            justify-center
-
-            gap-2
-
-            rounded-full
-
-            px-4
-            py-2.5
-
-            text-[0.72rem]
-            font-semibold
-
-            transition-all
-            duration-300
-
-            active:scale-[0.98]
-
-            focus-visible:outline-none
-            focus-visible:ring-2
-            focus-visible:ring-brand-accent-fill/40
-            focus-visible:ring-offset-2
-
-            ${
-              isFeatured
-                ? `
-        bg-brand-accent-text
-        text-brand-surface
-
-        hover:bg-brand-accent-text-hover
-      `
-                : `
-        bg-brand-primary
-        text-brand-surface
-
-        hover:bg-brand-primary-hover
-      `
-            }
-          `}
-        >
-          <ShoppingBagOutlinedIcon
-            sx={{
-              fontSize: 16,
-            }}
-          />
-          Add to cart
-        </Link>
       </div>
     </article>
+  );
+}
+
+/* =========================================================
+   FEATURED EDITORIAL CARD
+========================================================= */
+
+function FeaturedProductCard({ product, productUrl, primaryImage, price }) {
+  return (
+    <article
+      className="
+        group
+        col-span-2
+        grid
+        min-w-0
+        w-full
+        grid-cols-[44%_minmax(0,1fr)]
+
+        overflow-hidden
+        rounded-[1.5rem]
+
+        border
+        border-brand-accent-fill/25
+
+        bg-brand-accent-soft
+
+        shadow-[0_12px_32px_rgb(var(--theme-accent-fill)/0.12)]
+
+        transition-all
+        duration-300
+
+        hover:-translate-y-1
+        hover:shadow-[0_18px_42px_rgb(var(--theme-accent-fill)/0.18)]
+
+        sm:grid-cols-[42%_minmax(0,1fr)]
+      "
+    >
+      {/* IMAGE */}
+      <Link
+        to={productUrl}
+        aria-label={`View ${product.name}`}
+        className="
+          relative
+          block
+          min-h-[185px]
+          overflow-hidden
+          bg-brand-surface
+
+          sm:min-h-[230px]
+        "
+      >
+        <ProductImage image={primaryImage} product={product} />
+      </Link>
+
+      {/* CONTENT */}
+      <div
+        className="
+          flex
+          min-w-0
+          flex-col
+          p-3.5
+
+          sm:p-6
+        "
+      >
+        {/* CATEGORY + WISHLIST */}
+        <div
+          className="
+            flex
+            items-start
+            justify-between
+            gap-2
+          "
+        >
+          <p
+            className="
+              min-w-0
+              truncate
+              pt-2
+
+              text-[0.5rem]
+              font-bold
+              uppercase
+              tracking-[0.15em]
+              text-brand-accent-text
+
+              sm:text-[0.62rem]
+            "
+          >
+            {product.category?.name ?? "Butterfly Dream"}
+          </p>
+
+          <div className="-mr-2 -mt-2 shrink-0">
+            <WishlistToggleButton productId={product.id} variant="featured" />
+          </div>
+        </div>
+
+        {/* NAME */}
+        <Link
+          to={productUrl}
+          className="
+            my-auto
+            block
+            py-3
+          "
+        >
+          <h3
+            className="
+              line-clamp-3
+
+              font-display
+              text-[1.2rem]
+              font-medium
+              leading-[1.05]
+              tracking-[-0.035em]
+              text-brand-text
+
+              transition-colors
+              duration-300
+
+              group-hover:text-brand-accent-text
+
+              sm:text-2xl
+            "
+          >
+            {product.name}
+          </h3>
+        </Link>
+
+        {/* PRICE + VIEW */}
+        <div
+          className="
+            flex
+            items-end
+            justify-between
+            gap-2
+          "
+        >
+          <p
+            className="
+              min-w-0
+              truncate
+
+              font-display
+              text-lg
+              font-semibold
+              leading-none
+              tracking-[-0.035em]
+              text-brand-text
+
+              sm:text-2xl
+            "
+          >
+            {price}
+          </p>
+
+          <Link
+            to={productUrl}
+            className="
+              inline-flex
+              shrink-0
+              items-center
+              gap-1
+
+              text-[0.55rem]
+              font-semibold
+              uppercase
+              tracking-[0.08em]
+              text-brand-accent-text
+
+              transition
+              hover:gap-1.5
+
+              sm:text-[0.65rem]
+            "
+          >
+            View piece
+            <ArrowForwardRoundedIcon
+              sx={{
+                fontSize: 14,
+              }}
+            />
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/* =========================================================
+   PRODUCT CARD
+========================================================= */
+
+function ProductCard({ product, layout = "compact" }) {
+  const primaryImage = product.image ?? product.images?.[0] ?? null;
+
+  const defaultVariant =
+    product.defaultVariant ??
+    product.variants?.find((variant) => variant.isDefault) ??
+    product.variants?.[0] ??
+    null;
+
+  const price = getDisplayPrice(product, defaultVariant);
+
+  const productUrl = `/products/${product.slug}`;
+
+  if (layout === "featured") {
+    return (
+      <FeaturedProductCard
+        product={product}
+        productUrl={productUrl}
+        primaryImage={primaryImage}
+        price={price}
+      />
+    );
+  }
+
+  return (
+    <CompactProductCard
+      product={product}
+      productUrl={productUrl}
+      primaryImage={primaryImage}
+      price={price}
+    />
   );
 }
 

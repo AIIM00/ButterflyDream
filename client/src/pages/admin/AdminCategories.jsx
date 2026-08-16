@@ -1,16 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 
+// MUI Icons
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
+import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
+import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 
+// Toast
 import { toast } from "react-toastify";
 
+// Components
 import AdminCategoryTable from "../../components/admin/categories/AdminCategoryTable.jsx";
 import CategoryFormDialog from "../../components/admin/categories/CategoryFormDialog.jsx";
 import CategoryStatusDialog from "../../components/admin/categories/CategoryStatusDialog.jsx";
 
+// Services
 import {
   createAdminCategory,
   fetchAdminCategories,
@@ -21,34 +28,242 @@ import {
 
 import { uploadCategoryImage } from "../../services/adminCategoryImageUploadApi.js";
 
+// Utils
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
+
+/* =========================================================
+   LOADING
+========================================================= */
 
 function AdminCategoriesLoading() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-      <div className="h-20 animate-pulse border-b border-gray-200 bg-gray-50" />
+    <div
+      className="
+        overflow-hidden
+        rounded-[1.4rem]
+        border
+        border-gray-200/80
+        bg-white
+        shadow-[0_8px_24px_rgba(15,23,42,0.04)]
+      "
+    >
+      {/* HEADER */}
+      <div
+        className="
+          border-b
+          border-gray-100
+          px-4
+          py-4
 
-      <div className="space-y-1">
+          sm:px-5
+          sm:py-5
+
+          lg:px-6
+        "
+      >
+        <div className="h-3 w-20 animate-pulse rounded bg-gray-100" />
+
+        <div className="mt-3 h-6 w-40 animate-pulse rounded bg-gray-100" />
+
+        <div
+          className="
+            mt-2
+            h-4
+            w-72
+            max-w-full
+            animate-pulse
+            rounded
+            bg-gray-100
+          "
+        />
+      </div>
+
+      {/* MOBILE CARDS */}
+      <div
+        className="
+          space-y-3
+          p-4
+
+          sm:p-5
+
+          lg:hidden
+        "
+      >
+        {Array.from({
+          length: 5,
+        }).map((_, index) => (
+          <div
+            key={index}
+            className="
+              h-52
+              animate-pulse
+              rounded-[1.2rem]
+              bg-gray-100
+            "
+          />
+        ))}
+      </div>
+
+      {/* DESKTOP ROWS */}
+      <div className="hidden lg:block">
         {Array.from({
           length: 6,
         }).map((_, index) => (
           <div
             key={index}
-            className="flex items-center gap-5 border-b border-gray-100 px-5 py-5"
+            className="
+              flex
+              items-center
+              gap-4
+              border-b
+              border-gray-100
+              px-6
+              py-4
+            "
           >
             <div className="h-14 w-14 animate-pulse rounded-xl bg-gray-100" />
 
-            <div className="flex-1 space-y-3">
-              <div className="h-4 w-40 animate-pulse rounded bg-gray-200" />
+            <div className="flex-1">
+              <div className="h-4 w-40 animate-pulse rounded bg-gray-100" />
 
-              <div className="h-3 w-64 animate-pulse rounded bg-gray-100" />
+              <div className="mt-2 h-3 w-64 animate-pulse rounded bg-gray-100" />
             </div>
+
+            <div className="h-9 w-24 animate-pulse rounded-full bg-gray-100" />
           </div>
         ))}
       </div>
     </div>
   );
 }
+
+/* =========================================================
+   SUMMARY CARD
+========================================================= */
+
+function CategorySummaryCard({
+  icon: Icon,
+  label,
+  value,
+  description,
+  tone = "dark",
+}) {
+  const tones = {
+    dark: {
+      icon: "bg-gray-950 text-white",
+      value: "text-gray-950",
+    },
+
+    green: {
+      icon: "bg-emerald-50 text-emerald-600",
+      value: "text-emerald-700",
+    },
+
+    blue: {
+      icon: "bg-blue-50 text-blue-600",
+      value: "text-gray-950",
+    },
+  };
+
+  const configuration = tones[tone] ?? tones.dark;
+
+  return (
+    <article
+      className="
+        rounded-[1.25rem]
+        border
+        border-gray-200/80
+        bg-white
+        p-4
+        shadow-[0_6px_20px_rgba(15,23,42,0.035)]
+
+        sm:p-5
+      "
+    >
+      <div
+        className="
+          flex
+          items-start
+          justify-between
+          gap-3
+        "
+      >
+        <div className="min-w-0">
+          <p
+            className="
+              text-[0.6rem]
+              font-bold
+              uppercase
+              tracking-[0.1em]
+              text-gray-400
+
+              sm:text-[0.65rem]
+            "
+          >
+            {label}
+          </p>
+
+          <p
+            className={[
+              `
+                mt-2
+                text-2xl
+                font-bold
+                tracking-[-0.04em]
+
+                sm:text-3xl
+              `,
+              configuration.value,
+            ].join(" ")}
+          >
+            {value}
+          </p>
+        </div>
+
+        <span
+          className={[
+            `
+              flex
+              h-10
+              w-10
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+
+              sm:h-11
+              sm:w-11
+            `,
+            configuration.icon,
+          ].join(" ")}
+        >
+          <Icon
+            sx={{
+              fontSize: 19,
+            }}
+          />
+        </span>
+      </div>
+
+      <p
+        className="
+          mt-3
+          text-[0.68rem]
+          leading-5
+          text-gray-500
+
+          sm:text-xs
+        "
+      >
+        {description}
+      </p>
+    </article>
+  );
+}
+
+/* =========================================================
+   PAGE
+========================================================= */
 
 function AdminCategories() {
   const [categories, setCategories] = useState([]);
@@ -74,6 +289,10 @@ function AdminCategories() {
 
   const [isSavingOrder, setIsSavingOrder] = useState(false);
 
+  /* =======================================================
+     APPLY RESPONSE
+  ======================================================= */
+
   const applyCategoriesResponse = useCallback((response) => {
     const receivedCategories = Array.isArray(response.categories)
       ? response.categories
@@ -81,9 +300,12 @@ function AdminCategories() {
 
     setCategories(receivedCategories);
     setOriginalCategories(receivedCategories);
-
     setLoadError(null);
   }, []);
+
+  /* =======================================================
+     REFRESH
+  ======================================================= */
 
   const refreshCategories = useCallback(async () => {
     setIsLoading(true);
@@ -99,6 +321,10 @@ function AdminCategories() {
       setIsLoading(false);
     }
   }, [applyCategoriesResponse]);
+
+  /* =======================================================
+     INITIAL LOAD
+  ======================================================= */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -134,11 +360,19 @@ function AdminCategories() {
     };
   }, [applyCategoriesResponse]);
 
+  /* =======================================================
+     ORDER STATE
+  ======================================================= */
+
   const orderChanged =
     categories.length === originalCategories.length &&
     categories.some(
       (category, index) => category.id !== originalCategories[index]?.id,
     );
+
+  /* =======================================================
+     FORM DIALOG
+  ======================================================= */
 
   function openCreateDialog() {
     setFormState((currentState) => ({
@@ -173,11 +407,10 @@ function AdminCategories() {
 
     try {
       /*
-       * Save the ordinary category information first.
+       * Save category information first.
        *
-       * The category must exist before uploading an
-       * image because its ID is included in the R2
-       * object key.
+       * The category must exist before its image
+       * can be stored under its category ID.
        */
       const response = formState.category
         ? await updateAdminCategory(formState.category.id, {
@@ -202,21 +435,13 @@ function AdminCategories() {
       }
 
       /*
-       * If the owner selected an image, upload it
-       * directly to R2 using the presigned URL flow.
+       * Upload a newly selected category image
+       * after the category record has been saved.
        */
       if (categoryData.imageFile) {
         try {
           await uploadCategoryImage(savedCategory.id, categoryData.imageFile);
         } catch (imageError) {
-          /*
-           * The category itself already exists at
-           * this point.
-           *
-           * Therefore we report only the image
-           * failure instead of incorrectly saying
-           * category creation failed.
-           */
           toast.error(
             imageError?.message ||
               "The category was saved, but its image could not be uploaded.",
@@ -243,10 +468,6 @@ function AdminCategories() {
         }
       }
 
-      /*
-       * Category information and optional image
-       * were successfully saved.
-       */
       toast.success(
         categoryData.imageFile
           ? formState.category
@@ -278,9 +499,12 @@ function AdminCategories() {
     }
   }
 
+  /* =======================================================
+     STATUS DIALOG
+  ======================================================= */
+
   function openStatusDialog(category) {
     setRequiresProductConfirmation(false);
-
     setStatusCategory(category);
   }
 
@@ -290,7 +514,6 @@ function AdminCategories() {
     }
 
     setStatusCategory(null);
-
     setRequiresProductConfirmation(false);
   }
 
@@ -323,7 +546,6 @@ function AdminCategories() {
       );
 
       setStatusCategory(null);
-
       setRequiresProductConfirmation(false);
     } catch (error) {
       const confirmationRequired =
@@ -343,6 +565,10 @@ function AdminCategories() {
       setIsUpdatingStatus(false);
     }
   }
+
+  /* =======================================================
+     ORDERING
+  ======================================================= */
 
   function moveCategory(currentIndex, direction) {
     const destinationIndex = currentIndex + direction;
@@ -383,7 +609,6 @@ function AdminCategories() {
         : [];
 
       setCategories(reorderedCategories);
-
       setOriginalCategories(reorderedCategories);
 
       toast.success(response.message);
@@ -394,6 +619,10 @@ function AdminCategories() {
     }
   }
 
+  /* =======================================================
+     SUMMARY
+  ======================================================= */
+
   const totalAssignedProducts = categories.reduce(
     (total, category) => total + (category.productCount ?? 0),
     0,
@@ -403,21 +632,79 @@ function AdminCategories() {
     (category) => category.isActive,
   ).length;
 
+  const inactiveCategoryCount = categories.length - activeCategoryCount;
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
   return (
-    <section className="space-y-7">
-      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-widest text-gray-500">
+    <section
+      className="
+        mx-auto
+        w-full
+        max-w-[100rem]
+        space-y-5
+
+        sm:space-y-6
+      "
+    >
+      {/* =====================================================
+          PAGE HEADER
+      ===================================================== */}
+      <header
+        className="
+          flex
+          flex-col
+          gap-4
+
+          sm:flex-row
+          sm:items-end
+          sm:justify-between
+          sm:gap-6
+        "
+      >
+        <div className="min-w-0">
+          <p
+            className="
+              text-[0.62rem]
+              font-bold
+              uppercase
+              tracking-[0.13em]
+              text-gray-400
+            "
+          >
             Catalog management
           </p>
 
-          <h2 className="mt-2 text-3xl font-bold tracking-tight text-gray-950">
-            Categories
-          </h2>
+          <h1
+            className="
+              mt-1
+              text-2xl
+              font-bold
+              tracking-[-0.035em]
+              text-gray-950
 
-          <p className="mt-3 max-w-2xl text-gray-600">
-            Create and organize the categories displayed in the customer
-            storefront.
+              sm:text-3xl
+            "
+          >
+            Categories
+          </h1>
+
+          <p
+            className="
+              mt-1.5
+              max-w-2xl
+              text-xs
+              leading-5
+              text-gray-500
+
+              sm:text-sm
+              sm:leading-6
+            "
+          >
+            Create, organize, reorder, and control the categories customers see
+            across the storefront.
           </p>
         </div>
 
@@ -427,76 +714,162 @@ function AdminCategories() {
           disabled={isSavingOrder}
           className="
             inline-flex
+            min-h-11
+            w-full
+            shrink-0
             items-center
             justify-center
             gap-2
-            rounded-xl
+            rounded-full
             bg-gray-950
             px-5
-            py-3
-            font-semibold
+            text-sm
+            font-bold
             text-white
-            transition
+            transition-colors
+
             hover:bg-gray-800
+
             disabled:cursor-not-allowed
-            disabled:opacity-50
+            disabled:bg-gray-200
+            disabled:text-gray-400
+
+            sm:w-auto
           "
         >
-          <AddRoundedIcon />
+          <AddRoundedIcon
+            sx={{
+              fontSize: 18,
+            }}
+          />
           Add category
         </button>
       </header>
 
-      {!isLoading && !loadError && (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-semibold text-gray-500">
-              Total categories
-            </p>
+      {/* =====================================================
+          SUMMARY
+      ===================================================== */}
+      {!isLoading && !loadError && categories.length > 0 && (
+        <div
+          className="
+            grid
+            grid-cols-2
+            gap-3
 
-            <p className="mt-3 text-3xl font-bold text-gray-950">
-              {categories.length}
-            </p>
-          </article>
+            sm:grid-cols-3
+            sm:gap-4
+          "
+        >
+          <CategorySummaryCard
+            icon={CategoryOutlinedIcon}
+            label="Categories"
+            value={categories.length}
+            description={`${inactiveCategoryCount} currently inactive`}
+            tone="dark"
+          />
 
-          <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-semibold text-gray-500">
-              Active categories
-            </p>
+          <CategorySummaryCard
+            icon={CheckCircleOutlineRoundedIcon}
+            label="Active"
+            value={activeCategoryCount}
+            description="Visible storefront categories"
+            tone="green"
+          />
 
-            <p className="mt-3 text-3xl font-bold text-emerald-700">
-              {activeCategoryCount}
-            </p>
-          </article>
-
-          <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-semibold text-gray-500">
-              Assigned products
-            </p>
-
-            <p className="mt-3 text-3xl font-bold text-gray-950">
-              {totalAssignedProducts}
-            </p>
-          </article>
+          <div className="col-span-2 sm:col-span-1">
+            <CategorySummaryCard
+              icon={Inventory2OutlinedIcon}
+              label="Assigned products"
+              value={totalAssignedProducts}
+              description="Products organized across categories"
+              tone="blue"
+            />
+          </div>
         </div>
       )}
 
+      {/* =====================================================
+          LOADING
+      ===================================================== */}
       {isLoading && <AdminCategoriesLoading />}
 
+      {/* =====================================================
+          ERROR
+      ===================================================== */}
       {!isLoading && loadError && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-14 text-center">
-          <ErrorOutlineRoundedIcon
-            className="text-red-500"
-            sx={{
-              fontSize: 56,
-            }}
-          />
+        <div
+          className="
+            rounded-[1.4rem]
+            border
+            border-red-200
+            bg-white
+            p-5
+            text-center
+            shadow-[0_8px_24px_rgba(15,23,42,0.04)]
 
-          <h2 className="mt-4 text-xl font-bold text-red-800">
+            sm:p-8
+          "
+        >
+          <span
+            className="
+              mx-auto
+              flex
+              h-14
+              w-14
+              items-center
+              justify-center
+              rounded-full
+              bg-red-50
+              text-red-600
+              ring-1
+              ring-red-100
+            "
+          >
+            <ErrorOutlineRoundedIcon
+              sx={{
+                fontSize: 26,
+              }}
+            />
+          </span>
+
+          <p
+            className="
+              mt-5
+              text-[0.62rem]
+              font-bold
+              uppercase
+              tracking-[0.12em]
+              text-red-500
+            "
+          >
+            Loading error
+          </p>
+
+          <h2
+            className="
+              mt-1.5
+              text-xl
+              font-bold
+              tracking-[-0.025em]
+              text-gray-950
+            "
+          >
             Categories could not be loaded
           </h2>
 
-          <p className="mt-2 text-red-700">
+          <p
+            className="
+              mx-auto
+              mt-2
+              max-w-md
+              text-xs
+              leading-5
+              text-gray-500
+
+              sm:text-sm
+              sm:leading-6
+            "
+          >
             {getApiErrorMessage(loadError, "Unable to load categories.")}
           </p>
 
@@ -504,40 +877,115 @@ function AdminCategories() {
             type="button"
             onClick={() => void refreshCategories()}
             className="
-                mt-6
-                inline-flex
-                items-center
-                gap-2
-                rounded-xl
-                bg-red-700
-                px-5
-                py-3
-                font-semibold
-                text-white
-                hover:bg-red-600
-              "
+              mt-5
+              inline-flex
+              min-h-11
+              items-center
+              justify-center
+              gap-2
+              rounded-full
+              bg-gray-950
+              px-5
+              text-sm
+              font-bold
+              text-white
+              transition-colors
+
+              hover:bg-gray-800
+            "
           >
-            <RefreshRoundedIcon />
+            <RefreshRoundedIcon
+              sx={{
+                fontSize: 18,
+              }}
+            />
             Try again
           </button>
         </div>
       )}
 
+      {/* =====================================================
+          EMPTY
+      ===================================================== */}
       {!isLoading && !loadError && categories.length === 0 && (
-        <div className="rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center shadow-sm">
-          <CategoryOutlinedIcon
-            className="text-gray-300"
-            sx={{
-              fontSize: 64,
-            }}
-          />
+        <div
+          className="
+              rounded-[1.4rem]
+              border
+              border-gray-200/80
+              bg-white
+              px-5
+              py-10
+              text-center
+              shadow-[0_8px_24px_rgba(15,23,42,0.04)]
 
-          <h2 className="mt-4 text-2xl font-bold text-gray-950">
+              sm:px-8
+              sm:py-14
+            "
+        >
+          <span
+            className="
+                mx-auto
+                flex
+                h-14
+                w-14
+                items-center
+                justify-center
+                rounded-full
+                bg-gray-100
+                text-gray-400
+                ring-1
+                ring-gray-200
+              "
+          >
+            <StorefrontOutlinedIcon
+              sx={{
+                fontSize: 25,
+              }}
+            />
+          </span>
+
+          <p
+            className="
+                mt-5
+                text-[0.62rem]
+                font-bold
+                uppercase
+                tracking-[0.12em]
+                text-gray-400
+              "
+          >
+            Catalog setup
+          </p>
+
+          <h2
+            className="
+                mt-1.5
+                text-xl
+                font-bold
+                tracking-[-0.025em]
+                text-gray-950
+
+                sm:text-2xl
+              "
+          >
             No categories yet
           </h2>
 
-          <p className="mx-auto mt-3 max-w-lg text-gray-600">
-            Create the first category to begin organizing products in the
+          <p
+            className="
+                mx-auto
+                mt-2
+                max-w-md
+                text-xs
+                leading-5
+                text-gray-500
+
+                sm:text-sm
+                sm:leading-6
+              "
+          >
+            Create the first category to begin organizing products for the
             storefront.
           </p>
 
@@ -545,25 +993,36 @@ function AdminCategories() {
             type="button"
             onClick={openCreateDialog}
             className="
-                mt-7
+                mt-5
                 inline-flex
+                min-h-11
                 items-center
+                justify-center
                 gap-2
-                rounded-xl
+                rounded-full
                 bg-gray-950
-                px-6
-                py-3
-                font-semibold
+                px-5
+                text-sm
+                font-bold
                 text-white
+                transition-colors
+
                 hover:bg-gray-800
               "
           >
-            <AddRoundedIcon />
+            <AddRoundedIcon
+              sx={{
+                fontSize: 18,
+              }}
+            />
             Create category
           </button>
         </div>
       )}
 
+      {/* =====================================================
+          CATEGORY TABLE
+      ===================================================== */}
       {!isLoading && !loadError && categories.length > 0 && (
         <AdminCategoryTable
           categories={categories}
@@ -578,6 +1037,9 @@ function AdminCategories() {
         />
       )}
 
+      {/* =====================================================
+          CATEGORY FORM
+      ===================================================== */}
       {formState.open && (
         <CategoryFormDialog
           key={formState.formKey}
@@ -589,6 +1051,9 @@ function AdminCategories() {
         />
       )}
 
+      {/* =====================================================
+          STATUS DIALOG
+      ===================================================== */}
       <CategoryStatusDialog
         open={statusCategory !== null}
         category={statusCategory}

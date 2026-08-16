@@ -645,19 +645,28 @@ function Products() {
               <>
                 <div
                   className="
-                      grid
-                      grid-cols-1
-                      gap-y-3
-                      justify-items-center
-                      sm:gap-x-5
-                      sm:gap-y-10
-                      xl:grid-cols-3
-                      xl:gap-x-6
-                    "
+    grid
+    grid-cols-2
+    items-stretch
+
+    gap-x-3
+    gap-y-5
+
+    sm:gap-x-5
+    sm:gap-y-7
+  "
                 >
-                  {products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
+                  {products.map((product, index) => {
+                    const isFeaturedLayout = (index + 1) % 5 === 0;
+
+                    return (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        layout={isFeaturedLayout ? "featured" : "compact"}
+                      />
+                    );
+                  })}
                 </div>
 
                 <div className="mt-12 sm:mt-16">
