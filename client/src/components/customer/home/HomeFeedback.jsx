@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import StarBorderRoundedIcon from "@mui/icons-material/StarBorderRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
@@ -11,6 +12,7 @@ import { toast } from "react-toastify";
 
 import {
   createFeedback,
+  deleteMyFeedback,
   fetchFeedbacks,
   fetchMyFeedback,
   updateMyFeedback,
@@ -348,10 +350,14 @@ function FeedbackForm({
   comment,
   existingFeedback,
   isSubmitting,
+  isDeleting,
   onRatingChange,
   onCommentChange,
+  onDelete,
   onSubmit,
 }) {
+  const isBusy = isSubmitting || isDeleting;
+
   return (
     <form onSubmit={onSubmit}>
       <div className="flex items-start justify-between gap-4">
@@ -439,7 +445,7 @@ function FeedbackForm({
           rating={rating}
           interactive
           onSelect={onRatingChange}
-          disabled={isSubmitting}
+          disabled={isBusy}
         />
       </div>
 
@@ -459,7 +465,7 @@ function FeedbackForm({
         <textarea
           rows={4}
           value={comment}
-          disabled={isSubmitting}
+          disabled={isBusy}
           onChange={(event) => onCommentChange(event.target.value)}
           placeholder="Tell us about your Butterfly Dream experience..."
           className="
@@ -493,36 +499,88 @@ function FeedbackForm({
         />
       </label>
 
-      <button
-        type="submit"
-        disabled={isSubmitting || rating === 0 || !comment.trim()}
-        className="
-          button-base
-          button-primary
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <button
+          type="submit"
+          disabled={isBusy || rating === 0 || !comment.trim()}
+          className="
+            button-base
+            button-primary
 
-          mt-5
-          min-h-11
+            min-h-11
 
-          text-[0.68rem]
-          uppercase
-          tracking-[0.14em]
-        "
-      >
-        {isSubmitting
-          ? "Saving..."
-          : existingFeedback
-            ? "Update feedback"
-            : "Share feedback"}
+            text-[0.68rem]
+            uppercase
+            tracking-[0.14em]
+          "
+        >
+          {isSubmitting
+            ? "Saving..."
+            : existingFeedback
+              ? "Update feedback"
+              : "Share feedback"}
 
-        {!isSubmitting && (
-          <ArrowForwardRoundedIcon
-            aria-hidden="true"
-            sx={{
-              fontSize: 17,
-            }}
-          />
+          {!isSubmitting && (
+            <ArrowForwardRoundedIcon
+              aria-hidden="true"
+              sx={{
+                fontSize: 17,
+              }}
+            />
+          )}
+        </button>
+
+        {existingFeedback && (
+          <button
+            type="button"
+            disabled={isBusy}
+            onClick={onDelete}
+            className="
+              inline-flex
+              min-h-11
+              items-center
+              justify-center
+              gap-2
+
+              rounded-full
+
+              border
+              border-red-200
+              bg-white
+
+              px-6
+              py-3
+
+              text-[0.68rem]
+              font-bold
+              uppercase
+              tracking-[0.14em]
+              text-red-700
+
+              transition-colors
+
+              hover:border-red-300
+              hover:bg-red-50
+
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-red-500/30
+
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
+          >
+            <DeleteOutlineRoundedIcon
+              aria-hidden="true"
+              sx={{
+                fontSize: 17,
+              }}
+            />
+
+            {isDeleting ? "Deleting..." : "Delete feedback"}
+          </button>
         )}
-      </button>
+      </div>
     </form>
   );
 }
@@ -671,6 +729,8 @@ function HomeFeedback({ content }) {
   const [comment, setComment] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -853,6 +913,41 @@ function HomeFeedback({ content }) {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!myFeedback || isSubmitting || isDeleting) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Delete your feedback? This cannot be undone.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+
+      const response = await deleteMyFeedback();
+
+      setMyFeedback(null);
+      setRating(0);
+      setComment("");
+
+      toast.success(response.message || "Your feedback has been deleted.");
+
+      setPage(1);
+      setRefreshKey((currentKey) => currentKey + 1);
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(error, "Unable to delete your feedback."),
+      );
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -1236,8 +1331,10 @@ function HomeFeedback({ content }) {
                   comment={comment}
                   existingFeedback={myFeedback}
                   isSubmitting={isSubmitting}
+                  isDeleting={isDeleting}
                   onRatingChange={setRating}
                   onCommentChange={setComment}
+                  onDelete={handleDelete}
                   onSubmit={handleSubmit}
                 />
               )}

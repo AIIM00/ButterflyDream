@@ -470,7 +470,10 @@ function VariantEditorForm({ variant, isSubmitting, onClose, onSubmit }) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form
+      onSubmit={handleSubmit}
+      className="flex min-h-0 flex-1 flex-col overflow-hidden"
+    >
       {/* =====================================================
           HEADER
       ===================================================== */}
