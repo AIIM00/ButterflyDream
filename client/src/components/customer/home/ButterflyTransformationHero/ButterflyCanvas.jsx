@@ -28,7 +28,12 @@ const drawContainedImage = ({ context, image, canvasWidth, canvasHeight }) => {
 };
 
 export const ButterflyCanvas = forwardRef(function ButterflyCanvas(
-  { getFrameImage, initialFrameIndex = 0, className = "" },
+  {
+    getFrameImage,
+    requestFrame,
+    initialFrameIndex = 0,
+    className = "",
+  },
   ref,
 ) {
   const canvasRef = useRef(null);
@@ -38,6 +43,7 @@ export const ButterflyCanvas = forwardRef(function ButterflyCanvas(
   const drawFrame = useCallback(
     (requestedFrameIndex = currentFrameIndexRef.current) => {
       currentFrameIndexRef.current = requestedFrameIndex;
+      requestFrame(requestedFrameIndex);
 
       if (scheduledFrameIdRef.current !== null) {
         window.cancelAnimationFrame(scheduledFrameIdRef.current);
@@ -101,7 +107,7 @@ export const ButterflyCanvas = forwardRef(function ButterflyCanvas(
         });
       });
     },
-    [getFrameImage],
+    [getFrameImage, requestFrame],
   );
 
   useImperativeHandle(

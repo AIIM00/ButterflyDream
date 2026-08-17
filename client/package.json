@@ -11,6 +11,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "optimize:animation": "node scripts/optimize-butterfly-frames.mjs",
+    "test:animation": "node --test src/components/customer/home/ButterflyTransformationHero/frameSequenceLoader.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
