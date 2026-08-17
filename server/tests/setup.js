@@ -33,6 +33,7 @@ async function clearTestDatabase() {
     prisma.cart.deleteMany(),
     prisma.wishlist.deleteMany(),
 
+    prisma.deliveryGovernorate.deleteMany(),
     prisma.storeSetting.deleteMany(),
     prisma.user.deleteMany(),
   ]);

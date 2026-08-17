@@ -26,6 +26,7 @@ import { createTestUser } from "./helpers/createTestUser.js";
 import {
   createTestAddress,
   createTestCatalogItem,
+  createTestDeliveryGovernorate,
   createTestStoreSetting,
 } from "./helpers/createCommerceFixtures.js";
 
@@ -224,8 +225,10 @@ describe("Customer cart", () => {
 
 describe("Customer checkout", () => {
   test("checkout creates an order, deducts inventory, clears the cart, and creates snapshots", async () => {
-    await createTestStoreSetting({
-      defaultDeliveryFee: "4.50",
+    await createTestStoreSetting();
+
+    await createTestDeliveryGovernorate({
+      deliveryFee: "4.50",
     });
 
     const customer = await createTestUser({
@@ -344,6 +347,8 @@ describe("Customer checkout", () => {
   });
 
   test("checkout rejects an empty cart", async () => {
+    await createTestDeliveryGovernorate();
+
     const customer = await createTestUser();
 
     const address = await createTestAddress(customer.id);
@@ -374,6 +379,8 @@ describe("Customer checkout", () => {
   });
 
   test("checkout rejects changed prices without changing inventory", async () => {
+    await createTestDeliveryGovernorate();
+
     const customer = await createTestUser();
 
     const address = await createTestAddress(customer.id);
@@ -450,6 +457,7 @@ describe("Customer checkout", () => {
 
   test("concurrent checkout requests cannot oversell one remaining item", async () => {
     await createTestStoreSetting();
+    await createTestDeliveryGovernorate();
 
     const { variant } = await createTestCatalogItem({
       stock: 1,
