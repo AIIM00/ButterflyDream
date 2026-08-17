@@ -93,6 +93,20 @@ export async function createTestAddress(userId, overrides = {}) {
   });
 }
 
+export async function createTestDeliveryGovernorate({
+  name = "North Lebanon",
+  deliveryFee = "3.00",
+  isActive = true,
+} = {}) {
+  return prisma.deliveryGovernorate.create({
+    data: {
+      name,
+      deliveryFee,
+      isActive,
+    },
+  });
+}
+
 export async function createTestStoreSetting(overrides = {}) {
   return prisma.storeSetting.create({
     data: {

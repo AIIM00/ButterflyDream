@@ -14,6 +14,7 @@ import AddToCartSection from "../../components/cart/AddToCartSection.jsx";
 import ProductImageGallery from "../../components/catalog/ProductImageGallery.jsx";
 import StockBadge from "../../components/catalog/StockBadge.jsx";
 import VariantSelector from "../../components/catalog/VariantSelector.jsx";
+import { selectInitialVariant } from "../../components/catalog/variantSelection.js";
 import WishlistToggleButton from "../../components/wishlist/WishlistToggleButton.jsx";
 
 // Hooks
@@ -193,10 +194,8 @@ function ProductDetailsLoading() {
 ========================================================= */
 
 function ProductDetailsContent({ product }) {
-  const defaultVariant =
-    product.variants.find((variant) => variant.isDefault) ??
-    product.variants[0] ??
-    null;
+  const variants = Array.isArray(product.variants) ? product.variants : [];
+  const initialVariant = selectInitialVariant(variants);
 
   const initialImage =
     product.images.find((image) => image.isPrimary) ??
@@ -204,7 +203,7 @@ function ProductDetailsContent({ product }) {
     null;
 
   const [selectedVariantId, setSelectedVariantId] = useState(
-    defaultVariant?.id ?? "",
+    initialVariant?.id ?? "",
   );
 
   const [selectedImageId, setSelectedImageId] = useState(
@@ -212,8 +211,8 @@ function ProductDetailsContent({ product }) {
   );
 
   const selectedVariant =
-    product.variants.find((variant) => variant.id === selectedVariantId) ??
-    defaultVariant;
+    variants.find((variant) => variant.id === selectedVariantId) ??
+    initialVariant;
 
   /* =======================================================
      VARIANT CHANGE
@@ -250,9 +249,11 @@ function ProductDetailsContent({ product }) {
 
   const displayPrice = selectedVariant
     ? `$${selectedVariant.price}`
-    : product.pricing.hasPriceRange
-      ? `$${product.pricing.minimum} – $${product.pricing.maximum}`
-      : `$${product.pricing.minimum}`;
+    : product.pricing?.minimum == null
+      ? "Unavailable"
+      : product.pricing.hasPriceRange
+        ? `$${product.pricing.minimum} – $${product.pricing.maximum}`
+        : `$${product.pricing.minimum}`;
 
   return (
     <main
@@ -652,7 +653,7 @@ function ProductDetailsContent({ product }) {
               </p>
 
               <VariantSelector
-                variants={product.variants}
+                variants={variants}
                 selectedVariantId={selectedVariantId}
                 onVariantSelect={handleVariantSelect}
               />

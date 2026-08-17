@@ -47,7 +47,7 @@ function Stars({
   return (
     <div
       className="flex items-center gap-0.5"
-      role={interactive ? "radiogroup" : undefined}
+      role={interactive ? "radiogroup" : "img"}
       aria-label={
         interactive ? "Choose your rating" : `${rating} out of 5 stars`
       }
@@ -63,7 +63,7 @@ function Stars({
               sx={{
                 fontSize: size,
               }}
-              className="text-brand-bronze"
+              className="text-brand-accent-fill"
             />
           ) : (
             <StarBorderRoundedIcon
@@ -72,7 +72,7 @@ function Stars({
               sx={{
                 fontSize: size,
               }}
-              className="text-brand-bronze/35"
+              className="text-brand-accent-fill/35"
             />
           );
         }
@@ -95,15 +95,15 @@ function Stars({
 
               rounded-full
 
-              text-brand-bronze
+              text-brand-accent-fill
 
               transition
               duration-200
 
-              hover:bg-brand-pale-champagne
+              hover:bg-brand-accent-soft
               focus-visible:outline-none
               focus-visible:ring-2
-              focus-visible:ring-brand-bronze/30
+              focus-visible:ring-brand-accent-fill/30
 
               disabled:cursor-not-allowed
               disabled:opacity-50
@@ -134,76 +134,106 @@ function ReviewCard({ feedback }) {
     <article
       className="
         flex
-        min-h-[220px]
+        h-full
+        min-h-[180px]
+        min-w-0
+        w-full
         flex-col
+
+        rounded-[2rem]
+
         border
-        border-brand-border
-        bg-white
-        p-4
+        border-brand-surface/10
 
-        sm:min-h-[240px]
-        sm:p-5
+        bg-brand-dark-surface
 
-        lg:min-h-[280px]
+        p-5
+
+        text-brand-surface
+
+        shadow-[0_14px_32px_rgba(11,33,24,0.12)]
+
+        sm:min-h-[190px]
+        sm:rounded-[2.25rem]
+        sm:p-6
+
+        lg:min-h-[210px]
         lg:p-6
       "
     >
-      <Stars rating={feedback.rating} size={17} />
+      <div
+        className="
+          flex
+          flex-wrap
+          items-start
+          justify-between
+
+          gap-4
+        "
+      >
+        <div className="min-w-0 flex-1 basis-32">
+          <p
+            className="
+              break-words
+
+              text-sm
+              font-bold
+              tracking-[0.01em]
+
+              text-brand-surface
+
+              sm:text-[0.78rem]
+            "
+          >
+            {feedback.customerName}
+          </p>
+
+          {feedback.createdAt && (
+            <time
+              dateTime={feedback.createdAt}
+              className="
+                mt-1
+                block
+
+                text-[0.62rem]
+                uppercase
+                tracking-[0.1em]
+
+                text-brand-surface/55
+              "
+            >
+              {formatReviewDate(feedback.createdAt)}
+            </time>
+          )}
+        </div>
+
+        <div className="ml-auto shrink-0 pt-0.5">
+          <Stars rating={feedback.rating} size={18} />
+        </div>
+      </div>
+
+      <div
+        aria-hidden="true"
+        className="my-4 h-px bg-brand-surface/20 sm:my-5"
+      />
 
       <blockquote
         className="
-          mt-5
           flex-1
+          whitespace-pre-wrap
           break-words
 
-          font-display
-          text-[1.05rem]
+          text-sm
           font-medium
-          leading-[1.35]
-          tracking-[-0.02em]
-          text-brand-espresso
+          leading-6
 
-          sm:text-[1.2rem]
-          lg:text-[1.32rem]
+          text-brand-surface/90
+
+          sm:text-[0.95rem]
         "
       >
-        “{feedback.comment}”
+        {feedback.comment}
       </blockquote>
-
-      <div
-        className="
-          mt-6
-          border-t
-          border-brand-border
-          pt-4
-        "
-      >
-        <p
-          className="
-            text-[0.7rem]
-            font-bold
-            uppercase
-            tracking-[0.13em]
-            text-brand-espresso
-          "
-        >
-          {feedback.customerName}
-        </p>
-
-        {feedback.createdAt && (
-          <p
-            className="
-              mt-1
-              text-[0.65rem]
-              uppercase
-              tracking-[0.1em]
-              text-brand-espresso/45
-            "
-          >
-            {formatReviewDate(feedback.createdAt)}
-          </p>
-        )}
-      </div>
     </article>
   );
 }
@@ -212,31 +242,35 @@ function ReviewSkeleton() {
   return (
     <div
       className="
-        min-h-[220px]
+        min-h-[180px]
         animate-pulse
+
+        rounded-[2rem]
+
         border
         border-brand-border
-        bg-white
-        p-4
 
-        sm:min-h-[240px]
-        sm:p-5
+        bg-brand-surface
 
-        lg:min-h-[280px]
+        p-5
+
+        sm:min-h-[190px]
+        sm:rounded-[2.25rem]
+
         lg:p-6
       "
     >
-      <div className="h-4 w-24 bg-brand-pale-champagne" />
+      <div className="h-4 w-24 rounded-full bg-brand-accent-soft" />
 
       <div className="mt-7 space-y-3">
-        <div className="h-4 w-full bg-brand-pale-champagne" />
-        <div className="h-4 w-[85%] bg-brand-pale-champagne" />
-        <div className="h-4 w-[65%] bg-brand-pale-champagne" />
+        <div className="h-4 w-full rounded-full bg-brand-accent-soft" />
+        <div className="h-4 w-[85%] rounded-full bg-brand-accent-soft" />
+        <div className="h-4 w-[65%] rounded-full bg-brand-accent-soft" />
       </div>
 
       <div className="mt-16 h-px bg-brand-border" />
 
-      <div className="mt-4 h-3 w-20 bg-brand-pale-champagne" />
+      <div className="mt-4 h-3 w-20 rounded-full bg-brand-accent-soft" />
     </div>
   );
 }
@@ -245,7 +279,7 @@ function EmptyReviews() {
   return (
     <div
       className="
-        col-span-2
+        col-span-1
         flex
         min-h-[260px]
         flex-col
@@ -254,10 +288,15 @@ function EmptyReviews() {
 
         border
         border-brand-border
-        bg-white
+
+        rounded-[2rem]
+
+        bg-brand-surface
 
         px-6
         text-center
+
+        sm:col-span-2
 
         lg:col-span-4
       "
@@ -458,31 +497,15 @@ function FeedbackForm({
         type="submit"
         disabled={isSubmitting || rating === 0 || !comment.trim()}
         className="
+          button-base
+          button-primary
+
           mt-5
-          inline-flex
           min-h-11
-          items-center
-          justify-center
-          gap-2
-
-          rounded-full
-
-          bg-brand-forest
-
-          px-6
 
           text-[0.68rem]
-          font-bold
           uppercase
           tracking-[0.14em]
-          text-white
-
-          transition
-
-          hover:opacity-90
-
-          disabled:cursor-not-allowed
-          disabled:opacity-40
         "
       >
         {isSubmitting
@@ -587,7 +610,7 @@ function GuestReviewInvitation() {
   );
 }
 
-function HomeFeedback(content) {
+function HomeFeedback({ content }) {
   const feedbackContent = {
     eyebrow: "Customer stories",
 
@@ -982,9 +1005,10 @@ function HomeFeedback(content) {
             key={`feedback-page-${page}`}
             className="
               grid
-              grid-cols-2
+              grid-cols-1
               gap-2.5
 
+              sm:grid-cols-2
               sm:gap-4
 
               lg:grid-cols-4
