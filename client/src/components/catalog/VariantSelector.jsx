@@ -1,33 +1,20 @@
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 
 import StockBadge from "./StockBadge.jsx";
+import {
+  canUseGroupedVariantSelector,
+  findVariant,
+  getConcreteVariantChoices,
+  getVariantOptions as getOptions,
+  hasVariant,
+  isVariantInStock,
+  selectInitialVariant,
+  valuesMatch,
+} from "./variantSelection.js";
 
 /* =========================================================
    HELPERS
 ========================================================= */
-
-function getOptions(variant) {
-  const rawOptions =
-    variant?.options &&
-    typeof variant.options === "object" &&
-    !Array.isArray(variant.options)
-      ? variant.options
-      : {};
-
-  return {
-    metalColor: String(rawOptions.metalColor ?? rawOptions.color ?? "").trim(),
-
-    metalColorHex: rawOptions.metalColorHex ?? rawOptions.colorHex ?? null,
-
-    stoneColor: String(rawOptions.stoneColor ?? "").trim(),
-
-    stoneColorHex: rawOptions.stoneColorHex ?? null,
-
-    size: String(rawOptions.size ?? "").trim(),
-
-    sizeType: rawOptions.sizeType ?? null,
-  };
-}
 
 function getUniqueColorOptions(variants, valueKey, hexKey) {
   const seen = new Set();
@@ -85,46 +72,6 @@ function getUniqueSizes(variants) {
   }
 
   return result;
-}
-
-function valuesMatch(first, second) {
-  return (
-    String(first ?? "")
-      .trim()
-      .toLowerCase() ===
-    String(second ?? "")
-      .trim()
-      .toLowerCase()
-  );
-}
-
-function findVariant(
-  variants,
-  { metalColor = "", stoneColor = "", size = "" },
-) {
-  return (
-    variants.find((variant) => {
-      const options = getOptions(variant);
-
-      if (metalColor && !valuesMatch(options.metalColor, metalColor)) {
-        return false;
-      }
-
-      if (stoneColor && !valuesMatch(options.stoneColor, stoneColor)) {
-        return false;
-      }
-
-      if (size && !valuesMatch(options.size, size)) {
-        return false;
-      }
-
-      return true;
-    }) ?? null
-  );
-}
-
-function hasVariant(variants, filters) {
-  return Boolean(findVariant(variants, filters));
 }
 
 /* =========================================================
@@ -410,6 +357,212 @@ function OptionHeader({ label, value }) {
   );
 }
 
+function ConcreteVariantChoices({
+  variants,
+  selectedVariantId,
+  onVariantSelect,
+}) {
+  const choices = getConcreteVariantChoices(variants);
+  const selectedVariant =
+    variants.find((variant) => variant.id === selectedVariantId) ?? null;
+
+  return (
+    <fieldset
+      className="
+        mt-6
+
+        rounded-[1.25rem]
+
+        border
+        border-brand-border
+
+        bg-brand-surface-soft
+
+        p-4
+      "
+    >
+      <OptionHeader label="Option" value={selectedVariant?.displayName} />
+
+      <div
+        className="
+          mt-4
+
+          grid
+
+          gap-2.5
+
+          sm:grid-cols-2
+        "
+      >
+        {choices.map((choice, index) => {
+          const variant = variants[index];
+          const selected = choice.variantId === selectedVariantId;
+          const disabled = !isVariantInStock(variant);
+
+          return (
+            <button
+              key={choice.variantId}
+              type="button"
+              disabled={disabled}
+              aria-label={choice.accessibleLabel}
+              aria-pressed={selected}
+              title={
+                disabled
+                  ? `${choice.displayName} is currently out of stock`
+                  : choice.accessibleLabel
+              }
+              onClick={() => onVariantSelect(choice.variantId)}
+              className={`
+                relative
+
+                flex
+                min-h-20
+
+                items-center
+                justify-between
+
+                gap-3
+
+                rounded-[1rem]
+
+                border
+
+                px-4
+                py-3
+
+                text-left
+
+                transition-all
+                duration-200
+
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-brand-accent-fill/40
+                focus-visible:ring-offset-2
+
+                ${
+                  selected
+                    ? `
+                        border-brand-primary
+                        bg-brand-surface
+
+                        shadow-[0_4px_12px_rgba(0,0,0,0.08)]
+                      `
+                    : `
+                        border-brand-border
+                        bg-brand-surface
+
+                        hover:border-brand-accent-fill
+                        hover:bg-brand-accent-soft
+                      `
+                }
+
+                ${
+                  disabled
+                    ? `
+                        cursor-not-allowed
+                        opacity-45
+
+                        hover:border-brand-border
+                        hover:bg-brand-surface
+                      `
+                    : `
+                        cursor-pointer
+                        active:scale-[0.98]
+                      `
+                }
+              `}
+            >
+              <span className="min-w-0">
+                <span
+                  className="
+                    block
+
+                    truncate
+
+                    text-sm
+                    font-semibold
+
+                    text-brand-text
+                  "
+                >
+                  {choice.displayName}
+                </span>
+
+                {choice.identifier && (
+                  <span
+                    className="
+                      mt-1
+                      block
+
+                      truncate
+
+                      text-[0.65rem]
+                      font-medium
+                      uppercase
+
+                      tracking-[0.08em]
+
+                      text-brand-text-muted
+                    "
+                  >
+                    SKU {choice.identifier}
+                  </span>
+                )}
+
+                <span className="mt-2 block">
+                  <StockBadge status={variant.stockStatus} compact />
+                </span>
+              </span>
+
+              <span
+                className="
+                  shrink-0
+
+                  font-display
+
+                  text-lg
+                  font-semibold
+
+                  text-brand-text
+                "
+              >
+                ${variant.price}
+              </span>
+
+              {selected && (
+                <span
+                  aria-hidden="true"
+                  className="
+                    absolute
+                    right-2
+                    top-2
+
+                    inline-flex
+                    h-4
+                    w-4
+
+                    items-center
+                    justify-center
+
+                    rounded-full
+
+                    bg-brand-primary
+
+                    text-brand-surface
+                  "
+                >
+                  <CheckRoundedIcon sx={{ fontSize: 10 }} />
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
 /* =========================================================
    VARIANT SELECTOR
 ========================================================= */
@@ -446,10 +599,10 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
 
   const selectedVariant =
     variants.find((variant) => variant.id === selectedVariantId) ??
-    variants.find((variant) => variant.isDefault) ??
-    variants[0];
+    selectInitialVariant(variants);
 
   const selectedOptions = getOptions(selectedVariant);
+  const useGroupedSelector = canUseGroupedVariantSelector(variants);
 
   const metalColors = getUniqueColorOptions(
     variants,
@@ -470,27 +623,39 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
   ======================================================= */
 
   function isMetalAvailable(metalColor) {
-    return hasVariant(variants, {
-      metalColor,
-    });
+    return hasVariant(
+      variants,
+      {
+        metalColor,
+      },
+      { inStockOnly: true },
+    );
   }
 
   function isStoneAvailable(stoneColor) {
-    return hasVariant(variants, {
-      metalColor: selectedOptions.metalColor,
+    return hasVariant(
+      variants,
+      {
+        metalColor: selectedOptions.metalColor,
 
-      stoneColor,
-    });
+        stoneColor,
+      },
+      { inStockOnly: true },
+    );
   }
 
   function isSizeAvailable(size) {
-    return hasVariant(variants, {
-      metalColor: selectedOptions.metalColor,
+    return hasVariant(
+      variants,
+      {
+        metalColor: selectedOptions.metalColor,
 
-      stoneColor: selectedOptions.stoneColor,
+        stoneColor: selectedOptions.stoneColor,
 
-      size,
-    });
+        size,
+      },
+      { inStockOnly: true },
+    );
   }
 
   /* =======================================================
@@ -508,7 +673,7 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
       stoneColor: selectedOptions.stoneColor,
 
       size: selectedOptions.size,
-    });
+    }, { inStockOnly: true });
 
     if (exactMatch) {
       onVariantSelect(exactMatch.id);
@@ -524,7 +689,7 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
       metalColor,
 
       stoneColor: selectedOptions.stoneColor,
-    });
+    }, { inStockOnly: true });
 
     if (stoneMatch) {
       onVariantSelect(stoneMatch.id);
@@ -538,7 +703,7 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
      */
     const metalMatch = findVariant(variants, {
       metalColor,
-    });
+    }, { inStockOnly: true });
 
     if (metalMatch) {
       onVariantSelect(metalMatch.id);
@@ -556,7 +721,7 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
       stoneColor,
 
       size: selectedOptions.size,
-    });
+    }, { inStockOnly: true });
 
     if (exactMatch) {
       onVariantSelect(exactMatch.id);
@@ -568,7 +733,7 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
       metalColor: selectedOptions.metalColor,
 
       stoneColor,
-    });
+    }, { inStockOnly: true });
 
     if (stoneMatch) {
       onVariantSelect(stoneMatch.id);
@@ -586,7 +751,7 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
       stoneColor: selectedOptions.stoneColor,
 
       size,
-    });
+    }, { inStockOnly: true });
 
     if (match) {
       onVariantSelect(match.id);
@@ -654,11 +819,13 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
         </p>
       </div>
 
-      {/* ==================================================
-          METAL
-      ================================================== */}
+      {useGroupedSelector ? (
+        <>
+          {/* ================================================
+              METAL
+          ================================================ */}
 
-      {metalColors.length > 0 && (
+          {metalColors.length > 0 && (
         <fieldset
           className="
             mt-6
@@ -704,13 +871,13 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
             })}
           </div>
         </fieldset>
-      )}
+          )}
 
-      {/* ==================================================
-          STONE
-      ================================================== */}
+          {/* ================================================
+              STONE
+          ================================================ */}
 
-      {stoneColors.length > 0 && (
+          {stoneColors.length > 0 && (
         <fieldset
           className="
             mt-3
@@ -756,13 +923,13 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
             })}
           </div>
         </fieldset>
-      )}
+          )}
 
-      {/* ==================================================
-          SIZE
-      ================================================== */}
+          {/* ================================================
+              SIZE
+          ================================================ */}
 
-      {sizes.length > 0 && (
+          {sizes.length > 0 && (
         <fieldset
           className="
             mt-3
@@ -811,6 +978,14 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
             })}
           </div>
         </fieldset>
+          )}
+        </>
+      ) : (
+        <ConcreteVariantChoices
+          variants={variants}
+          selectedVariantId={selectedVariant.id}
+          onVariantSelect={onVariantSelect}
+        />
       )}
 
       {/* ==================================================
