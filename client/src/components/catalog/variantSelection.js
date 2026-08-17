@@ -47,6 +47,47 @@ export function getVariantOptions(variant) {
   };
 }
 
+export function getVariantColorChoices(variants, colorAxis = "metalColor") {
+  if (!Array.isArray(variants)) {
+    return [];
+  }
+
+  const valueKey = colorAxis === "stoneColor" ? "stoneColor" : "metalColor";
+  const hexKey =
+    colorAxis === "stoneColor" ? "stoneColorHex" : "metalColorHex";
+  const choices = [];
+  const choiceIndexByValue = new Map();
+
+  for (const variant of variants) {
+    const options = getVariantOptions(variant);
+    const value = options[valueKey];
+
+    if (!value) {
+      continue;
+    }
+
+    const normalizedValue = normalizeOptionValue(value);
+    const existingIndex = choiceIndexByValue.get(normalizedValue);
+    const color = options[hexKey] || null;
+
+    if (existingIndex !== undefined) {
+      if (!choices[existingIndex].color && color) {
+        choices[existingIndex].color = color;
+      }
+
+      continue;
+    }
+
+    choiceIndexByValue.set(normalizedValue, choices.length);
+    choices.push({
+      value,
+      color,
+    });
+  }
+
+  return choices;
+}
+
 export function valuesMatch(first, second) {
   return normalizeOptionValue(first) === normalizeOptionValue(second);
 }
@@ -118,9 +159,6 @@ export function canUseGroupedVariantSelector(variants) {
 
   let expectedAxes = null;
   const tuples = new Set();
-  const valuesByAxis = new Map(
-    IDENTITY_OPTION_KEYS.map((optionKey) => [optionKey, new Set()]),
-  );
 
   for (const variant of variants) {
     const rawOptions = getRawOptions(variant);
@@ -160,11 +198,9 @@ export function canUseGroupedVariantSelector(variants) {
       return false;
     }
 
-    const tupleValues = axes.map((optionKey) => {
-      const value = normalizeOptionValue(options[optionKey]);
-      valuesByAxis.get(optionKey).add(value);
-      return value;
-    });
+    const tupleValues = axes.map((optionKey) =>
+      normalizeOptionValue(options[optionKey]),
+    );
     const tuple = JSON.stringify(tupleValues);
 
     if (tuples.has(tuple)) {
@@ -174,12 +210,7 @@ export function canUseGroupedVariantSelector(variants) {
     tuples.add(tuple);
   }
 
-  const expectedVariantCount = expectedAxes.reduce(
-    (count, optionKey) => count * valuesByAxis.get(optionKey).size,
-    1,
-  );
-
-  return tuples.size === expectedVariantCount;
+  return true;
 }
 
 export function getConcreteVariantChoices(variants) {

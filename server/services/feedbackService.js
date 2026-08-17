@@ -236,3 +236,15 @@ export async function updateCustomerFeedback(userId, data) {
 
   return serializeCustomerFeedback(feedback);
 }
+
+export async function deleteCustomerFeedback(userId) {
+  const result = await prisma.feedback.deleteMany({
+    where: {
+      userId,
+    },
+  });
+
+  return {
+    status: result.count === 0 ? "NOT_FOUND" : "DELETED",
+  };
+}

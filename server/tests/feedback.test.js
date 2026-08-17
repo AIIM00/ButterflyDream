@@ -7,7 +7,7 @@ import createAuthCookie from "./helpers/createAuthCookie.js";
 import { createTestUser } from "./helpers/createTestUser.js";
 
 describe("Customer feedback", () => {
-  test("new feedback is immediately public and updates without duplication", async () => {
+  test("feedback is public, editable, deletable, and can be submitted again", async () => {
     const olderCustomer = await createTestUser({
       fullName: "Older Customer",
       email: "older.feedback@example.com",
@@ -105,6 +105,78 @@ describe("Customer feedback", () => {
       id: feedbackId,
       rating: 4,
       comment: "The same review, now updated.",
+    });
+
+    await request(app).delete("/api/feedback/me").expect(401);
+
+    const deleteResponse = await request(app)
+      .delete("/api/feedback/me")
+      .set("Cookie", cookie)
+      .expect(200);
+
+    expect(deleteResponse.body).toMatchObject({
+      success: true,
+      message: "Your feedback has been deleted.",
+    });
+
+    expect(
+      await prisma.feedback.count({
+        where: {
+          userId: customer.id,
+        },
+      }),
+    ).toBe(0);
+
+    const myFeedbackAfterDelete = await request(app)
+      .get("/api/feedback/me")
+      .set("Cookie", cookie)
+      .expect(200);
+
+    expect(myFeedbackAfterDelete.body.feedback).toBeNull();
+
+    const publicResponseAfterDelete = await request(app)
+      .get("/api/feedback?page=1&limit=8&sort=newest")
+      .expect(200);
+
+    expect(
+      publicResponseAfterDelete.body.feedbacks.some(
+        (feedback) => feedback.id === feedbackId,
+      ),
+    ).toBe(false);
+    expect(publicResponseAfterDelete.body.summary.totalFeedbacks).toBe(1);
+
+    await request(app)
+      .delete("/api/feedback/me")
+      .set("Cookie", cookie)
+      .expect(404);
+
+    const recreatedResponse = await request(app)
+      .post("/api/feedback")
+      .set("Cookie", cookie)
+      .send({
+        rating: 5,
+        comment: "A new review after deleting the previous one.",
+      })
+      .expect(201);
+
+    expect(recreatedResponse.body.feedback.id).not.toBe(feedbackId);
+
+    expect(
+      await prisma.feedback.count({
+        where: {
+          userId: customer.id,
+        },
+      }),
+    ).toBe(1);
+
+    const publicResponseAfterRecreation = await request(app)
+      .get("/api/feedback?page=1&limit=8&sort=newest")
+      .expect(200);
+
+    expect(publicResponseAfterRecreation.body.feedbacks[0]).toMatchObject({
+      id: recreatedResponse.body.feedback.id,
+      rating: 5,
+      comment: "A new review after deleting the previous one.",
     });
   });
 });

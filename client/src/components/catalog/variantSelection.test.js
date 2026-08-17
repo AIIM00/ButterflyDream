@@ -5,6 +5,7 @@ import {
   canUseGroupedVariantSelector,
   findVariant,
   getConcreteVariantChoices,
+  getVariantColorChoices,
   selectInitialVariant,
 } from "./variantSelection.js";
 
@@ -48,7 +49,7 @@ test("falls back to concrete choices when sibling variants omit axes", () => {
   assert.equal(canUseGroupedVariantSelector(variants), false);
 });
 
-test("falls back for empty options, duplicate tuples, unknown keys, and sparse matrices", () => {
+test("falls back for empty options, duplicate tuples, and unknown keys", () => {
   assert.equal(
     canUseGroupedVariantSelector([createVariant({ options: {} })]),
     false,
@@ -68,14 +69,53 @@ test("falls back for empty options, duplicate tuples, unknown keys, and sparse m
     ]),
     false,
   );
+});
 
+test("keeps sparse, unique admin color and size combinations in grouped controls", () => {
+  const variants = [
+    createVariant({
+      id: "gold-six",
+      options: { metalColor: "Gold", metalColorHex: "#ffd700", size: "6" },
+    }),
+    createVariant({
+      id: "silver-seven",
+      options: {
+        metalColor: "Silver",
+        metalColorHex: "#c0c0c0",
+        size: "7",
+      },
+    }),
+  ];
+
+  assert.equal(canUseGroupedVariantSelector(variants), true);
   assert.equal(
-    canUseGroupedVariantSelector([
-      createVariant({ options: { metalColor: "Gold", size: "6" } }),
-      createVariant({ options: { metalColor: "Silver", size: "7" } }),
-    ]),
-    false,
+    findVariant(variants, { metalColor: "Silver", size: "7" }).id,
+    "silver-seven",
   );
+  assert.equal(findVariant(variants, { metalColor: "Gold", size: "7" }), null);
+});
+
+test("uses the exact admin color values and hex codes for customer swatches", () => {
+  const variants = [
+    createVariant({ options: { color: "Gold" } }),
+    createVariant({
+      options: { metalColor: " gold ", metalColorHex: "#D4AF37" },
+    }),
+    createVariant({
+      options: { metalColor: "Silver", metalColorHex: "#C0C0C0" },
+    }),
+    createVariant({
+      options: { stoneColor: "Ruby", stoneColorHex: "#B64242" },
+    }),
+  ];
+
+  assert.deepEqual(getVariantColorChoices(variants, "metalColor"), [
+    { value: "Gold", color: "#D4AF37" },
+    { value: "Silver", color: "#C0C0C0" },
+  ]);
+  assert.deepEqual(getVariantColorChoices(variants, "stoneColor"), [
+    { value: "Ruby", color: "#B64242" },
+  ]);
 });
 
 test("accepts the supported color alias and metadata", () => {

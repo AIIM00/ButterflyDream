@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   createFeedback,
+  deleteFeedback,
   getMyFeedback,
   listFeedback,
   updateFeedback,
@@ -54,5 +55,12 @@ router.post("/", createFeedback);
  * Update the customer's existing feedback.
  */
 router.patch("/me", updateFeedback);
+
+/*
+ * CUSTOMER
+ *
+ * Delete the logged-in customer's feedback.
+ */
+router.delete("/me", deleteFeedback);
 
 export default router;

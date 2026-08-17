@@ -36,3 +36,9 @@ export async function updateMyFeedback(payload) {
 
   return response.data;
 }
+
+export async function deleteMyFeedback() {
+  const response = await apiClient.delete("/feedback/me");
+
+  return response.data;
+}

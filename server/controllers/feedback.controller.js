@@ -1,5 +1,6 @@
 import {
   createCustomerFeedback,
+  deleteCustomerFeedback,
   getCustomerFeedback,
   listPublicFeedback,
   updateCustomerFeedback,
@@ -138,6 +139,23 @@ export async function updateFeedback(request, response, next) {
       success: true,
       message: "Your feedback has been updated.",
       feedback,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+export async function deleteFeedback(request, response, next) {
+  try {
+    const result = await deleteCustomerFeedback(request.user.id);
+
+    if (result.status === "NOT_FOUND") {
+      return errorResponse(response, 404, "You have not shared feedback yet.");
+    }
+
+    return response.status(200).json({
+      success: true,
+      message: "Your feedback has been deleted.",
     });
   } catch (error) {
     return next(error);

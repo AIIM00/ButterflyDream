@@ -5,46 +5,13 @@ import {
   canUseGroupedVariantSelector,
   findVariant,
   getConcreteVariantChoices,
+  getVariantColorChoices,
   getVariantOptions as getOptions,
   hasVariant,
   isVariantInStock,
   selectInitialVariant,
   valuesMatch,
 } from "./variantSelection.js";
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function getUniqueColorOptions(variants, valueKey, hexKey) {
-  const seen = new Set();
-  const result = [];
-
-  for (const variant of variants) {
-    const options = getOptions(variant);
-
-    const value = options[valueKey];
-
-    if (!value) {
-      continue;
-    }
-
-    const normalized = value.toLowerCase();
-
-    if (seen.has(normalized)) {
-      continue;
-    }
-
-    seen.add(normalized);
-
-    result.push({
-      value,
-      color: options[hexKey] ?? null,
-    });
-  }
-
-  return result;
-}
 
 function getUniqueSizes(variants) {
   const seen = new Set();
@@ -90,13 +57,11 @@ function ColorChoice({ label, color, selected, disabled, onClick }) {
         disabled ? `${label} is unavailable with your current selection` : label
       }
       className={`
-        group/color
-
         relative
 
         inline-flex
-        h-12
-        w-12
+        h-10
+        w-10
         shrink-0
 
         items-center
@@ -104,30 +69,30 @@ function ColorChoice({ label, color, selected, disabled, onClick }) {
 
         rounded-full
 
-        border
-
-        bg-brand-surface
+        border-2
 
         transition-all
         duration-200
 
         focus-visible:outline-none
         focus-visible:ring-2
-        focus-visible:ring-brand-accent-fill/40
+        focus-visible:ring-brand-primary/40
         focus-visible:ring-offset-2
 
         ${
           selected
             ? `
-                border-brand-primary
+                border-brand-surface
 
-                shadow-[0_4px_12px_rgba(0,0,0,0.08)]
+                ring-2
+                ring-brand-primary
+                ring-offset-2
               `
             : `
-                border-brand-border
+                border-black/10
 
-                hover:border-brand-accent-fill
-                hover:bg-brand-surface-soft
+                hover:border-brand-primary/60
+                hover:scale-105
               `
         }
 
@@ -143,80 +108,35 @@ function ColorChoice({ label, color, selected, disabled, onClick }) {
               `
         }
       `}
+      style={{
+        /* Variant colors are product data authored in the admin editor. */
+        backgroundColor: color || "#E6DFDA",
+      }}
     >
-      {/* ACTUAL VARIANT COLOR */}
-
-      <span
-        aria-hidden="true"
-        className="
-          relative
-
-          h-8
-          w-8
-
-          overflow-hidden
-
-          rounded-full
-
-          border
-          border-black/10
-
-          shadow-inner
-        "
-        style={{
-          /*
-           * This color is product data,
-           * not a website theme color,
-           * so using the variant HEX here
-           * is correct.
-           */
-          backgroundColor: color || "#E6DFDA",
-        }}
-      >
-        {/* subtle shine */}
-        <span
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-
-            bg-gradient-to-br
-            from-white/30
-            via-transparent
-            to-black/5
-          "
-        />
-      </span>
-
       {/* SELECTED INDICATOR */}
 
       {selected && (
         <span
           aria-hidden="true"
           className="
-            absolute
-            -bottom-1
-
             inline-flex
-            h-4
-            w-4
+            h-5
+            w-5
 
             items-center
             justify-center
 
             rounded-full
 
-            bg-brand-primary
+            bg-black/45
 
             text-brand-surface
 
-            ring-2
-            ring-brand-surface
           "
         >
           <CheckRoundedIcon
             sx={{
-              fontSize: 10,
+              fontSize: 14,
             }}
           />
         </span>
@@ -322,7 +242,7 @@ function OptionHeader({ label, value }) {
         gap-3
       "
     >
-      <legend
+      <p
         className="
           text-[0.65rem]
           font-bold
@@ -334,7 +254,7 @@ function OptionHeader({ label, value }) {
         "
       >
         {label}
-      </legend>
+      </p>
 
       {value && (
         <span
@@ -357,19 +277,24 @@ function OptionHeader({ label, value }) {
   );
 }
 
-function ConcreteVariantChoices({
-  variants,
-  selectedVariantId,
-  onVariantSelect,
+function ColorOptionsFieldset({
+  className,
+  label,
+  value,
+  options,
+  isAvailable,
+  isSelected,
+  onSelect,
 }) {
-  const choices = getConcreteVariantChoices(variants);
-  const selectedVariant =
-    variants.find((variant) => variant.id === selectedVariantId) ?? null;
+  if (options.length === 0) {
+    return null;
+  }
 
   return (
     <fieldset
-      className="
-        mt-6
+      aria-label={label}
+      className={`
+        ${className}
 
         rounded-[1.25rem]
 
@@ -379,7 +304,60 @@ function ConcreteVariantChoices({
         bg-brand-surface-soft
 
         p-4
-      "
+      `}
+    >
+      <OptionHeader label={label} value={value} />
+
+      <div
+        className="
+          mt-4
+
+          flex
+          flex-wrap
+
+          gap-3
+        "
+      >
+        {options.map((option) => (
+          <ColorChoice
+            key={option.value}
+            label={`${label}: ${option.value}`}
+            color={option.color}
+            disabled={!isAvailable(option.value)}
+            selected={isSelected(option.value)}
+            onClick={() => onSelect(option.value)}
+          />
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function ConcreteVariantChoices({
+  variants,
+  selectedVariantId,
+  onVariantSelect,
+  className = "mt-6",
+}) {
+  const choices = getConcreteVariantChoices(variants);
+  const selectedVariant =
+    variants.find((variant) => variant.id === selectedVariantId) ?? null;
+
+  return (
+    <fieldset
+      aria-label="Exact product option"
+      className={`
+        ${className}
+
+        rounded-[1.25rem]
+
+        border
+        border-brand-border
+
+        bg-brand-surface-soft
+
+        p-4
+      `}
     >
       <OptionHeader label="Option" value={selectedVariant?.displayName} />
 
@@ -604,17 +582,9 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
   const selectedOptions = getOptions(selectedVariant);
   const useGroupedSelector = canUseGroupedVariantSelector(variants);
 
-  const metalColors = getUniqueColorOptions(
-    variants,
-    "metalColor",
-    "metalColorHex",
-  );
+  const metalColors = getVariantColorChoices(variants, "metalColor");
 
-  const stoneColors = getUniqueColorOptions(
-    variants,
-    "stoneColor",
-    "stoneColorHex",
-  );
+  const stoneColors = getVariantColorChoices(variants, "stoneColor");
 
   const sizes = getUniqueSizes(variants);
 
@@ -819,16 +789,35 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
         </p>
       </div>
 
-      {useGroupedSelector ? (
-        <>
-          {/* ================================================
-              METAL
-          ================================================ */}
+      <ColorOptionsFieldset
+        className="mt-6"
+        label="Color"
+        value={selectedOptions.metalColor}
+        options={metalColors}
+        isAvailable={isMetalAvailable}
+        isSelected={(value) =>
+          valuesMatch(selectedOptions.metalColor, value)
+        }
+        onSelect={selectMetal}
+      />
 
-          {metalColors.length > 0 && (
+      <ColorOptionsFieldset
+        className={metalColors.length > 0 ? "mt-3" : "mt-6"}
+        label="Stone color"
+        value={selectedOptions.stoneColor}
+        options={stoneColors}
+        isAvailable={isStoneAvailable}
+        isSelected={(value) =>
+          valuesMatch(selectedOptions.stoneColor, value)
+        }
+        onSelect={selectStone}
+      />
+
+      {useGroupedSelector && sizes.length > 0 && (
         <fieldset
-          className="
-            mt-6
+          aria-label="Size"
+          className={`
+            ${metalColors.length > 0 || stoneColors.length > 0 ? "mt-3" : "mt-6"}
 
             rounded-[1.25rem]
 
@@ -838,111 +827,7 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
             bg-brand-surface-soft
 
             p-4
-          "
-        >
-          <OptionHeader label="Metal" value={selectedOptions.metalColor} />
-
-          <div
-            className="
-              mt-4
-
-              flex
-              flex-wrap
-
-              gap-2.5
-            "
-          >
-            {metalColors.map((option) => {
-              const disabled = !isMetalAvailable(option.value);
-
-              return (
-                <ColorChoice
-                  key={option.value}
-                  label={option.value}
-                  color={option.color}
-                  disabled={disabled}
-                  selected={valuesMatch(
-                    selectedOptions.metalColor,
-                    option.value,
-                  )}
-                  onClick={() => selectMetal(option.value)}
-                />
-              );
-            })}
-          </div>
-        </fieldset>
-          )}
-
-          {/* ================================================
-              STONE
-          ================================================ */}
-
-          {stoneColors.length > 0 && (
-        <fieldset
-          className="
-            mt-3
-
-            rounded-[1.25rem]
-
-            border
-            border-brand-border
-
-            bg-brand-surface-soft
-
-            p-4
-          "
-        >
-          <OptionHeader label="Stone" value={selectedOptions.stoneColor} />
-
-          <div
-            className="
-              mt-4
-
-              flex
-              flex-wrap
-
-              gap-2.5
-            "
-          >
-            {stoneColors.map((option) => {
-              const disabled = !isStoneAvailable(option.value);
-
-              return (
-                <ColorChoice
-                  key={option.value}
-                  label={option.value}
-                  color={option.color}
-                  disabled={disabled}
-                  selected={valuesMatch(
-                    selectedOptions.stoneColor,
-                    option.value,
-                  )}
-                  onClick={() => selectStone(option.value)}
-                />
-              );
-            })}
-          </div>
-        </fieldset>
-          )}
-
-          {/* ================================================
-              SIZE
-          ================================================ */}
-
-          {sizes.length > 0 && (
-        <fieldset
-          className="
-            mt-3
-
-            rounded-[1.25rem]
-
-            border
-            border-brand-border
-
-            bg-brand-surface-soft
-
-            p-4
-          "
+          `}
         >
           <OptionHeader
             label="Size"
@@ -978,13 +863,16 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
             })}
           </div>
         </fieldset>
-          )}
-        </>
-      ) : (
+      )}
+
+      {!useGroupedSelector && (
         <ConcreteVariantChoices
           variants={variants}
           selectedVariantId={selectedVariant.id}
           onVariantSelect={onVariantSelect}
+          className={
+            metalColors.length > 0 || stoneColors.length > 0 ? "mt-3" : "mt-6"
+          }
         />
       )}
 
