@@ -36,9 +36,9 @@ services:
       - key: ALLOWED_FRONTEND_ORIGINS
         value: https://butterflydream.cc,https://www.butterflydream.cc,https://admin.butterflydream.cc
 
-      # Render generates this securely.
+      # Secret configured manually in Render.
       - key: JWT_SECRET
-        generateValue: false
+        sync: false
 
       - key: AUTH_SESSION_DAYS
         value: "7"
@@ -69,7 +69,7 @@ services:
 
       # Still required for customer verification/password reset OTP hashing.
       - key: OTP_HASH_SECRET
-        generateValue: false
+        sync: false
 
       - key: EMAIL_VERIFICATION_OTP_MINUTES
         value: "3"
