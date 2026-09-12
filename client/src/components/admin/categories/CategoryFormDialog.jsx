@@ -194,7 +194,7 @@ function CategoryForm({ category, isSubmitting, onClose, onSubmit }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
+    <form onSubmit={handleSubmit} noValidate className="flex max-h-[90vh] flex-col overflow-hidden"  >
       {/* =====================================================
           HEADER
       ===================================================== */}
@@ -202,6 +202,7 @@ function CategoryForm({ category, isSubmitting, onClose, onSubmit }) {
         id="category-form-title"
         sx={{
           padding: 0,
+          flexShrink: 0,
         }}
       >
         <div
@@ -297,7 +298,13 @@ function CategoryForm({ category, isSubmitting, onClose, onSubmit }) {
       {/* =====================================================
           CONTENT
       ===================================================== */}
-      <DialogContent sx={{ padding: 0 }}>
+      <DialogContent sx={{ padding: 0 ,
+
+    overflowY: "auto",
+
+    minHeight: 0,
+
+    flex: 1, }}>
         <div
           className="
             space-y-6
@@ -928,7 +935,7 @@ function CategoryForm({ category, isSubmitting, onClose, onSubmit }) {
       {/* =====================================================
           ACTIONS
       ===================================================== */}
-      <DialogActions sx={{ padding: 0 }}>
+      <DialogActions sx={{ padding: 0, flexShrink: 0 }}>
         <div
           className="
             flex
