@@ -52,6 +52,29 @@ async function prepareCommerce() {
 }
 
 describe("Guest and manual checkout", () => {
+  test("checkout options expose only active delivery governorates", async () => {
+    await prepareCommerce();
+    await createTestDeliveryGovernorate({
+      name: "Unavailable Governorate",
+      deliveryFee: "9.00",
+      isActive: false,
+    });
+
+    const response = await request(app).get("/api/checkout/options").expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.checkoutOptions).toMatchObject({
+      currency: "USD",
+      ordersEnabled: true,
+    });
+    expect(response.body.checkoutOptions.governorates).toEqual([
+      expect.objectContaining({
+        name: "North Lebanon",
+        deliveryFee: "4.00",
+      }),
+    ]);
+  });
+
   test("a guest can preview current prices and delivery without signing in", async () => {
     const { variant } = await prepareCommerce();
 
