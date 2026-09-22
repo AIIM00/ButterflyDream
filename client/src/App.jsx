@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound.jsx";
 
 // Admin pages
 import AdminCategories from "./pages/admin/AdminCategories.jsx";
+import AdminCustomers from "./pages/admin/AdminCustomers.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import AdminOrderManage from "./pages/admin/AdminOrderManage.jsx";
 import AdminOrders from "./pages/admin/AdminOrders.jsx";
@@ -201,15 +202,7 @@ function App() {
                 }
               />
 
-              <Route
-                path="customers"
-                element={
-                  <AdminPlaceholder
-                    title="Customers"
-                    description="Review customer accounts and manage account status."
-                  />
-                }
-              />
+              <Route path="customers" element={<AdminCustomers />} />
 
               <Route
                 path="notifications"
