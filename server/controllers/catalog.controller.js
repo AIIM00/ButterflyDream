@@ -9,6 +9,7 @@ import {
   getPublicProductBySlug,
   getPublicProducts,
 } from "../services/catalogService.js";
+import { getMetaCatalogCsv } from "../services/metaCatalogService.js";
 
 function handleCatalogError(error, response, next) {
   if (error instanceof CatalogQueryError) {
@@ -65,6 +66,24 @@ export async function getPublicProduct(request, response, next) {
     return successResponse(response, 200, "Product retrieved successfully.", {
       product,
     });
+  } catch (error) {
+    return handleCatalogError(error, response, next);
+  }
+}
+
+export async function getMetaCatalogFeed(_request, response, next) {
+  try {
+    const { csv, itemCount, skippedItems } = await getMetaCatalogCsv();
+
+    response.set({
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": 'inline; filename="butterfly-dream-meta-catalog.csv"',
+      "Cache-Control": "public, max-age=300",
+      "X-Catalog-Item-Count": String(itemCount),
+      "X-Catalog-Skipped-Items": String(skippedItems),
+    });
+
+    return response.status(200).send(csv);
   } catch (error) {
     return handleCatalogError(error, response, next);
   }
