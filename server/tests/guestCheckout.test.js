@@ -117,11 +117,13 @@ describe("Guest and manual checkout", () => {
       email: "manual.address@example.com",
     });
 
-    const cart = await prisma.cart.create({
-      data: {
+    const cart = await prisma.cart.findUnique({
+      where: {
         userId: customer.id,
       },
     });
+
+    expect(cart).not.toBeNull();
 
     await prisma.cartItem.create({
       data: {
