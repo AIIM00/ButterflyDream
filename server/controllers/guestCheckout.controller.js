@@ -4,6 +4,7 @@ import {
   placeGuestOrder,
   previewFlexibleCheckout,
 } from "../services/guestCheckoutService.js";
+import { getPublicCheckoutOptions } from "../services/checkoutOptionsService.js";
 import { sendOrderPlacedEmailSafely } from "../services/orderEmailService.js";
 import {
   GuestCheckoutValidationError,
@@ -46,6 +47,18 @@ function handleGuestCheckoutError(error, response, next) {
   }
 
   return next(error);
+}
+
+export async function getCheckoutOptions(_request, response, next) {
+  try {
+    const checkoutOptions = await getPublicCheckoutOptions();
+
+    return successResponse(response, 200, "Checkout options retrieved.", {
+      checkoutOptions,
+    });
+  } catch (error) {
+    return next(error);
+  }
 }
 
 export async function previewCheckout(request, response, next) {
