@@ -3,15 +3,35 @@ import {
   createCheckoutOrder,
   getCheckout,
 } from "../controllers/checkout.controller.js";
+import {
+  createCustomerManualOrder,
+  createGuestOrder,
+  previewCheckout,
+} from "../controllers/guestCheckout.controller.js";
 import requireAuthentication from "../middleware/authMiddleware.js";
 import requireRole from "../middleware/roleMiddleware.js";
 
 const router = Router();
 
-router.use(requireAuthentication, requireRole("CUSTOMER"));
+// Public checkout support for guest bags.
+router.post("/preview", previewCheckout);
+router.post("/guest-orders", createGuestOrder);
 
-router.get("/", getCheckout);
+// Customer checkout using a manually entered address.
+router.post(
+  "/manual-orders",
+  requireAuthentication,
+  requireRole("CUSTOMER"),
+  createCustomerManualOrder,
+);
 
-router.post("/orders", createCheckoutOrder);
+// Existing customer checkout using saved account addresses.
+router.get("/", requireAuthentication, requireRole("CUSTOMER"), getCheckout);
+router.post(
+  "/orders",
+  requireAuthentication,
+  requireRole("CUSTOMER"),
+  createCheckoutOrder,
+);
 
 export default router;
