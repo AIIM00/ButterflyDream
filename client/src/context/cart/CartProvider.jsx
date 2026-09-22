@@ -87,9 +87,34 @@ async function hydrateGuestCart(items, signal) {
     { signal },
   );
 
+  const checkoutCart = response.checkout?.cart ?? null;
+
+  if (!checkoutCart) {
+    return {
+      message: "Bag updated.",
+      cart: null,
+    };
+  }
+
+  const summary = checkoutCart.summary ?? {};
+  const canCheckout =
+    Boolean(response.checkout?.ordersEnabled ?? true) &&
+    (checkoutCart.items?.length ?? 0) > 0 &&
+    !summary.hasPriceChanges &&
+    !summary.hasUnavailableItems &&
+    !summary.hasInsufficientStock;
+
   return {
     message: "Bag updated.",
-    cart: response.checkout?.cart ?? null,
+    cart: {
+      ...checkoutCart,
+      summary: {
+        ...summary,
+        // Delivery is intentionally selected on the next screen. A missing
+        // address must not block a guest from proceeding from the bag.
+        canCheckout,
+      },
+    },
   };
 }
 
