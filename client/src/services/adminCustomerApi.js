@@ -23,3 +23,11 @@ export async function fetchAdminCustomers(
 
   return response.data;
 }
+
+export async function fetchAdminCustomerProfile(customerId, { signal } = {}) {
+  const response = await apiClient.get(`/admin/customers/${customerId}`, {
+    signal,
+  });
+
+  return response.data;
+}
