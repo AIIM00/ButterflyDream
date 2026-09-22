@@ -22,6 +22,7 @@ import feedbackRoutes from "../routes/feedback.routes.js";
 
 // Admin routes
 import adminCategoryRoutes from "../routes/adminCategory.routes.js";
+import adminCustomerRoutes from "../routes/adminCustomer.routes.js";
 import adminDashboardRoutes from "../routes/adminDashboard.routes.js";
 import adminOrderRoutes from "../routes/adminOrder.routes.js";
 import adminProductRoutes from "../routes/adminProduct.routes.js";
@@ -81,6 +82,7 @@ app.use("/api/admin/settings", adminStoreSettingRoutes);
 app.use("/api/admin/categories", adminCategoryRoutes);
 app.use("/api/admin/products", adminProductRoutes);
 app.use("/api/admin/orders", adminOrderRoutes);
+app.use("/api/admin/customers", adminCustomerRoutes);
 app.use("/api/admin/in-store-sales", adminInStoreSaleRouter);
 app.use("/api/admin/popups", adminPopupEventRoutes);
 app.use("/api/admin/delivery-governorates", adminDeliveryGovernorateRoutes);
