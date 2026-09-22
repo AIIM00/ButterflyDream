@@ -1,5 +1,7 @@
 const CUSTOMER_STATUSES = new Set(["ACTIVE", "SUSPENDED"]);
 const CUSTOMER_SORTS = new Set(["newest", "oldest", "name_asc", "name_desc"]);
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export class AdminCustomerValidationError extends Error {
   constructor(message, statusCode = 400) {
@@ -23,6 +25,16 @@ function parsePositiveInteger(value, fallback, fieldName, maximum) {
   }
 
   return parsed;
+}
+
+export function parseAdminCustomerId(value) {
+  const customerId = String(value ?? "").trim();
+
+  if (!UUID_PATTERN.test(customerId)) {
+    throw new AdminCustomerValidationError("customerId must be a valid UUID.");
+  }
+
+  return customerId;
 }
 
 export function parseAdminCustomerQuery(query = {}) {
