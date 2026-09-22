@@ -30,6 +30,7 @@ import AdminInStoreSales from "./pages/admin/AdminInStoreSales.jsx";
 import AdminInStoreSalesHistory from "./pages/admin/AdminInStoreSalesHistory.jsx";
 import AdminInitialPasswordChange from "./pages/auth/AdminInitialPasswordChange.jsx";
 import AdminWebsite from "./pages/admin/AdminWebsite.jsx";
+
 // Authentication pages
 import AdminLogin from "./pages/auth/AdminLogin.jsx";
 import EmailVerification from "./pages/auth/EmailVerification.jsx";
@@ -41,7 +42,7 @@ import ResetPassword from "./pages/auth/ResetPassword.jsx";
 // Customer pages
 import Account from "./pages/customer/Account.jsx";
 import Cart from "./pages/customer/Cart.jsx";
-import Checkout from "./pages/customer/Checkout.jsx";
+import CheckoutGuestEnabled from "./pages/customer/CheckoutGuestEnabled.jsx";
 import CustomerPlaceholder from "./pages/customer/CustomerPlaceholder.jsx";
 import Home from "./pages/customer/Home.jsx";
 import Notifications from "./pages/customer/Notifications.jsx";
@@ -55,24 +56,27 @@ import PopupsPage from "./pages/customer/PopupsPage.jsx";
 
 function App() {
   const isDevelopmentRouting = runtimeSite === "development";
-
   const allowCustomerRoutes =
     isDevelopmentRouting || runtimeSite === "customer";
-
   const allowAdminRoutes = isDevelopmentRouting || runtimeSite === "admin";
 
   return (
     <Routes>
       {allowCustomerRoutes && (
         <>
-          {/* Customer storefront */}
           <Route element={<CustomerLayout />}>
-            {/* Public storefront routes */}
             <Route index element={<Home />} />
-
             <Route path="products" element={<Products />} />
-
             <Route path="products/:slug" element={<ProductDetails />} />
+
+            {/* Bag and checkout are intentionally public so visitors can buy
+                without creating an account. */}
+            <Route path="cart" element={<Cart />} />
+            <Route path="checkout" element={<CheckoutGuestEnabled />} />
+            <Route
+              path="checkout/success/:orderId"
+              element={<OrderSuccess />}
+            />
 
             <Route
               path="privacy"
@@ -96,42 +100,24 @@ function App() {
               }
             />
 
-            {/* Customer-only storefront routes */}
             <Route element={<ProtectedRoute allowedRoles={["CUSTOMER"]} />}>
-              <Route path="cart" element={<Cart />} />
-
               <Route path="wishlist" element={<Wishlist />} />
-
               <Route path="notifications" element={<Notifications />} />
-
-              <Route path="checkout" element={<Checkout />} />
-
-              <Route
-                path="checkout/success/:orderId"
-                element={<OrderSuccess />}
-              />
-
               <Route path="account" element={<Account />} />
-
               <Route path="orders" element={<Orders />} />
-
               <Route path="orders/:orderId" element={<OrderDetails />} />
             </Route>
+
             <Route path="popups" element={<PopupsPage />} />
           </Route>
 
-          {/* Customer authentication pages */}
           <Route element={<AuthLayout />}>
             <Route path="login" element={<Login />} />
-
             <Route path="register" element={<Register />} />
-
             <Route path="forgot-password" element={<ForgotPassword />} />
-
             <Route path="reset-password" element={<ResetPassword />} />
           </Route>
 
-          {/* Logged-in customer email verification */}
           <Route element={<ProtectedRoute allowedRoles={["CUSTOMER"]} />}>
             <Route element={<AuthLayout />}>
               <Route path="verify-email" element={<EmailVerification />} />
@@ -142,13 +128,6 @@ function App() {
 
       {allowAdminRoutes && (
         <>
-          {/*
-           * Production admin hostname:
-           * https://admin.butterflydream.cc/
-           *
-           * Local development keeps:
-           * http://localhost:5173/admin/login
-           */}
           <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
             <Route element={<AuthLayout />}>
               <Route
@@ -157,42 +136,32 @@ function App() {
               />
             </Route>
           </Route>
+
           {runtimeSite === "admin" && (
             <Route element={<AuthLayout />}>
               <Route index element={<AdminLogin />} />
             </Route>
           )}
 
-          {/* Admin authentication pages */}
           <Route element={<AuthLayout />}>
             <Route path="admin/login" element={<AdminLogin />} />
           </Route>
 
-          {/* Admin-only application routes */}
           <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
-
               <Route path="dashboard" element={<AdminDashboard />} />
-
               <Route path="products" element={<AdminProducts />} />
-
               <Route path="products/new" element={<AdminProductCreate />} />
-
               <Route
                 path="products/:productId"
                 element={<AdminProductManage />}
               />
-
               <Route path="categories" element={<AdminCategories />} />
-
               <Route path="orders" element={<AdminOrders />} />
-
               <Route path="orders/:orderId" element={<AdminOrderManage />} />
               <Route path="website" element={<AdminWebsite />} />
-
               <Route path="settings" element={<AdminSettings />} />
-
               <Route
                 path="inventory"
                 element={
@@ -202,13 +171,11 @@ function App() {
                   />
                 }
               />
-
               <Route path="customers" element={<AdminCustomersOverview />} />
               <Route
                 path="customers/:customerId"
                 element={<AdminCustomerProfile />}
               />
-
               <Route
                 path="notifications"
                 element={
@@ -218,9 +185,7 @@ function App() {
                   />
                 }
               />
-
               <Route path="in-store-sales" element={<AdminInStoreSales />} />
-
               <Route
                 path="in-store-sales/history"
                 element={<AdminInStoreSalesHistory />}
