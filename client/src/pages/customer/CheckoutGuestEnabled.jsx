@@ -15,6 +15,7 @@ import CheckoutOrderItem from "../../components/checkout/CheckoutOrderItem.jsx";
 import useAppContext from "../../context/app/useAppContext.js";
 import useCart from "../../context/cart/useCart.js";
 import {
+  fetchCheckoutOptions,
   fetchCustomerCheckout,
   placeCustomerManualOrder,
   placeCustomerOrder,
@@ -61,7 +62,7 @@ function hasRequiredAddress(address) {
 }
 
 function fieldClass() {
-  return "min-h-12 w-full rounded-[1rem] border border-brand-border bg-brand-surface px-4 text-sm text-brand-text outline-none transition focus:border-brand-accent-fill focus:ring-2 focus:ring-brand-accent-fill/15";
+  return "min-h-12 w-full rounded-[1rem] border border-brand-border bg-brand-surface px-4 text-sm text-brand-text outline-none transition focus:border-brand-accent-fill focus:ring-2 focus:ring-brand-accent-fill/15 disabled:cursor-not-allowed disabled:opacity-60";
 }
 
 function Section({ eyebrow, title, children }) {
@@ -78,7 +79,14 @@ function Section({ eyebrow, title, children }) {
   );
 }
 
-function AddressForm({ value, onChange, disabled }) {
+function AddressForm({
+  value,
+  onChange,
+  disabled,
+  governorates,
+  currency,
+  optionsLoading,
+}) {
   function update(event) {
     const { name, value: nextValue } = event.target;
     onChange((current) => ({ ...current, [name]: nextValue }));
@@ -99,6 +107,7 @@ function AddressForm({ value, onChange, disabled }) {
           autoComplete="name"
         />
       </div>
+
       <div>
         <label className="mb-1.5 block text-xs font-semibold text-brand-text">
           Phone
@@ -112,22 +121,40 @@ function AddressForm({ value, onChange, disabled }) {
           autoComplete="tel"
         />
       </div>
+
       <div>
         <label className="mb-1.5 block text-xs font-semibold text-brand-text">
           Governorate
         </label>
-        <input
+        <select
           name="governorate"
           value={value.governorate}
           onChange={update}
-          disabled={disabled}
-          placeholder="e.g. North Lebanon"
+          disabled={disabled || optionsLoading || governorates.length === 0}
           className={fieldClass()}
-        />
+          autoComplete="address-level1"
+        >
+          <option value="">
+            {optionsLoading
+              ? "Loading governorates..."
+              : governorates.length === 0
+                ? "No delivery governorates available"
+                : "Choose governorate"}
+          </option>
+          {governorates.map((governorate) => (
+            <option key={governorate.id} value={governorate.name}>
+              {governorate.name} — {formatCurrency(governorate.deliveryFee, currency)} delivery
+            </option>
+          ))}
+        </select>
+        <p className="mt-1.5 text-[0.65rem] leading-5 text-brand-text-muted">
+          Only governorates currently served by Butterfly Dream can be selected.
+        </p>
       </div>
+
       <div>
         <label className="mb-1.5 block text-xs font-semibold text-brand-text">
-          City
+          City / town
         </label>
         <input
           name="city"
@@ -138,6 +165,7 @@ function AddressForm({ value, onChange, disabled }) {
           autoComplete="address-level2"
         />
       </div>
+
       <div className="sm:col-span-2">
         <label className="mb-1.5 block text-xs font-semibold text-brand-text">
           Street / area
@@ -151,9 +179,10 @@ function AddressForm({ value, onChange, disabled }) {
           autoComplete="street-address"
         />
       </div>
+
       <div>
         <label className="mb-1.5 block text-xs font-semibold text-brand-text">
-          Building
+          Building <span className="font-normal text-brand-text-muted">(optional)</span>
         </label>
         <input
           name="building"
@@ -163,9 +192,10 @@ function AddressForm({ value, onChange, disabled }) {
           className={fieldClass()}
         />
       </div>
+
       <div>
         <label className="mb-1.5 block text-xs font-semibold text-brand-text">
-          Floor
+          Floor <span className="font-normal text-brand-text-muted">(optional)</span>
         </label>
         <input
           name="floor"
@@ -175,6 +205,7 @@ function AddressForm({ value, onChange, disabled }) {
           className={fieldClass()}
         />
       </div>
+
       <div className="sm:col-span-2">
         <label className="mb-1.5 block text-xs font-semibold text-brand-text">
           Landmark <span className="font-normal text-brand-text-muted">(optional)</span>
@@ -187,6 +218,7 @@ function AddressForm({ value, onChange, disabled }) {
           className={fieldClass()}
         />
       </div>
+
       <div className="sm:col-span-2">
         <label className="mb-1.5 block text-xs font-semibold text-brand-text">
           Delivery notes <span className="font-normal text-brand-text-muted">(optional)</span>
@@ -210,6 +242,9 @@ function CheckoutGuestEnabled() {
   const { cart, isLoading: cartLoading, clearCart, reloadCart } = useCart();
 
   const isCustomer = isAuthenticated && user?.role === "CUSTOMER";
+
+  const [checkoutOptions, setCheckoutOptions] = useState(null);
+  const [optionsLoading, setOptionsLoading] = useState(true);
   const [addressMode, setAddressMode] = useState("manual");
   const [savedCheckout, setSavedCheckout] = useState(null);
   const [selectedAddressId, setSelectedAddressId] = useState("");
@@ -224,10 +259,40 @@ function CheckoutGuestEnabled() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const itemPayload = useMemo(() => cartItemsPayload(cart), [cart]);
+  const governorates = checkoutOptions?.governorates ?? [];
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadOptions() {
+      try {
+        const response = await fetchCheckoutOptions({ signal: controller.signal });
+        if (!controller.signal.aborted) {
+          setCheckoutOptions(response.checkoutOptions ?? null);
+        }
+      } catch (error) {
+        if (error?.code !== "ERR_CANCELED") {
+          toast.error(
+            getApiErrorMessage(
+              error,
+              "Unable to load the available delivery governorates.",
+            ),
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setOptionsLoading(false);
+        }
+      }
+    }
+
+    void loadOptions();
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     if (!isCustomer || authLoading) {
-      return;
+      return undefined;
     }
 
     const controller = new AbortController();
@@ -236,7 +301,9 @@ function CheckoutGuestEnabled() {
       setIsLoadingCheckout(true);
       try {
         const response = await fetchCustomerCheckout({ signal: controller.signal });
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          return;
+        }
 
         setSavedCheckout(response.checkout);
         const defaultId = response.checkout?.defaultAddressId ?? "";
@@ -248,7 +315,9 @@ function CheckoutGuestEnabled() {
           setAddressMode("manual");
         }
       } finally {
-        if (!controller.signal.aborted) setIsLoadingCheckout(false);
+        if (!controller.signal.aborted) {
+          setIsLoadingCheckout(false);
+        }
       }
     }
 
@@ -259,7 +328,7 @@ function CheckoutGuestEnabled() {
   useEffect(() => {
     if (addressMode !== "manual" || !hasRequiredAddress(manualAddress)) {
       setManualPreview(null);
-      return;
+      return undefined;
     }
 
     const controller = new AbortController();
@@ -273,6 +342,7 @@ function CheckoutGuestEnabled() {
           },
           { signal: controller.signal },
         );
+
         if (!controller.signal.aborted) {
           setManualPreview(response.checkout);
         }
@@ -281,9 +351,11 @@ function CheckoutGuestEnabled() {
           setManualPreview(null);
         }
       } finally {
-        if (!controller.signal.aborted) setIsPreviewing(false);
+        if (!controller.signal.aborted) {
+          setIsPreviewing(false);
+        }
       }
-    }, 350);
+    }, 300);
 
     return () => {
       window.clearTimeout(timer);
@@ -294,6 +366,7 @@ function CheckoutGuestEnabled() {
   async function selectSavedAddress(addressId) {
     setSelectedAddressId(addressId);
     setIsLoadingCheckout(true);
+
     try {
       const response = await fetchCustomerCheckout({ addressId });
       setSavedCheckout(response.checkout);
@@ -308,7 +381,8 @@ function CheckoutGuestEnabled() {
   const checkout = addressMode === "saved" ? savedCheckout : manualPreview;
   const displayItems = checkout?.cart?.items ?? cart?.items ?? [];
   const summary = checkout?.cart?.summary ?? cart?.summary;
-  const currency = checkout?.currency ?? "USD";
+  const currency =
+    checkout?.currency ?? checkoutOptions?.currency ?? cart?.currency ?? "USD";
 
   const guestInfoValid = Boolean(
     guestInfo.fullName.trim() &&
@@ -412,7 +486,10 @@ function CheckoutGuestEnabled() {
     return (
       <section className="flex min-h-[70vh] items-center bg-brand-page px-4 py-12">
         <div className="mx-auto max-w-xl text-center">
-          <ShoppingBagOutlinedIcon sx={{ fontSize: 44 }} className="text-brand-accent-text" />
+          <ShoppingBagOutlinedIcon
+            sx={{ fontSize: 44 }}
+            className="text-brand-accent-text"
+          />
           <h1 className="mt-4 font-display text-4xl font-medium text-brand-text">
             Your bag is empty.
           </h1>
@@ -460,6 +537,7 @@ function CheckoutGuestEnabled() {
                 Enter your details below. No password needed.
               </p>
             </div>
+
             <Link
               to="/login"
               state={{ from: { pathname: "/checkout" } }}
@@ -471,6 +549,7 @@ function CheckoutGuestEnabled() {
                 Your guest bag will move into your account.
               </p>
             </Link>
+
             <Link
               to="/register"
               state={{ from: { pathname: "/checkout" } }}
@@ -491,21 +570,29 @@ function CheckoutGuestEnabled() {
               <Section eyebrow="Step 1" title="Contact information">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="sm:col-span-2">
-                    <label className="mb-1.5 block text-xs font-semibold">Full name</label>
+                    <label className="mb-1.5 block text-xs font-semibold">
+                      Full name
+                    </label>
                     <input
                       value={guestInfo.fullName}
-                      onChange={(event) =>
-                        setGuestInfo((current) => ({
-                          ...current,
-                          fullName: event.target.value,
-                        }))
-                      }
+                      onChange={(event) => {
+                        const fullName = event.target.value;
+                        setGuestInfo((current) => ({ ...current, fullName }));
+                        setManualAddress((current) =>
+                          current.recipientName
+                            ? current
+                            : { ...current, recipientName: fullName },
+                        );
+                      }}
                       className={fieldClass()}
                       autoComplete="name"
                     />
                   </div>
+
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold">Email</label>
+                    <label className="mb-1.5 block text-xs font-semibold">
+                      Email
+                    </label>
                     <input
                       type="email"
                       value={guestInfo.email}
@@ -519,8 +606,11 @@ function CheckoutGuestEnabled() {
                       autoComplete="email"
                     />
                   </div>
+
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold">Phone</label>
+                    <label className="mb-1.5 block text-xs font-semibold">
+                      Phone
+                    </label>
                     <input
                       value={guestInfo.phone}
                       onChange={(event) => {
@@ -599,12 +689,14 @@ function CheckoutGuestEnabled() {
                       </div>
                     </button>
                   ))}
+
                   <button
                     type="button"
                     onClick={() => setAddressMode("manual")}
                     className="inline-flex items-center gap-2 text-sm font-semibold text-brand-accent-text"
                   >
-                    <AddLocationAltOutlinedIcon sx={{ fontSize: 18 }} /> Use a different address
+                    <AddLocationAltOutlinedIcon sx={{ fontSize: 18 }} /> Use a
+                    different address
                   </button>
                 </div>
               ) : (
@@ -613,6 +705,9 @@ function CheckoutGuestEnabled() {
                     value={manualAddress}
                     onChange={setManualAddress}
                     disabled={isSubmitting}
+                    governorates={governorates}
+                    currency={currency}
+                    optionsLoading={optionsLoading}
                   />
 
                   {isCustomer && (
@@ -653,10 +748,15 @@ function CheckoutGuestEnabled() {
               )}
             </Section>
 
-            <Section eyebrow={isCustomer ? "Order note" : "Step 3"} title="Anything we should know?">
+            <Section
+              eyebrow={isCustomer ? "Order note" : "Step 3"}
+              title="Anything we should know?"
+            >
               <textarea
                 value={customerNote}
-                onChange={(event) => setCustomerNote(event.target.value.slice(0, 1000))}
+                onChange={(event) =>
+                  setCustomerNote(event.target.value.slice(0, 1000))
+                }
                 rows={4}
                 placeholder="Optional note for your order or delivery"
                 className={`${fieldClass()} py-3`}
@@ -666,7 +766,10 @@ function CheckoutGuestEnabled() {
               </p>
             </Section>
 
-            <Section eyebrow="Your bag" title={`${displayItems.length} item${displayItems.length === 1 ? "" : "s"}`}>
+            <Section
+              eyebrow="Your bag"
+              title={`${displayItems.length} item${displayItems.length === 1 ? "" : "s"}`}
+            >
               <div className="-my-5">
                 {displayItems.map((item) => (
                   <CheckoutOrderItem key={item.id} item={item} />
@@ -680,32 +783,46 @@ function CheckoutGuestEnabled() {
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.17em] text-brand-accent-text">
                 Order summary
               </p>
+
               <div className="mt-5 space-y-3 text-sm">
                 <div className="flex justify-between gap-4">
                   <span className="text-brand-text-muted">Subtotal</span>
-                  <strong>{formatCurrency(summary?.subtotal ?? 0, currency)}</strong>
+                  <strong>
+                    {formatCurrency(summary?.subtotal ?? 0, currency)}
+                  </strong>
                 </div>
+
                 <div className="flex justify-between gap-4">
                   <span className="text-brand-text-muted">Delivery</span>
                   <strong>
                     {summary?.deliveryFee == null
-                      ? "Enter address"
+                      ? "Choose address"
                       : formatCurrency(summary.deliveryFee, currency)}
                   </strong>
                 </div>
+
                 <div className="border-t border-brand-border pt-4">
                   <div className="flex items-end justify-between gap-4">
                     <span className="font-semibold">Total</span>
                     <span className="font-display text-3xl font-semibold tracking-[-0.04em]">
-                      {formatCurrency(summary?.totalAmount ?? summary?.subtotal ?? 0, currency)}
+                      {formatCurrency(
+                        summary?.totalAmount ?? summary?.subtotal ?? 0,
+                        currency,
+                      )}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {summary?.deliveryAvailable === false && manualAddress.governorate && (
+              {checkoutOptions?.ordersEnabled === false && (
                 <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
-                  Delivery is not currently configured for this governorate.
+                  Online orders are temporarily paused.
+                </div>
+              )}
+
+              {governorates.length === 0 && !optionsLoading && addressMode === "manual" && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
+                  No delivery governorates are currently enabled. Please contact the store before ordering.
                 </div>
               )}
 
@@ -718,20 +835,26 @@ function CheckoutGuestEnabled() {
               <button
                 type="button"
                 onClick={() => void submitOrder()}
-                disabled={!canPlace || isLoadingCheckout}
-                className="mt-5 inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-brand-primary px-5 py-3.5 text-sm font-bold text-white transition hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-45"
+                disabled={!canPlace || isLoadingCheckout || optionsLoading}
+                className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-brand-primary px-5 py-3.5 text-sm font-bold text-white transition hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <LockOutlinedIcon sx={{ fontSize: 17 }} />
                 {isSubmitting
                   ? "Placing order..."
-                  : isPreviewing || isLoadingCheckout
+                  : isPreviewing || isLoadingCheckout || optionsLoading
                     ? "Updating total..."
                     : "Place order"}
               </button>
 
               <div className="mt-4 flex items-start gap-2.5 text-xs leading-5 text-brand-text-muted">
-                <LocalShippingOutlinedIcon sx={{ fontSize: 17 }} className="mt-0.5 shrink-0" />
-                <span>Cash on delivery. Stock and prices are checked again when you place the order.</span>
+                <LocalShippingOutlinedIcon
+                  sx={{ fontSize: 17 }}
+                  className="mt-0.5 shrink-0"
+                />
+                <span>
+                  Cash on delivery. Stock and prices are checked again when you
+                  place the order.
+                </span>
               </div>
             </div>
           </aside>
