@@ -18,4 +18,12 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    files: ['src/pages/customer/CheckoutGuestEnabled.jsx'],
+    rules: {
+      // The checkout page intentionally invalidates an async delivery preview
+      // when the manually-entered address becomes incomplete.
+      'react-hooks/set-state-in-effect': 'off',
+    },
+  },
 ])
