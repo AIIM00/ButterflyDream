@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { listAdminCustomers } from "../controllers/adminCustomer.controller.js";
+import {
+  getAdminCustomer,
+  listAdminCustomers,
+} from "../controllers/adminCustomer.controller.js";
 import requireAuthentication from "../middleware/authMiddleware.js";
 import requireRole from "../middleware/roleMiddleware.js";
 import requireCompletedAdminPasswordChange from "../middleware/adminPasswordChangeMiddleware.js";
@@ -13,5 +16,6 @@ router.use(
 );
 
 router.get("/", listAdminCustomers);
+router.get("/:customerId", getAdminCustomer);
 
 export default router;
