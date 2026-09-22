@@ -1,6 +1,8 @@
 import { getAdminCustomers } from "../services/adminCustomerService.js";
+import { getAdminCustomerProfile } from "../services/adminCustomerProfileService.js";
 import {
   AdminCustomerValidationError,
+  parseAdminCustomerId,
   parseAdminCustomerQuery,
 } from "../utils/adminCustomerValidation.js";
 import { errorResponse, successResponse } from "../utils/apiResponse.js";
@@ -26,6 +28,14 @@ function requireAdminId(request, response) {
   return adminUserId;
 }
 
+function handleAdminCustomerError(error, response, next) {
+  if (error instanceof AdminCustomerValidationError) {
+    return errorResponse(response, error.statusCode, error.message);
+  }
+
+  return next(error);
+}
+
 export async function listAdminCustomers(request, response, next) {
   try {
     if (!requireAdminId(request, response)) {
@@ -42,10 +52,25 @@ export async function listAdminCustomers(request, response, next) {
       result,
     );
   } catch (error) {
-    if (error instanceof AdminCustomerValidationError) {
-      return errorResponse(response, error.statusCode, error.message);
+    return handleAdminCustomerError(error, response, next);
+  }
+}
+
+export async function getAdminCustomer(request, response, next) {
+  try {
+    if (!requireAdminId(request, response)) {
+      return undefined;
     }
 
-    return next(error);
+    const customerId = parseAdminCustomerId(request.params.customerId);
+    const profile = await getAdminCustomerProfile(customerId);
+
+    if (!profile) {
+      return errorResponse(response, 404, "Customer not found.");
+    }
+
+    return successResponse(response, 200, "Customer retrieved successfully.", profile);
+  } catch (error) {
+    return handleAdminCustomerError(error, response, next);
   }
 }
