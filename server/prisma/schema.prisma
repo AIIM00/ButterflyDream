@@ -124,6 +124,8 @@ model User {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
+  vipDiscounts DiscountCampaign[] @relation("VIPCustomers")
+  discountRedemptions DiscountRedemption[]
   addresses          Address[]
   otpCodes           OtpCode[]
   cart               Cart?
@@ -221,6 +223,8 @@ model Product {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
+  includedDiscounts DiscountCampaign[] @relation("IncludedProducts")
+  excludedDiscounts DiscountCampaign[] @relation("ExcludedProducts")
   category         Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   images           ProductImage[]
   variants         ProductVariant[]
@@ -488,6 +492,8 @@ model Order {
   paymentStatus PaymentStatus @default(UNPAID)
   currency      String        @default("USD") @db.Char(3)
 
+  discountSnapshot Json?
+  discountRedemption DiscountRedemption?
   subtotal       Decimal @db.Decimal(10, 2)
   deliveryFee    Decimal @db.Decimal(10, 2)
   discountAmount Decimal @default(0) @db.Decimal(10, 2)
@@ -778,4 +784,48 @@ model DeliveryGovernorate {
   updatedAt   DateTime @updatedAt
 
   @@index([isActive])
+}
+// Campaigns are retained permanently; order snapshots survive subsequent edits.
+enum DiscountKind {
+  PERCENTAGE
+  FIXED
+}
+enum DiscountMode {
+  AUTOMATIC
+  CODE
+  VIP
+}
+model DiscountCampaign {
+  id String @id @default(uuid()) @db.Uuid
+  name String @db.VarChar(120)
+  mode DiscountMode
+  kind DiscountKind
+  value Decimal @db.Decimal(10, 2)
+  code String? @unique @db.VarChar(64)
+  active Boolean @default(false)
+  startsAt DateTime?
+  endsAt DateTime?
+  maxRedemptions Int?
+  usedCount Int @default(0)
+  includedProducts Product[] @relation("IncludedProducts")
+  excludedProducts Product[] @relation("ExcludedProducts")
+  assignedCustomers User[] @relation("VIPCustomers")
+  redemptions DiscountRedemption[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([active, mode, startsAt, endsAt])
+}
+model DiscountRedemption {
+  id String @id @default(uuid()) @db.Uuid
+  campaignId String @db.Uuid
+  orderId String @unique @db.Uuid
+  userId String? @db.Uuid
+  amount Decimal @db.Decimal(10, 2)
+  restoredAt DateTime?
+  createdAt DateTime @default(now())
+  campaign DiscountCampaign @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([campaignId, restoredAt])
+  @@index([userId, createdAt])
 }

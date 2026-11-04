@@ -64,7 +64,7 @@ export async function getCheckoutOptions(_request, response, next) {
 export async function previewCheckout(request, response, next) {
   try {
     const input = parseCheckoutPreviewInput(request.body);
-    const checkout = await previewFlexibleCheckout(input);
+    const checkout = await previewFlexibleCheckout({ ...input, userId: request.user?.id ?? null });
 
     return successResponse(response, 200, "Checkout preview retrieved.", {
       checkout,

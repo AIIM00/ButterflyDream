@@ -35,6 +35,8 @@ import adminDeliveryGovernorateRoutes from "../routes/adminDeliveryGovernorate.r
 //site routes
 import siteRoutes from "../routes/site.routes.js";
 
+import adminDiscountRoutes from "../routes/adminDiscount.routes.js";
+
 const app = express();
 
 applySecurityMiddleware(app);
@@ -77,6 +79,7 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/site", siteRoutes);
 
 // Admin routes
+app.use("/api/admin/discounts", adminDiscountRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/admin/settings", adminStoreSettingRoutes);
 app.use("/api/admin/categories", adminCategoryRoutes);

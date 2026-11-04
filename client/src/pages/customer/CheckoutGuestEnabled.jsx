@@ -1,3 +1,4 @@
+import PromoCode from "../../components/discounts/PromoCode.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -239,7 +240,7 @@ function AddressForm({
 function CheckoutGuestEnabled() {
   const navigate = useNavigate();
   const { user, isAuthenticated, authLoading } = useAppContext();
-  const { cart, isLoading: cartLoading, clearCart, reloadCart } = useCart();
+  const { cart, isLoading: cartLoading, clearCart, reloadCart, promoCode, setPromoCode } = useCart();
 
   const isCustomer = isAuthenticated && user?.role === "CUSTOMER";
 
@@ -257,6 +258,7 @@ function CheckoutGuestEnabled() {
   const [isLoadingCheckout, setIsLoadingCheckout] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [discountError, setDiscountError] = useState("");
 
   const itemPayload = useMemo(() => cartItemsPayload(cart), [cart]);
   const governorates = checkoutOptions?.governorates ?? [];
@@ -328,16 +330,20 @@ function CheckoutGuestEnabled() {
   useEffect(() => {
     if (addressMode !== "manual" || !hasRequiredAddress(manualAddress)) {
       setManualPreview(null);
+      setIsPreviewing(false);
       return undefined;
     }
 
     const controller = new AbortController();
+    setManualPreview(null);
+    setIsPreviewing(true);
     const timer = window.setTimeout(async () => {
       setIsPreviewing(true);
       try {
         const response = await previewCheckout(
           {
             items: itemPayload,
+            code: promoCode,
             deliveryAddress: manualAddress,
           },
           { signal: controller.signal },
@@ -345,10 +351,12 @@ function CheckoutGuestEnabled() {
 
         if (!controller.signal.aborted) {
           setManualPreview(response.checkout);
+          setDiscountError("");
         }
       } catch (error) {
         if (error?.code !== "ERR_CANCELED") {
           setManualPreview(null);
+          setDiscountError(getApiErrorMessage(error, "Unable to calculate checkout."));
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -361,21 +369,22 @@ function CheckoutGuestEnabled() {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [addressMode, itemPayload, manualAddress]);
+  }, [addressMode, itemPayload, manualAddress, promoCode]);
 
-  async function selectSavedAddress(addressId) {
-    setSelectedAddressId(addressId);
+  useEffect(() => {
+    if (!isCustomer || addressMode !== "saved" || !selectedAddressId) return;
+    const controller = new AbortController();
     setIsLoadingCheckout(true);
+    fetchCustomerCheckout({ addressId: selectedAddressId, code: promoCode, signal: controller.signal }).then(response => {
+      if (!controller.signal.aborted) { setSavedCheckout(response.checkout); setDiscountError(""); }
+    }).catch(error => {
+      if (!controller.signal.aborted) { setSavedCheckout(null); setDiscountError(getApiErrorMessage(error, "Unable to calculate checkout.")); }
+    }).finally(() => { if (!controller.signal.aborted) setIsLoadingCheckout(false); });
+    return () => controller.abort();
+  }, [isCustomer, addressMode, selectedAddressId, promoCode]);
 
-    try {
-      const response = await fetchCustomerCheckout({ addressId });
-      setSavedCheckout(response.checkout);
-      setSelectedAddressId(response.checkout?.selectedAddressId ?? addressId);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, "Unable to update delivery."));
-    } finally {
-      setIsLoadingCheckout(false);
-    }
+  function selectSavedAddress(addressId) {
+    setSelectedAddressId(addressId);
   }
 
   const checkout = addressMode === "saved" ? savedCheckout : manualPreview;
@@ -393,6 +402,10 @@ function CheckoutGuestEnabled() {
   const savedAddressValid = Boolean(selectedAddressId);
   const canPlace =
     !isSubmitting &&
+    !isLoadingCheckout &&
+    !discountError &&
+    Boolean(checkout) &&
+    summary?.requestedCode === (promoCode || "") &&
     !isPreviewing &&
     itemPayload.length > 0 &&
     (addressMode === "saved"
@@ -414,6 +427,7 @@ function CheckoutGuestEnabled() {
       if (isCustomer && addressMode === "saved") {
         response = await placeCustomerOrder({
           addressId: selectedAddressId,
+          code: promoCode,
           customerNote: customerNote.trim() || null,
         });
       } else if (isCustomer) {
@@ -436,6 +450,7 @@ function CheckoutGuestEnabled() {
 
         response = await placeCustomerManualOrder({
           deliveryAddress: manualAddress,
+          code: promoCode,
           customerNote: customerNote.trim() || null,
         });
       } else {
@@ -443,6 +458,7 @@ function CheckoutGuestEnabled() {
           items: itemPayload,
           customer: guestInfo,
           deliveryAddress: manualAddress,
+          code: promoCode,
           customerNote: customerNote.trim() || null,
         });
       }
@@ -453,6 +469,7 @@ function CheckoutGuestEnabled() {
         await clearCart().catch(() => undefined);
       }
 
+      setPromoCode("");
       toast.success(response.message ?? "Order placed successfully.");
       navigate(`/checkout/success/${response.order.id}`, {
         replace: true,
@@ -783,6 +800,9 @@ function CheckoutGuestEnabled() {
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.17em] text-brand-accent-text">
                 Order summary
               </p>
+              <PromoCode code={promoCode} onChange={setPromoCode} busy={isSubmitting} />
+              {discountError && <p role="alert" className="text-brand-error">{discountError}</p>}
+              {summary?.discount && <p className="my-3 text-sm">{summary.discount.name}: save {formatCurrency(summary.discountAmount, currency)}</p>}
 
               <div className="mt-5 space-y-3 text-sm">
                 <div className="flex justify-between gap-4">

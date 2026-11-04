@@ -1,3 +1,4 @@
+import AdminDiscounts from "./pages/admin/AdminDiscounts.jsx";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 // Configuration
@@ -158,6 +159,7 @@ function App() {
                 element={<AdminProductManage />}
               />
               <Route path="categories" element={<AdminCategories />} />
+              <Route path="discounts" element={<AdminDiscounts />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="orders/:orderId" element={<AdminOrderManage />} />
               <Route path="website" element={<AdminWebsite />} />

@@ -14,6 +14,7 @@ import useAppContext from "../../context/app/useAppContext.js";
 
 const adminPageTitles = {
   "/admin/dashboard": "Dashboard",
+  "/admin/discounts": "Discounts",
   "/admin/products": "Products",
   "/admin/categories": "Categories",
   "/admin/orders": "Orders",

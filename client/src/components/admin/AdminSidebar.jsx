@@ -20,6 +20,7 @@ import WebRoundedIcon from "@mui/icons-material/WebRounded";
 ========================================================= */
 
 const adminNavigation = [
+  { label: "Discounts", path: "/admin/discounts", icon: ReceiptLongRoundedIcon },
   {
     label: "Dashboard",
     path: "/admin/dashboard",

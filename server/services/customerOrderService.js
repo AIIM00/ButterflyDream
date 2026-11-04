@@ -11,6 +11,7 @@ const orderListSelect = {
   subtotal: true,
   deliveryFee: true,
   discountAmount: true,
+  discountSnapshot: true,
   totalAmount: true,
   deliveryGovernorate: true,
   deliveryCity: true,
@@ -56,6 +57,7 @@ const orderDetailSelect = {
   subtotal: true,
   deliveryFee: true,
   discountAmount: true,
+  discountSnapshot: true,
   totalAmount: true,
 
   customerNote: true,

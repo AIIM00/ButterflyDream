@@ -13,6 +13,8 @@ function ensureTestDatabase() {
 
 async function clearTestDatabase() {
   await prisma.$transaction([
+    prisma.discountRedemption.deleteMany(),
+    prisma.discountCampaign.deleteMany(),
     prisma.notification.deleteMany(),
     prisma.orderStatusHistory.deleteMany(),
     prisma.orderItem.deleteMany(),
