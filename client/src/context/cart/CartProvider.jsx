@@ -127,6 +127,10 @@ export function CartProvider({ children }) {
     error: null,
   });
   const [mutationKey, setMutationKey] = useState(null);
+  const [promo, setPromo] = useState({ owner: null, code: "" });
+  const promoOwner = user?.id ?? "guest";
+  const promoCode = promo.owner === promoOwner ? promo.code : "";
+  const setPromoCode = useCallback(code => setPromo({ owner: promoOwner, code }), [promoOwner]);
 
   const isCustomer = isAuthenticated && user?.role === "CUSTOMER";
 
@@ -357,6 +361,9 @@ export function CartProvider({ children }) {
 
   const value = useMemo(
     () => ({
+      promoCode,
+      setPromoCode,
+      promoOwner,
       cart: cartState.cart,
       status: cartState.status,
       error: cartState.error,
@@ -376,6 +383,9 @@ export function CartProvider({ children }) {
       reloadCart,
     }),
     [
+      promoCode,
+      setPromoCode,
+      promoOwner,
       addItem,
       cartState,
       clearCart,

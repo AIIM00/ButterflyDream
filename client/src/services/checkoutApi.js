@@ -6,9 +6,10 @@ export async function fetchCheckoutOptions({ signal } = {}) {
   return response.data;
 }
 
-export async function fetchCustomerCheckout({ addressId, signal } = {}) {
+export async function fetchCustomerCheckout({ addressId, code, signal } = {}) {
   const response = await apiClient.get("/checkout", {
     params: {
+      code,
       ...(addressId
         ? {
             addressId,
@@ -21,12 +22,13 @@ export async function fetchCustomerCheckout({ addressId, signal } = {}) {
   return response.data;
 }
 
-export async function previewCheckout({ items, deliveryAddress }, { signal } = {}) {
+export async function previewCheckout({ items, deliveryAddress, code }, { signal } = {}) {
   const response = await apiClient.post(
     "/checkout/preview",
     {
       items,
       deliveryAddress,
+      code,
     },
     { signal },
   );

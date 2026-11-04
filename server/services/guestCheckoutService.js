@@ -1,3 +1,4 @@
+import { quoteDiscount, discountSnapshot, applyDiscountToPreview, redeemDiscount } from "./discountService.js";
 import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import prisma from "../src/prisma.js";
@@ -77,6 +78,7 @@ const orderSelect = {
   subtotal: true,
   deliveryFee: true,
   discountAmount: true,
+  discountSnapshot: true,
   totalAmount: true,
   customerNote: true,
   customerName: true,
@@ -405,9 +407,21 @@ async function createManualOrderTransaction({
   items,
   deliveryAddress,
   customerNote,
+  code,
 }) {
   return prisma.$transaction(
     async (transaction) => {
+      // Read the account and cart inside every retry, so concurrent submissions
+      // cannot both order the same saved cart after one transaction clears it.
+      if (userId) {
+        const account = await transaction.user.findUnique({ where: { id: userId } });
+        if (!account || account.deletedAt || account.status !== "ACTIVE" || account.role !== "CUSTOMER") {
+          throw new GuestCheckoutServiceError("CUSTOMER_UNAVAILABLE", "Your customer account is not available for checkout.");
+        }
+        customer = { fullName: account.fullName, email: account.email, phone: account.phone ?? deliveryAddress.phone };
+        const cart = await transaction.cart.findUnique({ where: { userId }, include: { items: true } });
+        items = cart?.items ?? [];
+      }
       const [storeSetting, entries, deliveryGovernorate] = await Promise.all([
         getStoreSettings(transaction),
         loadVariants(transaction, items),
@@ -475,7 +489,9 @@ async function createManualOrderTransaction({
       }
 
       const deliveryFee = new Prisma.Decimal(deliveryGovernorate.deliveryFee);
-      const totalAmount = subtotal.plus(deliveryFee);
+      const discount = await quoteDiscount(transaction, orderItems, { code, userId });
+      const discountAmount = discount?.amount ?? new Prisma.Decimal(0);
+      const totalAmount = subtotal.plus(deliveryFee).minus(discountAmount);
 
       const order = await transaction.order.create({
         data: {
@@ -487,7 +503,8 @@ async function createManualOrderTransaction({
           currency: storeSetting?.currency ?? "USD",
           subtotal,
           deliveryFee,
-          discountAmount: new Prisma.Decimal(0),
+          discountAmount,
+          ...(discount ? { discountSnapshot: discountSnapshot(discount) } : {}),
           totalAmount,
           customerNote,
           customerName: customer.fullName,
@@ -518,6 +535,8 @@ async function createManualOrderTransaction({
         },
         select: orderSelect,
       });
+
+      await redeemDiscount(transaction, discount, order.id, userId);
 
       if (userId) {
         await transaction.cartItem.deleteMany({
@@ -570,7 +589,7 @@ async function withTransactionRetry(operation) {
   );
 }
 
-export async function previewFlexibleCheckout({ items, deliveryAddress }) {
+export async function previewFlexibleCheckout({ items, deliveryAddress, code, userId = null }) {
   const [entries, storeSetting, deliveryGovernorate] = await Promise.all([
     loadVariants(prisma, items),
     getStoreSettings(prisma),
@@ -579,12 +598,14 @@ export async function previewFlexibleCheckout({ items, deliveryAddress }) {
       : Promise.resolve(null),
   ]);
 
-  return buildPreview(
+  const preview = buildPreview(
     entries,
     storeSetting,
     deliveryAddress,
     deliveryGovernorate,
   );
+  const discount = await quoteDiscount(prisma, preview.cart.items.map(item => ({ productId: item.product.id, unitPrice: item.unitPrice, quantity: item.quantity })), { code, userId });
+  return applyDiscountToPreview(preview, discount, code);
 }
 
 export async function placeGuestOrder(input) {
@@ -594,62 +615,14 @@ export async function placeGuestOrder(input) {
       customer: input.customer,
       items: input.items,
       deliveryAddress: input.deliveryAddress,
+      code: input.code,
       customerNote: input.customerNote,
     }),
   );
 }
 
 export async function placeCustomerManualOrder(userId, input) {
-  const [customer, cart] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        phone: true,
-        role: true,
-        status: true,
-        deletedAt: true,
-      },
-    }),
-    prisma.cart.findUnique({
-      where: { userId },
-      select: {
-        items: {
-          orderBy: { createdAt: "asc" },
-          select: {
-            variantId: true,
-            quantity: true,
-          },
-        },
-      },
-    }),
-  ]);
-
-  if (
-    !customer ||
-    customer.deletedAt ||
-    customer.role !== "CUSTOMER" ||
-    customer.status !== "ACTIVE"
-  ) {
-    throw new GuestCheckoutServiceError(
-      "CUSTOMER_UNAVAILABLE",
-      "Your customer account is not available for checkout.",
-    );
-  }
-
-  return withTransactionRetry(() =>
-    createManualOrderTransaction({
-      userId,
-      customer: {
-        fullName: customer.fullName,
-        email: customer.email,
-        phone: customer.phone ?? input.deliveryAddress.phone,
-      },
-      items: cart?.items ?? [],
-      deliveryAddress: input.deliveryAddress,
-      customerNote: input.customerNote,
-    }),
-  );
+  return withTransactionRetry(() => createManualOrderTransaction({
+    userId, code: input.code, deliveryAddress: input.deliveryAddress, customerNote: input.customerNote,
+  }));
 }

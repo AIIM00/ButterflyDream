@@ -1493,6 +1493,7 @@ function AdminOrderManage() {
                     ].join(" ")}
                   >
                     -${order.discountAmount}
+                      {order.discountSnapshot?.name && <small className="block text-xs">{order.discountSnapshot.name}{order.discountSnapshot.code ? ` (${order.discountSnapshot.code})` : ""}</small>}
                   </span>
                 </div>
               </div>

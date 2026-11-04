@@ -12,11 +12,16 @@ import {
 import requireAuthentication from "../middleware/authMiddleware.js";
 import requireRole from "../middleware/roleMiddleware.js";
 
+import authConfig from "../config/authConfig.js";
 const router = Router();
+function optionalCustomer(req, res, next) {
+  if (!req.cookies?.[authConfig.cookieName]) return next();
+  return requireAuthentication(req, res, () => requireRole("CUSTOMER")(req, res, next));
+}
 
 // Public checkout support for guest bags.
 router.get("/options", getCheckoutOptions);
-router.post("/preview", previewCheckout);
+router.post("/preview", optionalCustomer, previewCheckout);
 router.post("/guest-orders", createGuestOrder);
 
 // Customer checkout using a manually entered address.

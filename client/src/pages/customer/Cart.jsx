@@ -1,3 +1,5 @@
+import PromoCode from "../../components/discounts/PromoCode.jsx";
+import useDiscountQuote from "../../hooks/useDiscountQuote.js";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -95,6 +97,7 @@ function Cart() {
 
   const {
     cart,
+    promoCode, setPromoCode, promoOwner,
     status,
     error,
     mutationKey,
@@ -108,6 +111,7 @@ function Cart() {
   } = useCart();
 
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const discountQuote = useDiscountQuote(cart?.items, promoCode, promoOwner);
 
   /* =======================================================
      QUANTITY
@@ -1369,6 +1373,9 @@ function Cart() {
                 Your selection
               </h2>
 
+              <PromoCode code={promoCode} onChange={setPromoCode} busy={discountQuote.busy} />
+              {discountQuote.error && <p role="alert">{discountQuote.error}</p>}
+              {discountQuote.summary?.discount && <p className="text-sm">{discountQuote.summary.discount.name}: save ${discountQuote.summary.discountAmount}</p>}
               {/* SUMMARY ROWS */}
 
               <div
@@ -1501,7 +1508,7 @@ function Cart() {
                     text-brand-surface
                   "
                 >
-                  ${summary?.subtotal ?? "0.00"}
+                  ${discountQuote.summary?.totalAmount ?? summary?.subtotal ?? "0.00"}
                 </span>
               </div>
 

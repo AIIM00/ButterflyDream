@@ -1,3 +1,4 @@
+import { normalizeDiscountCode } from "../services/discountService.js";
 const MAX_ITEMS = 50;
 const MAX_QUANTITY = 99;
 const CUSTOMER_NOTE_MAX_LENGTH = 1000;
@@ -166,6 +167,7 @@ export function parseCheckoutPreviewInput(body) {
   requireObject(body, "Request body");
 
   return {
+    code: normalizeDiscountCode(body.code),
     items: parseCheckoutItems(body.items ?? []),
     deliveryAddress: parseManualAddress(body.deliveryAddress, {
       required: false,
@@ -179,6 +181,7 @@ export function parseGuestOrderInput(body) {
   const customer = requireObject(body.customer, "Customer information");
 
   return {
+    code: normalizeDiscountCode(body.code),
     items: parseCheckoutItems(body.items),
     customer: {
       fullName: requiredText(
@@ -202,6 +205,7 @@ export function parseCustomerManualOrderInput(body) {
   requireObject(body, "Request body");
 
   return {
+    code: normalizeDiscountCode(body.code),
     deliveryAddress: parseManualAddress(body.deliveryAddress),
     customerNote: optionalText(
       body.customerNote,

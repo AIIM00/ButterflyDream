@@ -1,3 +1,4 @@
+import { restoreDiscountRedemption } from "./discountService.js";
 import { Prisma } from "@prisma/client";
 import prisma from "../src/prisma.js";
 
@@ -48,6 +49,7 @@ const orderListSelect = {
   subtotal: true,
   deliveryFee: true,
   discountAmount: true,
+  discountSnapshot: true,
   totalAmount: true,
 
   customerName: true,
@@ -99,6 +101,7 @@ const orderDetailSelect = {
   subtotal: true,
   deliveryFee: true,
   discountAmount: true,
+  discountSnapshot: true,
   totalAmount: true,
 
   customerNote: true,
@@ -531,6 +534,7 @@ export async function getAdminOrderById(orderId) {
 
 export async function updateAdminOrderStatus(adminUserId, orderId, input) {
   return prisma.$transaction(async (transaction) => {
+    await transaction.$queryRaw`SELECT id FROM "Order" WHERE id = ${orderId}::uuid FOR UPDATE`;
     const existingOrder = await transaction.order.findUnique({
       where: {
         id: orderId,
@@ -627,6 +631,7 @@ export async function updateAdminOrderStatus(adminUserId, orderId, input) {
 
 export async function cancelAdminOrder(adminUserId, orderId, reason) {
   return prisma.$transaction(async (transaction) => {
+    await transaction.$queryRaw`SELECT id FROM "Order" WHERE id = ${orderId}::uuid FOR UPDATE`;
     const existingOrder = await transaction.order.findUnique({
       where: {
         id: orderId,
@@ -660,6 +665,8 @@ export async function cancelAdminOrder(adminUserId, orderId, reason) {
     }
 
     await restoreInventoryForOrderItems(transaction, existingOrder.items);
+
+    await restoreDiscountRedemption(transaction, orderId);
 
     const cancelledAt = new Date();
 
@@ -746,6 +753,7 @@ export async function updateAdminOrderNote(orderId, adminNote) {
 
 export async function updateAdminOrderPayment(orderId, input) {
   return prisma.$transaction(async (transaction) => {
+    await transaction.$queryRaw`SELECT id FROM "Order" WHERE id = ${orderId}::uuid FOR UPDATE`;
     const existingOrder = await transaction.order.findUnique({
       where: {
         id: orderId,

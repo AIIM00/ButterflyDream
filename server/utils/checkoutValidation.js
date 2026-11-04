@@ -1,3 +1,4 @@
+import { normalizeDiscountCode } from "../services/discountService.js";
 const ID_MAX_LENGTH = 191;
 const CUSTOMER_NOTE_MAX_LENGTH = 1000;
 
@@ -65,6 +66,7 @@ function parseOptionalId(value, fieldName) {
 
 export function parseCheckoutQuery(query) {
   return {
+    code: normalizeDiscountCode(query?.code),
     addressId: parseOptionalId(query?.addressId, "Delivery address"),
   };
 }
@@ -72,6 +74,7 @@ export function parsePlaceOrderInput(body) {
   validatePlainObject(body);
 
   return {
+    code: normalizeDiscountCode(body.code),
     addressId: parseRequiredId(body.addressId, "Delivery address"),
 
     customerNote: parseOptionalText(body.customerNote, {

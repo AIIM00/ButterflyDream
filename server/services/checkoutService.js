@@ -1,3 +1,4 @@
+import { quoteDiscount, discountSnapshot, applyDiscountToPreview, redeemDiscount } from "./discountService.js";
 import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import prisma from "../src/prisma.js";
@@ -156,6 +157,7 @@ const createdOrderSelect = {
   subtotal: true,
   deliveryFee: true,
   discountAmount: true,
+  discountSnapshot: true,
   totalAmount: true,
 
   customerNote: true,
@@ -719,7 +721,8 @@ async function createOrderTransaction(userId, input) {
 
       const deliveryFee = new Prisma.Decimal(deliveryGovernorate.deliveryFee);
 
-      const discountAmount = new Prisma.Decimal(0);
+      const discount = await quoteDiscount(transaction, orderItems, { code: input.code, userId });
+      const discountAmount = discount?.amount ?? new Prisma.Decimal(0);
 
       const totalAmount = subtotal.add(deliveryFee).sub(discountAmount);
 
@@ -741,6 +744,7 @@ async function createOrderTransaction(userId, input) {
           subtotal,
           deliveryFee,
           discountAmount,
+          ...(discount ? { discountSnapshot: discountSnapshot(discount) } : {}),
           totalAmount,
 
           customerNote: input.customerNote,
@@ -788,6 +792,8 @@ async function createOrderTransaction(userId, input) {
 
         select: createdOrderSelect,
       });
+
+      await redeemDiscount(transaction, discount, order.id, userId);
 
       await transaction.notification.create({
         data: {
@@ -890,13 +896,15 @@ export async function getCustomerCheckout(userId, input = {}) {
     ? await findDeliveryGovernorate(prisma, selectedAddress.governorate)
     : null;
 
-  return buildCheckoutSummary(
+  const preview = buildCheckoutSummary(
     cart,
     storeSetting,
     addresses,
     selectedAddress,
     deliveryGovernorate,
   );
+  const discount = await quoteDiscount(prisma, preview.cart.items.map(item => ({ productId: item.product.id, unitPrice: item.unitPrice, quantity: item.quantity })), { code: input.code, userId });
+  return applyDiscountToPreview(preview, discount, input.code);
 }
 
 export async function placeCustomerOrder(userId, input) {
