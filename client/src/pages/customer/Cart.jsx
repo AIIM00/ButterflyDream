@@ -1,3 +1,4 @@
+import PricePair from "../../components/discounts/PricePair.jsx";
 import PromoCode from "../../components/discounts/PromoCode.jsx";
 import useDiscountQuote from "../../hooks/useDiscountQuote.js";
 import { useState } from "react";
@@ -1300,6 +1301,7 @@ function Cart() {
                 <CartItemCard
                   key={item.id}
                   item={item}
+                  quotedLine={discountQuote.lines?.get(item.variantId ?? item.variant?.id)}
                   isUpdating={mutationKey === `update:${item.id}`}
                   isRemoving={mutationKey === `remove:${item.id}`}
                   onQuantityChange={(quantity) =>
@@ -1436,7 +1438,7 @@ function Cart() {
                       text-brand-surface
                     "
                   >
-                    ${summary?.subtotal ?? "0.00"}
+                    ${discountQuote.summary?.subtotal ?? summary?.subtotal ?? "0.00"}
                   </span>
                 </div>
 
@@ -1508,7 +1510,9 @@ function Cart() {
                     text-brand-surface
                   "
                 >
-                  ${discountQuote.summary?.totalAmount ?? summary?.subtotal ?? "0.00"}
+                  {discountQuote.summary?.discount
+                    ? <PricePair regular={discountQuote.summary.regularTotal} sale={discountQuote.summary.totalAmount} mutedClass="text-brand-surface/65" />
+                    : `$${discountQuote.summary?.totalAmount ?? summary?.subtotal ?? "0.00"}`}
                 </span>
               </div>
 

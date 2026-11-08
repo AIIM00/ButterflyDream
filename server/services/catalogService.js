@@ -183,8 +183,7 @@ function getMaximumVariantPrice(variants) {
   }, null);
 }
 
-async function serializeProductCards(products) {
-  if (!products.length) return [];
+async function catalogOffers() {
   const campaigns = await loadDiscountCandidates(prisma);
   const now = new Date();
   const nextBoundary = campaigns.reduce((next, campaign) => {
@@ -193,13 +192,26 @@ async function serializeProductCards(products) {
     }
     return next;
   }, null);
+  return { campaigns, now, nextBoundary };
+}
+
+function variantSalePrice(productId, variant, { campaigns, now }) {
+  const quote = chooseBestDiscount(campaigns, [
+    { productId, quantity: 1, unitPrice: variant.price },
+  ], { now });
+  return quote ? variant.price.minus(quote.amount).toFixed(2) : null;
+}
+
+async function serializeProductCards(products) {
+  if (!products.length) return [];
+  const offers = await catalogOffers();
   return products.map(product => ({
-    ...serializeProductCard(product, campaigns, now),
-    priceRefreshAt: nextBoundary,
+    ...serializeProductCard(product, offers),
+    priceRefreshAt: offers.nextBoundary,
   }));
 }
 
-function serializeProductCard(product, campaigns, now) {
+function serializeProductCard(product, offers) {
   const minimumPrice = getMinimumVariantPrice(product.variants);
 
   const maximumPrice = getMaximumVariantPrice(product.variants);
@@ -209,10 +221,6 @@ function serializeProductCard(product, campaigns, now) {
     product.variants[0] ??
     null;
 
-  const quote = defaultVariant && chooseBestDiscount(campaigns, [
-    { productId: product.id, quantity: 1, unitPrice: defaultVariant.price },
-  ], { now });
-
   return {
     id: product.id,
     name: product.name,
@@ -220,7 +228,7 @@ function serializeProductCard(product, campaigns, now) {
     description: product.description,
     isFeatured: product.isFeatured,
     category: product.category,
-    salePrice: quote ? defaultVariant.price.minus(quote.amount).toFixed(2) : null,
+    salePrice: defaultVariant && variantSalePrice(product.id, defaultVariant, offers),
     image: product.images[0] ?? null,
 
     pricing: {
@@ -272,7 +280,7 @@ function getPublicStockStatus(variant) {
   return "IN_STOCK";
 }
 
-function serializeProductDetail(product) {
+function serializeProductDetail(product, offers) {
   const minimumPrice = getMinimumVariantPrice(product.variants);
 
   const maximumPrice = getMaximumVariantPrice(product.variants);
@@ -287,6 +295,7 @@ function serializeProductDetail(product) {
 
     category: product.category,
 
+    priceRefreshAt: offers.nextBoundary,
     images: product.images,
 
     pricing: {
@@ -308,6 +317,7 @@ function serializeProductDetail(product) {
       displayName: variant.displayName,
       options: variant.options,
       price: formatPrice(variant.price),
+      salePrice: variantSalePrice(product.id, variant, offers),
       isDefault: variant.isDefault,
 
       inStock: isVariantInStock(variant),
@@ -787,5 +797,5 @@ export async function getPublicProductBySlug(slug) {
     return null;
   }
 
-  return serializeProductDetail(product);
+  return serializeProductDetail(product, await catalogOffers());
 }

@@ -1,3 +1,4 @@
+import CardSalePrice from "../../components/catalog/CardSalePrice.jsx";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -590,7 +591,7 @@ function ProductDetailsContent({ product }) {
                     sm:text-4xl
                   "
                 >
-                  {displayPrice}
+                  <CardSalePrice regular={selectedVariant?.price} sale={selectedVariant?.salePrice}>{displayPrice}</CardSalePrice>
                 </p>
 
                 <StockBadge

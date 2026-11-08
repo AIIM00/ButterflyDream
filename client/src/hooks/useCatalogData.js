@@ -137,6 +137,7 @@ export function usePublicProduct(slug) {
   useEffect(() => {
     const controller = new AbortController();
 
+    let refreshTimer;
     async function loadProduct() {
       try {
         const response = await fetchPublicProductBySlug(slug, {
@@ -147,6 +148,7 @@ export function usePublicProduct(slug) {
           return;
         }
 
+        refreshTimer = scheduleCatalogRefresh([response.product], loadProduct);
         setState({
           requestKey: slug,
           product: response.product ?? null,
@@ -170,6 +172,7 @@ export function usePublicProduct(slug) {
     }
 
     return () => {
+      clearTimeout(refreshTimer);
       controller.abort();
     };
   }, [slug]);

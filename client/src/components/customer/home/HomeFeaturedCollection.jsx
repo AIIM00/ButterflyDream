@@ -227,7 +227,7 @@ function FeaturedSpotlight({ product }) {
                   sm:text-sm
                 "
               >
-                <CardSalePrice product={product}>{getProductPrice(product)}</CardSalePrice>
+                <CardSalePrice regular={product.defaultVariant?.price} sale={product.salePrice}>{getProductPrice(product)}</CardSalePrice>
               </p>
 
               <AvailabilityLabel inStock={product.inStock} />
@@ -396,7 +396,7 @@ function FeaturedProductCard({ product }) {
             sm:text-xs
           "
         >
-          <CardSalePrice product={product}>{getProductPrice(product)}</CardSalePrice>
+          <CardSalePrice regular={product.defaultVariant?.price} sale={product.salePrice}>{getProductPrice(product)}</CardSalePrice>
         </p>
 
         <div

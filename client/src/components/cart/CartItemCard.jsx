@@ -1,3 +1,4 @@
+import PricePair from "../discounts/PricePair.jsx";
 import { Link } from "react-router-dom";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import ImageNotSupportedOutlinedIcon from "@mui/icons-material/ImageNotSupportedOutlined";
@@ -28,6 +29,7 @@ function getAvailabilityMessage(availability) {
 
 function CartItemCard({
   item,
+  quotedLine,
   isUpdating,
   isRemoving,
   onQuantityChange,
@@ -108,12 +110,16 @@ function CartItemCard({
 
             <div className="sm:text-right">
               <p className="text-lg font-bold text-gray-950">
-                ${item.lineTotal}
+                {quotedLine?.discountedLineTotal != null
+                  ? <PricePair regular={quotedLine.lineTotal} sale={quotedLine.discountedLineTotal} />
+                  : `$${quotedLine?.lineTotal ?? item.lineTotal}`}
               </p>
 
-              <p className="mt-1 text-sm text-gray-500">
-                ${item.unitPrice} each
-              </p>
+              {(quotedLine?.discountedLineTotal == null || item.quantity > 1) && (
+                <p className="mt-1 text-sm text-gray-500">
+                  ${quotedLine?.unitPrice ?? item.unitPrice} each{quotedLine?.discountedLineTotal != null && " before discount"}
+                </p>
+              )}
             </div>
           </div>
 
