@@ -1,3 +1,4 @@
+import PricePair from "../discounts/PricePair.jsx";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 
 import StockBadge from "./StockBadge.jsx";
@@ -505,7 +506,9 @@ function ConcreteVariantChoices({
                   text-brand-text
                 "
               >
-                ${variant.price}
+                {variant.salePrice != null
+                ? <PricePair regular={variant.price} sale={variant.salePrice} />
+                : `$${variant.price}`}
               </span>
 
               {selected && (
@@ -980,7 +983,9 @@ function VariantSelector({ variants, selectedVariantId, onVariantSelect }) {
                 text-brand-text
               "
             >
-              ${selectedVariant.price}
+              {selectedVariant.salePrice != null
+                ? <PricePair regular={selectedVariant.price} sale={selectedVariant.salePrice} />
+                : `$${selectedVariant.price}`}
             </p>
           </div>
         </div>

@@ -186,6 +186,38 @@ describe("discount checkout and management", () => {
     await prisma.discountCampaign.update({ where: { id: created.body.campaign.id }, data: { endsAt: new Date(0) } });
     expect((await catalog()).body.products.every(p => p.salePrice === null)).toBe(true);
   });
+  test("variant previews show the single-item automatic price and exclude code offers", async () => {
+    const { product } = await commerce();
+    await prisma.productVariant.create({ data: { productId: product.id, sku: "silver",
+      displayName: "Silver", options: { color: "Silver" }, price: "9.50", isActive: true } });
+    await campaign({ value: "20" });
+    await campaign({ mode: "CODE", code: "HALF", value: "50" });
+    const detail = await request(app).get(`/api/catalog/products/${product.slug}`).expect(200);
+    expect(detail.body.product.variants.map(v => v.salePrice).sort()).toEqual(["20.00", "7.60"]);
+  });
+
+  test("fixed savings reconcile to the cent across quantities, exclusions, and delivery", async () => {
+    const first = await commerce();
+    const second = await createTestCatalogItem({ price: "25.00" });
+    const excluded = await createTestCatalogItem({ price: "9.50" });
+    await campaign({ mode: "CODE", code: "FIXED", kind: "FIXED", value: "1.00",
+      excludedProducts: { connect: { id: excluded.product.id } } });
+    const items = [first, second, excluded].map((entry, index) => ({
+      variantId: entry.variant.id, quantity: index === 0 ? 2 : 1,
+    }));
+    const preview = async lines => (await request(app).post("/api/checkout/preview")
+      .send({ items: lines, code: "FIXED", deliveryAddress: address }).expect(200)).body.checkout.cart;
+    for (const lines of [items, [...items].reverse()]) {
+      const cart = await preview(lines);
+      const totals = new Map(cart.items.map(item => [item.variantId, item.discountedLineTotal]));
+      expect(totals.get(first.variant.id)).toBe("49.33");
+      expect(totals.get(second.variant.id)).toBe("24.67");
+      expect(totals.get(excluded.variant.id)).toBeUndefined();
+      expect(cart.summary.regularTotal).toBe("87.50");
+      expect(cart.summary.totalAmount).toBe("86.50");
+    }
+  });
+
   test("validates trimmed campaign name length", () => {
     expect(parseCampaign({ ...base, name: " A " }).name).toBe("A");
     expect(parseCampaign({ ...base, name: "x".repeat(80) }).name).toHaveLength(80);

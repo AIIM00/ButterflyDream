@@ -15,6 +15,13 @@ export function normalizeDiscountCode(value) {
   return value.trim().toUpperCase();
 }
 
+function eligibleProducts(campaign) {
+  const included = new Set((campaign.collection?.products ?? campaign.includedProducts).map(p => p.id));
+  const excluded = new Set(campaign.excludedProducts.map(p => p.id));
+  const restricted = Boolean(campaign.collection) || included.size > 0;
+  return id => !excluded.has(id) && (!restricted || included.has(id));
+}
+
 export function chooseBestDiscount(campaigns, items, { code = null, userId = null, now = new Date() } = {}) {
   let best = null;
   let codeEligible = !code;
@@ -24,10 +31,9 @@ export function chooseBestDiscount(campaigns, items, { code = null, userId = nul
         (campaign.maxRedemptions != null && campaign.usedCount >= campaign.maxRedemptions)) continue;
     if (campaign.mode !== "AUTOMATIC" && campaign.code !== code) continue;
     if (campaign.mode === "VIP" && (!userId || !campaign.assignedCustomers.some(c => c.id === userId))) continue;
-    const included = new Set((campaign.collection?.products ?? campaign.includedProducts).map(p => p.id));
-    const excluded = new Set(campaign.excludedProducts.map(p => p.id));
+    const eligible = eligibleProducts(campaign);
     const eligibleSubtotal = items.reduce((sum, item) => {
-      if (excluded.has(item.productId) || ((campaign.collection || included.size) && !included.has(item.productId))) return sum;
+      if (!eligible(item.productId)) return sum;
       return sum.plus(new Prisma.Decimal(item.unitPrice).mul(item.quantity));
     }, new Prisma.Decimal(0));
     const calculated = campaign.kind === "PERCENTAGE"
@@ -72,13 +78,42 @@ export function discountSnapshot(quote) {
   };
 }
 
+function cents(value) {
+  return BigInt(new Prisma.Decimal(value).times(100).toFixed(0));
+}
+
+function allocateLineSavings(items, quote) {
+  const eligible = eligibleProducts(quote.campaign);
+  const subtotal = cents(quote.eligibleSubtotal);
+  const savings = cents(quote.amount);
+  const shares = items.filter(item => eligible(item.product.id)).map(item => {
+    const weighted = cents(item.lineTotal) * savings;
+    return { item, amount: weighted / subtotal, remainder: weighted % subtotal };
+  });
+  // Largest remainders receive the leftover cents. Variant IDs break ties consistently.
+  shares.sort((a, b) => a.remainder === b.remainder
+    ? a.item.variantId.localeCompare(b.item.variantId)
+    : a.remainder > b.remainder ? -1 : 1);
+  const leftover = savings - shares.reduce((sum, share) => sum + share.amount, 0n);
+  for (const [index, share] of shares.entries()) {
+    const amount = share.amount + (BigInt(index) < leftover ? 1n : 0n);
+    if (amount > 0n) {
+      const discount = new Prisma.Decimal(amount.toString()).div(100);
+      share.item.discountedLineTotal = new Prisma.Decimal(share.item.lineTotal).minus(discount).toFixed(2);
+    }
+  }
+}
+
 export function applyDiscountToPreview(preview, quote, code = null) {
   const summary = preview.cart.summary;
   const amount = quote?.amount ?? new Prisma.Decimal(0);
   summary.requestedCode = normalizeDiscountCode(code) ?? "";
   summary.discountAmount = amount.toFixed(2);
   summary.discount = discountSnapshot(quote);
-  summary.totalAmount = new Prisma.Decimal(summary.subtotal).plus(summary.deliveryFee ?? 0).minus(amount).toFixed(2);
+  const regularTotal = new Prisma.Decimal(summary.subtotal).plus(summary.deliveryFee ?? 0);
+  summary.regularTotal = regularTotal.toFixed(2);
+  summary.totalAmount = regularTotal.minus(amount).toFixed(2);
+  if (quote) allocateLineSavings(preview.cart.items, quote);
   return preview;
 }
 

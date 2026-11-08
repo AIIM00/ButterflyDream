@@ -192,7 +192,7 @@ function CompactProductCard({ product, productUrl, primaryImage, price }) {
               sm:text-lg
             "
           >
-            <CardSalePrice product={product}>{price}</CardSalePrice>
+            <CardSalePrice regular={product.defaultVariant?.price} sale={product.salePrice}>{price}</CardSalePrice>
           </p>
 
           <Link
@@ -381,7 +381,7 @@ function FeaturedProductCard({ product, productUrl, primaryImage, price }) {
               sm:text-2xl
             "
           >
-            <CardSalePrice product={product}>{price}</CardSalePrice>
+            <CardSalePrice regular={product.defaultVariant?.price} sale={product.salePrice}>{price}</CardSalePrice>
           </p>
 
           <Link
