@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import apiClient from "../../services/apiClient.js";
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
@@ -19,7 +20,10 @@ function Selection({ label, options, selected, onChange }) {
 }
 export default function AdminDiscounts() {
   const [campaigns, setCampaigns] = useState([]);
-  const [form, setForm] = useState(empty);
+  const location = useLocation();
+  const [form, setForm] = useState(() => Array.isArray(location.state?.vipCustomerIds)
+    ? { ...empty, mode: "VIP", assignedCustomerIds: location.state.vipCustomerIds }
+    : empty);
   const [products, setProducts] = useState([]);
   const [collections, setCollections] = useState([]);
   const [collectionName, setCollectionName] = useState("");

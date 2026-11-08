@@ -1,3 +1,5 @@
+import { customerMetrics, customerDirectory } from "../services/adminCustomerInsights.js";
+import { successResponse } from "../utils/apiResponse.js";
 import { Router } from "express";
 import {
   getAdminCustomer,
@@ -16,6 +18,13 @@ router.use(
 );
 
 router.get("/", listAdminCustomers);
+for (const [path, read] of [["/metrics", customerMetrics], ["/directory", customerDirectory]]) {
+  router.get(path, async (req, res, next) => {
+    try {
+      return successResponse(res, 200, "Customer dashboard retrieved.", await read(req.query));
+    } catch (error) { next(error); }
+  });
+}
 router.get("/:customerId", getAdminCustomer);
 
 export default router;

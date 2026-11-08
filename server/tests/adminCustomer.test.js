@@ -28,6 +28,37 @@ describe("Admin customer analytics", () => {
     await request(app).get("/api/admin/customers").expect(401);
   });
 
+  test("ranks paid merchandise and units independently and keeps guest orders separate", async () => {
+    const { adminCookie } = await createAdmin();
+    const get = (path, query={}) => request(app).get("/api/admin/customers/"+path).set("Cookie",adminCookie).query(query);
+    const a = await createTestUser({fullName:"Alice",email:"a@example.com"});
+    const b = await createTestUser({fullName:"Bob",email:"b@example.com"});
+    const paid = {status:"DELIVERED",paymentStatus:"PAID"};
+    const {order: recent} = await createTestOrder({customer:a,...paid,quantity:1,unitPrice:"100"});
+    await prisma.order.update({where:{id:recent.id},data:{discountAmount:"15",totalAmount:"88"}});
+    await createTestOrder({customer:b,...paid,quantity:3,unitPrice:"10"});
+    const {order:prior} = await createTestOrder({customer:b,...paid});
+    await prisma.order.update({where:{id:prior.id},data:{deliveredAt:new Date(Date.now()-40*86400000)}});
+    await createTestOrder({customer:b,status:"RETURNED",paymentStatus:"REFUNDED",quantity:10});
+    const {order:guest} = await createTestOrder({customer:a,...paid,quantity:1,unitPrice:"5"});
+    await prisma.order.update({where:{id:guest.id},data:{userId:null}});
+    const metrics = (await get("metrics").expect(200)).body;
+    expect(metrics.current).toMatchObject({registrations:2,buyers:2,returning:1,guests:1,average:40});
+    expect(metrics.previous.buyers).toBe(1);
+    const spend = (await get("directory").expect(200)).body.rows;
+    expect(spend[0]).toMatchObject({id:a.id,spend:85,items:1,orders:1});
+    const units = (await get("directory",{rank:"items"}).expect(200)).body.rows;
+    expect(units[0]).toMatchObject({id:b.id,spend:30,items:3});
+    expect((await get("directory",{activity:"returning"})).body.rows.map(r=>r.id)).toEqual([b.id]);
+    const match = (await get("directory",{search:guest.orderNumber})).body;
+    expect(match.rows).toHaveLength(0);
+    expect(match.guests[0].id).toBe(guest.id);
+    expect((await get("directory",{search:recent.orderNumber})).body.rows[0].id).toBe(a.id);
+    await get("metrics",{period:"custom",start:"2026-02-31",end:"2026-03-04"}).expect(400);
+    await request(app).get("/api/admin/customers/metrics").expect(401);
+    await request(app).get("/api/admin/customers/directory").set("Cookie",createAuthCookie(a)).expect(403);
+  });
+
   test("returns customer statistics, spend ranking and governorate analytics", async () => {
     const { adminCookie } = await createAdmin();
 
