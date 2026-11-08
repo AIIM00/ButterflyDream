@@ -1,3 +1,4 @@
+import CardSalePrice from "./CardSalePrice.jsx";
 import { Link } from "react-router-dom";
 
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
@@ -170,6 +171,7 @@ function CompactProductCard({ product, productUrl, primaryImage, price }) {
           className="
             mt-auto
             flex
+            flex-wrap
             items-end
             justify-between
             gap-2
@@ -190,7 +192,7 @@ function CompactProductCard({ product, productUrl, primaryImage, price }) {
               sm:text-lg
             "
           >
-            {price}
+            <CardSalePrice product={product}>{price}</CardSalePrice>
           </p>
 
           <Link
@@ -358,6 +360,7 @@ function FeaturedProductCard({ product, productUrl, primaryImage, price }) {
         <div
           className="
             flex
+            flex-wrap
             items-end
             justify-between
             gap-2
@@ -378,7 +381,7 @@ function FeaturedProductCard({ product, productUrl, primaryImage, price }) {
               sm:text-2xl
             "
           >
-            {price}
+            <CardSalePrice product={product}>{price}</CardSalePrice>
           </p>
 
           <Link

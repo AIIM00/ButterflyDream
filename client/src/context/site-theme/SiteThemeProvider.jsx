@@ -1,3 +1,4 @@
+import scheduleCatalogRefresh from "../../utils/scheduleCatalogRefresh.js";
 import { useEffect, useRef, useState } from "react";
 
 import { applySiteTheme } from "../../config/siteThemeRuntime.js";
@@ -47,6 +48,7 @@ function SiteThemeProvider({ children }) {
   useEffect(() => {
     const controller = new AbortController();
 
+    let refreshTimer;
     async function loadTheme() {
       try {
         /*
@@ -89,6 +91,8 @@ function SiteThemeProvider({ children }) {
         setTheme(siteTheme);
 
         setSections(siteSections);
+        const featured = siteSections.find(section => section.type === "FEATURED_PRODUCTS");
+        refreshTimer = scheduleCatalogRefresh(featured?.content?.products, loadTheme);
 
         setThemeError(null);
 
@@ -116,6 +120,7 @@ function SiteThemeProvider({ children }) {
     void loadTheme();
 
     return () => {
+      clearTimeout(refreshTimer);
       controller.abort();
     };
   }, [isDraftPreview, previewToken]);

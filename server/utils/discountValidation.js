@@ -18,10 +18,21 @@ function date(value) {
   }
   return new Date(value);
 }
+function displayName(value, label) {
+  const name = typeof value === "string" ? value.trim() : "";
+  if (!name || [...name].length > 80) throw new DiscountError(`${label} must be 1–80 characters.`, 400);
+  return name;
+}
+export function parseCollection(body) {
+  const name = displayName(body?.name, "Collection name");
+  const productIds = ids(body.productIds, "Collection products");
+  if (!productIds.length) throw new DiscountError("Select at least one product.", 400);
+  return { name, productIds };
+}
 export function parseCampaign(body) {
   if (!body || typeof body !== "object" || Array.isArray(body)) throw new DiscountError("Campaign data is required.", 400);
-  const { name, mode, kind, active } = body;
-  if (typeof name !== "string" || !name.trim() || name.trim().length > 120) throw new DiscountError("Campaign name is required (up to 120 characters).", 400);
+  const { mode, kind, active } = body;
+  const name = displayName(body.name, "Campaign name");
   if (!["AUTOMATIC", "CODE", "VIP"].includes(mode) || !["PERCENTAGE", "FIXED"].includes(kind)) throw new DiscountError("Invalid discount mode or kind.", 400);
   if (typeof active !== "boolean") throw new DiscountError("Active must be true or false.", 400);
   if (!/^(\d{1,8})(\.\d{1,2})?$/.test(String(body.value)) || Number(body.value) <= 0 || (kind === "PERCENTAGE" && Number(body.value) > 100)) throw new DiscountError("Enter a positive discount with at most two decimal places; percentages cannot exceed 100.", 400);
@@ -36,6 +47,8 @@ export function parseCampaign(body) {
   const assignedCustomerIds = ids(body.assignedCustomerIds ?? [], "VIP customers");
   if (includedProductIds.some(id => excludedProductIds.includes(id))) throw new DiscountError("A product cannot be both included and excluded.", 400);
   if ((mode === "VIP" && !assignedCustomerIds.length) || (mode !== "VIP" && assignedCustomerIds.length)) throw new DiscountError("Assign customers only to VIP campaigns; VIP requires at least one customer.", 400);
-  return { name: name.trim(), mode, kind, value: String(body.value), code, active, startsAt, endsAt, maxRedemptions,
+  const collectionId = body.collectionId == null ? null : requireDiscountId(body.collectionId);
+  if (collectionId && includedProductIds.length) throw new DiscountError("Choose a collection or individual products.", 400);
+  return { name, collectionId, mode, kind, value: String(body.value), code, active, startsAt, endsAt, maxRedemptions,
     includedProductIds, excludedProductIds, assignedCustomerIds };
 }

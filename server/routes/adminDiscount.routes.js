@@ -4,7 +4,7 @@ import requireAuthentication from "../middleware/authMiddleware.js";
 import requireRole from "../middleware/roleMiddleware.js";
 import requireCompletedAdminPasswordChange from "../middleware/adminPasswordChangeMiddleware.js";
 import { DiscountError } from "../services/discountService.js";
-import { parseCampaign, requireDiscountId } from "../utils/discountValidation.js";
+import { parseCampaign, parseCollection, requireDiscountId } from "../utils/discountValidation.js";
 import { successResponse } from "../utils/apiResponse.js";
 
 const router = Router();
@@ -22,12 +22,26 @@ router.get("/", async (_req, res, next) => {
 });
 router.get("/options", async (_req, res, next) => {
   try {
-    const [products, customers] = await Promise.all([
+    const [products, customers, collections] = await Promise.all([
       prisma.product.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
       prisma.user.findMany({ where: { role: "CUSTOMER", status: "ACTIVE", deletedAt: null }, select: { id: true, fullName: true, email: true }, orderBy: { fullName: "asc" } }),
+      prisma.discountCollection.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
     ]);
-    return successResponse(res, 200, "Campaign options retrieved.", { products, customers });
+    return successResponse(res, 200, "Campaign options retrieved.", { products, customers, collections });
   } catch (error) { next(error); }
+});
+router.post("/collections", async (req, res, next) => {
+  try {
+    const { name, productIds } = parseCollection(req.body);
+    const collection = await prisma.discountCollection.create({
+      data: { name, products: { connect: productIds.map(id => ({ id })) } },
+      select: { id: true, name: true },
+    });
+    return successResponse(res, 201, "Collection created.", { collection });
+  } catch (error) {
+    if (error.code === "P2025") return next(new DiscountError("Some selected products are unavailable.", 400));
+    next(error);
+  }
 });
 router.get("/:id/redemptions", async (req, res, next) => {
   try {
@@ -63,6 +77,7 @@ async function save(req, res, next) {
     }, { isolationLevel: "Serializable" });
     return successResponse(res, id ? 200 : 201, "Campaign saved.", { campaign });
   } catch (error) {
+    if (error.code === "P2003") return next(new DiscountError("The selected collection is unavailable.", 400));
     if (error.code === "P2002") return next(new DiscountError("This code already belongs to another campaign.", 409));
     if (error.code === "P2034") return next(new DiscountError("Campaign changed. Reload before saving.", 409));
     next(error);

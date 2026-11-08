@@ -1,3 +1,4 @@
+import CardSalePrice from "../../catalog/CardSalePrice.jsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
@@ -226,7 +227,7 @@ function FeaturedSpotlight({ product }) {
                   sm:text-sm
                 "
               >
-                {getProductPrice(product)}
+                <CardSalePrice product={product}>{getProductPrice(product)}</CardSalePrice>
               </p>
 
               <AvailabilityLabel inStock={product.inStock} />
@@ -395,7 +396,7 @@ function FeaturedProductCard({ product }) {
             sm:text-xs
           "
         >
-          {getProductPrice(product)}
+          <CardSalePrice product={product}>{getProductPrice(product)}</CardSalePrice>
         </p>
 
         <div
