@@ -6,7 +6,9 @@ This feature is implemented on `feature/discounts-promotions-2026-11`. Do not me
 
 - An administrator can create and edit campaigns at `/admin/discounts`, activate/deactivate them, set optional start/end times, choose percentage or fixed savings, restrict products, and assign customers to VIP codes.
 - Automatic campaigns compete with the one entered public or VIP code. The server applies only the eligible campaign giving the largest savings. Equal savings use ascending campaign ID for a stable winner.
-- Empty inclusions mean all products. Exclusions take precedence. Savings apply to eligible merchandise only, never delivery, and cannot exceed the eligible subtotal. Percentage savings round once to two decimals using half-up rounding.
+- Campaign names accept 1–80 characters after trimming, including spaces, Arabic, and punctuation.
+- Admins can save a named collection of products and reuse it across campaigns. A collection campaign applies only to its members. Without a collection, empty inclusions mean all products. Exclusions take precedence. Savings apply to eligible merchandise only, never delivery, and cannot exceed the eligible subtotal. Percentage savings round once to two decimals using half-up rounding.
+- Catalog and homepage cards show the automatic price for one default variant bought alone. A multi-item bag gets the best single campaign on its eligible subtotal, so fixed savings apply once per bag.
 - Codes are trimmed, uppercase, and unique. Invalid, expired, exhausted, unassigned or product-ineligible codes return the same generic message. Guest identity is never inferred from an email or a submitted user ID. VIP previews require the existing authenticated customer session; guest order endpoints never grant VIP access.
 - Active campaigns run from the start timestamp (inclusive) until the end timestamp (exclusive). Admin inputs are local times converted to UTC. No scheduler process is necessary: eligibility is checked on each quote and order.
 - Optional usage caps count currently consumed redemptions across guest and signed-in orders. Preview requests never consume usage. There is no per-email or per-customer usage limit.
@@ -29,7 +31,8 @@ Cancellation takes a row lock before inspecting order status. Status and payment
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/api/admin/discounts` | List latest 500 campaigns and assignments |
-| GET | `/api/admin/discounts/options` | Product/customer selectors |
+| GET | `/api/admin/discounts/options` | Product, customer, and saved collection selectors |
+| POST | `/api/admin/discounts/collections` | Create a reusable product collection |
 | POST | `/api/admin/discounts` | Create campaign |
 | PUT | `/api/admin/discounts/:id` | Replace campaign configuration; requires last read `updatedAt` |
 | GET | `/api/admin/discounts/:id/redemptions` | Latest 100 redemptions |
@@ -41,6 +44,8 @@ The existing checkout preview/query and order endpoints accept an optional `code
 ## Migration and verification
 
 The additive migration is `server/prisma/migrations/20261104230000_add_discount_campaigns/migration.sql`. Existing order totals are unchanged and old orders have a null snapshot. It adds enums, tables, assignment relations, indexes, foreign keys, and check constraints for money, schedules, usage, and normalized codes.
+
+The follow-up migration `20261108160000_discount_collections` adds reusable collections and an optional campaign reference. Existing campaigns retain their product assignments.
 
 After approval, apply using the existing deployment migration procedure (`npm run db:deploy` in `server`) before serving the new backend. Do not run `migrate dev` or reset a production database. Rollback should disable campaigns and roll back application code; retain the additive tables and historical data.
 

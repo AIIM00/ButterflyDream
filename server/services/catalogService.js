@@ -1,3 +1,4 @@
+import { chooseBestDiscount, loadDiscountCandidates } from "./discountService.js";
 import prisma from "../src/prisma.js";
 
 const activeVariantWhere = {
@@ -182,7 +183,23 @@ function getMaximumVariantPrice(variants) {
   }, null);
 }
 
-function serializeProductCard(product) {
+async function serializeProductCards(products) {
+  if (!products.length) return [];
+  const campaigns = await loadDiscountCandidates(prisma);
+  const now = new Date();
+  const nextBoundary = campaigns.reduce((next, campaign) => {
+    for (const date of [campaign.startsAt, campaign.endsAt]) {
+      if (date > now && (!next || date < next)) next = date;
+    }
+    return next;
+  }, null);
+  return products.map(product => ({
+    ...serializeProductCard(product, campaigns, now),
+    priceRefreshAt: nextBoundary,
+  }));
+}
+
+function serializeProductCard(product, campaigns, now) {
   const minimumPrice = getMinimumVariantPrice(product.variants);
 
   const maximumPrice = getMaximumVariantPrice(product.variants);
@@ -192,16 +209,18 @@ function serializeProductCard(product) {
     product.variants[0] ??
     null;
 
+  const quote = defaultVariant && chooseBestDiscount(campaigns, [
+    { productId: product.id, quantity: 1, unitPrice: defaultVariant.price },
+  ], { now });
+
   return {
     id: product.id,
     name: product.name,
     slug: product.slug,
     description: product.description,
-
     isFeatured: product.isFeatured,
-
     category: product.category,
-
+    salePrice: quote ? defaultVariant.price.minus(quote.amount).toFixed(2) : null,
     image: product.images[0] ?? null,
 
     pricing: {
@@ -677,7 +696,7 @@ export async function getPublicProducts(filters) {
   }
 
   return {
-    products: products.map(serializeProductCard),
+    products: await serializeProductCards(products),
 
     pagination: createPagination({
       page: filters.page,
@@ -739,10 +758,9 @@ export async function getPublicProductsByIds(productIds) {
   /*
    * Preserve the exact order chosen by admin.
    */
-  return uniqueProductIds
+  return serializeProductCards(uniqueProductIds
     .map((productId) => productById.get(productId))
-    .filter(Boolean)
-    .map(serializeProductCard);
+    .filter(Boolean));
 }
 export async function getPublicProductBySlug(slug) {
   const product = await prisma.product.findFirst({

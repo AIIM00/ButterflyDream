@@ -223,6 +223,7 @@ model Product {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
+  discountCollections DiscountCollection[] @relation("CollectionProducts")
   includedDiscounts DiscountCampaign[] @relation("IncludedProducts")
   excludedDiscounts DiscountCampaign[] @relation("ExcludedProducts")
   category         Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
@@ -795,7 +796,17 @@ enum DiscountMode {
   CODE
   VIP
 }
+model DiscountCollection {
+  id String @id @default(uuid()) @db.Uuid
+  name String @db.VarChar(80)
+  products Product[] @relation("CollectionProducts")
+  campaigns DiscountCampaign[]
+}
+
 model DiscountCampaign {
+  collectionId String? @db.Uuid
+  collection DiscountCollection? @relation(fields: [collectionId], references: [id], onDelete: Restrict)
+  @@index([collectionId])
   id String @id @default(uuid()) @db.Uuid
   name String @db.VarChar(120)
   mode DiscountMode

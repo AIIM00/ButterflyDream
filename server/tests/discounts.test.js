@@ -160,6 +160,37 @@ describe("discount checkout and management", () => {
     expect(await prisma.orderStatusHistory.count({ where: { orderId, toStatus: "CANCELLED" } })).toBe(1);
     expect((await prisma.order.findUnique({ where: { id: orderId } })).discountAmount.toFixed(2)).toBe("5.00");
   });
+  test("a collection sale matches one-item checkout, respects exclusions and expiry", async () => {
+    const member = await commerce();
+    const excluded = await createTestCatalogItem();
+    const outside = await createTestCatalogItem();
+    const cookie = createAuthCookie(await createTestUser({ role: "ADMIN" }));
+    const collection = await request(app).post("/api/admin/discounts/collections")
+      .set("Cookie", cookie).send({ name: "Jewelry", productIds: [member.product.id, excluded.product.id] });
+    expect(collection.status).toBe(201);
+    const created = await request(app).post("/api/admin/discounts").set("Cookie", cookie)
+      .send({ ...base, name: "  خصم العيد 20%  ", value: "20", collectionId: collection.body.collection.id,
+        excludedProductIds: [excluded.product.id] });
+    expect(created.status).toBe(201);
+    expect(created.body.campaign.name).toBe("خصم العيد 20%");
+    await campaign({ mode: "CODE", code: "BETTER", value: "60" });
+    const catalog = () => request(app).get("/api/catalog/products");
+    const listing = await catalog();
+    expect(listing.status).toBe(200);
+    const prices = new Map(listing.body.products.map(p => [p.id, p.salePrice]));
+    expect(prices.get(member.product.id)).toBe("20.00");
+    expect(prices.get(excluded.product.id)).toBeNull();
+    expect(prices.get(outside.product.id)).toBeNull();
+    const preview = await request(app).post("/api/checkout/preview").send({ items: [{ variantId: member.variant.id, quantity: 1 }] });
+    expect(preview.body.checkout.cart.summary.discountAmount).toBe("5.00");
+    await prisma.discountCampaign.update({ where: { id: created.body.campaign.id }, data: { endsAt: new Date(0) } });
+    expect((await catalog()).body.products.every(p => p.salePrice === null)).toBe(true);
+  });
+  test("validates trimmed campaign name length", () => {
+    expect(parseCampaign({ ...base, name: " A " }).name).toBe("A");
+    expect(parseCampaign({ ...base, name: "x".repeat(80) }).name).toHaveLength(80);
+    for (const name of [" ", "x".repeat(81)]) expect(() => parseCampaign({ ...base, name })).toThrow();
+  });
   test("admin authorization, normalized duplicate codes, editing and history", async () => {
     const admin = await createTestUser({ role: "ADMIN" }); const user = await createTestUser({ email: "buyer@example.com" });
     expect((await request(app).get("/api/admin/discounts")).status).toBe(401);

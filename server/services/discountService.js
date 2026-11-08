@@ -24,10 +24,10 @@ export function chooseBestDiscount(campaigns, items, { code = null, userId = nul
         (campaign.maxRedemptions != null && campaign.usedCount >= campaign.maxRedemptions)) continue;
     if (campaign.mode !== "AUTOMATIC" && campaign.code !== code) continue;
     if (campaign.mode === "VIP" && (!userId || !campaign.assignedCustomers.some(c => c.id === userId))) continue;
-    const included = new Set(campaign.includedProducts.map(p => p.id));
+    const included = new Set((campaign.collection?.products ?? campaign.includedProducts).map(p => p.id));
     const excluded = new Set(campaign.excludedProducts.map(p => p.id));
     const eligibleSubtotal = items.reduce((sum, item) => {
-      if (excluded.has(item.productId) || (included.size && !included.has(item.productId))) return sum;
+      if (excluded.has(item.productId) || ((campaign.collection || included.size) && !included.has(item.productId))) return sum;
       return sum.plus(new Prisma.Decimal(item.unitPrice).mul(item.quantity));
     }, new Prisma.Decimal(0));
     const calculated = campaign.kind === "PERCENTAGE"
@@ -44,16 +44,21 @@ export function chooseBestDiscount(campaigns, items, { code = null, userId = nul
   return best;
 }
 
-export async function quoteDiscount(database, items, { code: rawCode, userId = null } = {}) {
-  const code = normalizeDiscountCode(rawCode);
-  const campaigns = await database.discountCampaign.findMany({
+export async function loadDiscountCandidates(database, code = null, userId = null) {
+  return database.discountCampaign.findMany({
     where: { active: true, OR: [{ mode: "AUTOMATIC" }, ...(code ? [{ code }] : [])] },
     include: {
+      collection: { select: { products: { select: { id: true } } } },
       includedProducts: { select: { id: true } },
       excludedProducts: { select: { id: true } },
       assignedCustomers: { where: { id: userId ?? "00000000-0000-0000-0000-000000000000" }, select: { id: true } },
     },
   });
+}
+
+export async function quoteDiscount(database, items, { code: rawCode, userId = null } = {}) {
+  const code = normalizeDiscountCode(rawCode);
+  const campaigns = await loadDiscountCandidates(database, code, userId);
   return chooseBestDiscount(campaigns, items, { code, userId });
 }
 

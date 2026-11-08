@@ -1,3 +1,4 @@
+import scheduleCatalogRefresh from "../utils/scheduleCatalogRefresh.js";
 import { useEffect, useState } from "react";
 import {
   fetchPublicCategories,
@@ -75,6 +76,7 @@ export function usePublicProducts(queryString) {
   useEffect(() => {
     const controller = new AbortController();
 
+    let refreshTimer;
     async function loadProducts() {
       try {
         const params = new URLSearchParams(queryString);
@@ -87,6 +89,7 @@ export function usePublicProducts(queryString) {
           return;
         }
 
+        refreshTimer = scheduleCatalogRefresh(response.products, loadProducts);
         setState({
           requestKey: queryString,
           data: response,
@@ -108,6 +111,7 @@ export function usePublicProducts(queryString) {
     void loadProducts();
 
     return () => {
+      clearTimeout(refreshTimer);
       controller.abort();
     };
   }, [queryString]);

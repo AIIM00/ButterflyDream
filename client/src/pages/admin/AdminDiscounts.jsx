@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import apiClient from "../../services/apiClient.js";
 import getApiErrorMessage from "../../utils/getApiErrorMessage.js";
-const empty = { name: "", mode: "AUTOMATIC", kind: "PERCENTAGE", value: "10", code: "", active: false, startsAt: "", endsAt: "", maxRedemptions: "", includedProductIds: [], excludedProductIds: [], assignedCustomerIds: [] };
+const empty = { collectionId: null, name: "", mode: "AUTOMATIC", kind: "PERCENTAGE", value: "10", code: "", active: false, startsAt: "", endsAt: "", maxRedemptions: "", includedProductIds: [], excludedProductIds: [], assignedCustomerIds: [] };
 const localTime = value => {
   if (!value) return "";
   const d = new Date(value);
@@ -21,6 +21,9 @@ export default function AdminDiscounts() {
   const [campaigns, setCampaigns] = useState([]);
   const [form, setForm] = useState(empty);
   const [products, setProducts] = useState([]);
+  const [collections, setCollections] = useState([]);
+  const [collectionName, setCollectionName] = useState("");
+  const [collectionProducts, setCollectionProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -33,7 +36,7 @@ export default function AdminDiscounts() {
   useEffect(() => {
     let active = true;
     Promise.all([apiClient.get("/admin/discounts"), apiClient.get("/admin/discounts/options")]).then(([a, b]) => {
-      if (active) { setCampaigns(a.data.campaigns); setProducts(b.data.products); setCustomers(b.data.customers); }
+      if (active) { setCampaigns(a.data.campaigns); setProducts(b.data.products); setCustomers(b.data.customers); setCollections(b.data.collections); }
     }).catch(e => { if (active) setError(getApiErrorMessage(e, "Unable to load campaigns.")); });
     return () => { active = false; };
   }, []);
@@ -41,6 +44,24 @@ export default function AdminDiscounts() {
   function edit(c) {
     setForm({ ...c, startsAt: localTime(c.startsAt), endsAt: localTime(c.endsAt), maxRedemptions: c.maxRedemptions ?? "", includedProductIds: c.includedProducts.map(p => p.id), excludedProductIds: c.excludedProducts.map(p => p.id), assignedCustomerIds: c.assignedCustomers.map(p => p.id) });
     setError("");
+  }
+  async function createCollection(event) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const { data } = await apiClient.post("/admin/discounts/collections", {
+        name: collectionName, productIds: collectionProducts,
+      });
+      setCollections(current => [...current, data.collection]);
+      setForm(current => ({ ...current, collectionId: data.collection.id, includedProductIds: [] }));
+      setCollectionName("");
+      setCollectionProducts([]);
+    } catch (e) {
+      setError(getApiErrorMessage(e, "Unable to create collection."));
+    } finally {
+      setBusy(false);
+    }
   }
   async function save(event) {
     event.preventDefault(); setBusy(true); setError("");
@@ -67,10 +88,18 @@ export default function AdminDiscounts() {
     <h1 className="text-3xl font-semibold">Discounts & promotions</h1>
     <p>Schedule automatic offers or create public and assigned VIP codes. One best offer applies to merchandise; delivery is excluded.</p>
     {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-700">{error}</p>}
+    <details className="rounded-2xl border border-brand-border p-5">
+      <summary className="cursor-pointer font-semibold">Create a reusable product collection</summary>
+      <form onSubmit={createCollection} className="mt-4 space-y-3">
+        <label>Collection name<input required value={collectionName} onChange={e => setCollectionName(e.target.value)} className="block w-full rounded border p-2" /></label>
+        <Selection label="Collection products" options={products} selected={collectionProducts} onChange={setCollectionProducts} />
+        <button disabled={busy || !collectionName.trim() || !collectionProducts.length} className="rounded-lg border px-4 py-2">Save and select collection</button>
+      </form>
+    </details>
     <form onSubmit={save} className="space-y-4 rounded-2xl border border-brand-border bg-brand-surface p-5">
       <h2 className="text-xl font-semibold">{form.id ? "Edit campaign" : "New campaign"}</h2>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label>Name<input required maxLength={120} value={form.name} onChange={e => field("name", e.target.value)} className="block w-full rounded border p-2" /></label>
+        <label>Name<input required placeholder="e.g. Weekend 20%" value={form.name} onChange={e => field("name", e.target.value)} className="block w-full rounded border p-2" /></label>
         <label>Mode<select value={form.mode} onChange={e => field("mode", e.target.value)} className="block w-full rounded border p-2"><option value="AUTOMATIC">Automatic seasonal offer</option><option value="CODE">Public code</option><option value="VIP">Assigned VIP code</option></select></label>
         <label>Discount type<select value={form.kind} onChange={e => field("kind", e.target.value)} className="block w-full rounded border p-2"><option value="PERCENTAGE">Percentage</option><option value="FIXED">Fixed amount (store currency)</option></select></label>
         <label>Value<input required type="number" min="0.01" step="0.01" max={form.kind === "PERCENTAGE" ? 100 : 99999999.99} value={form.value} onChange={e => field("value", e.target.value)} className="block w-full rounded border p-2" /></label>
@@ -80,9 +109,15 @@ export default function AdminDiscounts() {
         <label>End (your local time)<input type="datetime-local" value={form.endsAt} onChange={e => field("endsAt", e.target.value)} className="block w-full rounded border p-2" /></label>
       </div>
       <label className="flex gap-2"><input type="checkbox" checked={form.active} onChange={e => field("active", e.target.checked)} />Active (applies only within the scheduled dates)</label>
-      <p className="text-sm">Leave included products empty to include all products. Exclusions always take precedence.</p>
+      <label>Product collection
+        <select value={form.collectionId ?? ""} onChange={e => setForm(f => ({ ...f, collectionId: e.target.value || null, includedProductIds: [] }))} className="block w-full rounded border p-2">
+          <option value="">Whole store or individual products</option>
+          {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </label>
+      <p className="text-sm">{form.collectionId ? "Only collection members qualify. Exclusions apply within the collection." : "Leave included products empty for a storewide sale. Select any products to exclude."}</p>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Selection label="Included products" options={products} selected={form.includedProductIds} onChange={v => field("includedProductIds", v)} />
+        {!form.collectionId && <Selection label="Included products" options={products} selected={form.includedProductIds} onChange={v => field("includedProductIds", v)} />}
         <Selection label="Excluded products" options={products} selected={form.excludedProductIds} onChange={v => field("excludedProductIds", v)} />
         {form.mode === "VIP" && <Selection label="VIP customers" options={customers} selected={form.assignedCustomerIds} onChange={v => field("assignedCustomerIds", v)} />}
       </div>
